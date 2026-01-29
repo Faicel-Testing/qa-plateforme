@@ -1,0 +1,96 @@
+name: CI - Selenium Cucumber (Maven)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  # Exécution manuelle avec choix du tag Cucumber
+  workflow_dispatch:
+    inputs:
+      cucumber_tag:
+        description: "Cucumber tag to run (@smoke, @regression, @smoke and not @wip)"
+        required: true
+        default: "@smoke"
+
+  # Exécution planifiée (ex: régression chaque dimanche à 17:20 UTC)
+  schedule:
+    - cron: "20 17 * * 0"
+
+env:
+  HEADLESS: "true"
+  REMOTE_URL: "http://localhost:4444/wd/hub"
+  SELENIUM_REMOTE_URL: "http://localhost:4444/wd/hub"
+
+jobs:
+  test:
+    name: Run Cucumber Tests
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    services:
+      selenium:
+        image: selenium/standalone-chrome:latest
+        ports:
+          - 4444:4444
+        options: >-
+          --shm-size=2g
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl wget unzip
+
+      - name: Wait for Selenium Grid
+        run: |
+          echo "Waiting for Selenium..."
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:4444/status | grep -q '"ready"[[:space:]]*:[[:space:]]*true'; then
+              echo "Selenium is ready"
+              break
+            fi
+            echo "Still waiting ($i)..."
+            sleep 2
+          done
+
+      - name: Debug Selenium (optional)
+        if: always()
+        run: |
+          curl -fsS http://localhost:4444/status || true
+          docker ps -a || true
+
+      - name: Run Maven tests (Cucumber by tag)
+        env:
+          HEADLESS: ${{ env.HEADLESS }}
+          REMOTE_URL: ${{ env.REMOTE_URL }}
+          SELENIUM_REMOTE_URL: ${{ env.SELENIUM_REMOTE_URL }}
+          CUCUMBER_TAG: ${{ github.event.inputs.cucumber_tag || '@regression' }}
+        run: |
+          echo "Running Cucumber tests with tag: $CUCUMBER_TAG"
+          mvn -B -e clean test \
+            -Dcucumber.filter.tags="$CUCUMBER_TAG" \
+            -Dheadless="$HEADLESS" || true
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          retention-days: 7
+          path: |
+            target/surefire-reports/
+            target/cucumber-reports/
+            target/allure-results/
+            target/allure-report/

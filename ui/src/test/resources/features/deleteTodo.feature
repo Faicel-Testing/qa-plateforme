@@ -1,0 +1,6 @@
+@smoke
+Feature: DeleteTodo Feature
+  Scenario: User should be able delete todo
+    Given User is in the add todo page
+    When User delete the add todo page
+    Then add todo page is delete
