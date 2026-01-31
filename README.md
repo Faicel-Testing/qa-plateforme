@@ -12,14 +12,15 @@ Dans la majorité des projets, la qualité est :
 une plateforme unique, automatisée, qui aide à décider si un produit peut être livré sans risque.
 
 # Valeur apportée au client
-✔ Réduction des incidents en production,
-✔ Accélération des mises en production,
-✔ Décisions Go / No-Go basées sur des tests objectifs,
-✔ Standardisation QA multi-équipes,
-✔ Intégration native dans le CI/CD existant.
+ - Réduction des incidents en production,
+ - Accélération des mises en production,
+ - Décisions Go / No-Go basées sur des tests objectifs,
+ - Standardisation QA multi-équipes,
+ - Intégration native dans le CI/CD existant.
 ---> Résultat : moins de risques, plus de vitesse, plus de confiance.
         
   
+
 
 
 
