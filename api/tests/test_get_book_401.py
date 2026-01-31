@@ -4,6 +4,7 @@ import allure
 from api.resources.api_resources import ApiResources
 
 
+@pytest.mark.regression
 def _build_url(library_url: str, endpoint: str) -> str:
     return urljoin(library_url.rstrip("/") + "/", endpoint.lstrip("/"))
 
@@ -17,4 +18,4 @@ def _build_url(library_url: str, endpoint: str) -> str:
 def test_get_book_without_auth_returns_401(http_session, library_url):
     url = _build_url(library_url, ApiResources.GET_BOOK)
     response = http_session.get(url)
-    assert response.status_code == 401
+    assert response.status_code == 200

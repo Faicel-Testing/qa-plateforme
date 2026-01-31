@@ -1,7 +1,9 @@
+import pytest
 from urllib.parse import urljoin
 from api.resources.api_resources import ApiResources
 
 
+@pytest.mark.smoke
 def _build_url(library_url: str, endpoint: str) -> str:
     return urljoin(library_url.rstrip("/") + "/", endpoint.lstrip("/"))
 
