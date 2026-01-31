@@ -1,76 +1,18 @@
-# QA-Plateforme – Unified Test Automation Platform
-# QA Automation Architect Platform – UI | API | Performance – CI/CD Read
+# QA-Plateforme 
+# Unified Quality Engineering Platform – Ready for Enterprise Delivery
+# QA Automation Architect – UI | API | Performance | CI/CD
 
-# Objectif
-qa-plateforme est une plateforme d’automatisation de tests unifiée, conçue pour répondre aux exigences réelles des clients :
-   - Sécuriser les parcours critiques
-   - Réduire les régressions en production
-   - Accélérer les mises en production
-   - Fournir des quality gates exploitables dans le CI/CD
- Ce n’est pas un simple projet de tests, mais une architecture QA industrialisable.
-
-# Vision QA
-La plateforme est construite selon les principes suivants :
-- Test Pyramid respectée (UI / API / Performance)
-- Quality Gates clairs (Smoke, Regression, Perf)
-- Exécution CI/CD first
-- Scalabilité et maintenabilité
-- Séparation claire des responsabilités
-
-# QA-PLATEFORME :
-- UI Tests → Sécurisation des parcours utilisateurs
-- API Tests → Validation des contrats et flux backend
-- Performance → Détection des régressions de charge
-- CI/CD → Décision automatique Go / No-Go
-
-# Structure du repository (Monorepo) :
-#qa-plateforme 
-- ui → src/test | pom.xml | README.md    # Selenium + Cucumber (Java)
-- api → tests | requirements.txt         # Pytest + Requests (Python)
-- perf → scenarios | k6.config.ts        # k6 (TypeScript)
-- .github/workflows/                     # GitHub Actions (CI/CD)
-- Makefile                               # Commandes unifiées
-- README.md
-
-# Technologies utilisées
-# UI Automation
-- Selenium WebDriver
-- Cucumber (BDD)
-- Java / Maven
-- Page Object Model
-- Tags : @smoke, @regression
-# API Automation
-- Python
-- Pytest
-- Requests
-- Validation des statuts, schémas, contrats
-# Performance
-- k6
-- Tests de charge ciblés
-- Seuils de performance intégrés aux quality gates
-# CI/CD
-- GitHub Actions
-- Exécution conditionnelle
-- Décision automatique de merge
-
-# Quality Gates (approche client)
-  # Gate 1 – Smoke Tests (bloquant)
-- Parcours critiques UI
-- Doit être 100% OK
-- Échec = No-Go
-  # Gate 2 – Regression
-- Fonctionnel étendu
-- Exécuté avant release
-  # Gate 3 – Performance
-- Temps de réponse
-- Seuils définis (ex : p95 < 800ms)
-- Alerte si dérive
-
-Aucune mise en production sans validation QA automatique.
-        
-        
+# Pourquoi cette plateforme existe (vision client)
+Dans la majorité des projets, la qualité est :
+- Fragmentée (UI d’un côté, API ailleurs, perf jamais testée),
+- Tardive (tests à la fin),
+- Peu décisionnelle (rapports sans impact réel).
+  
+---> QA-Plateforme apporte une réponse claire :
+une plateforme unique, automatisée, qui aide à décider si un produit peut être livré sans risque.
         
   
+
 
 
 
