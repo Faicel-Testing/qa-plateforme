@@ -25,12 +25,18 @@ La plateforme est construite selon les principes suivants :
 
 # Structure du repository (Monorepo) :
 #qa-plateforme 
-- ui -> src/test | pom.xml | README.md
-- api
+- ui → src/test | pom.xml | README.md    # Selenium + Cucumber (Java)
+- api → tests | requirements.txt         # Pytest + Requests (Python)
+- perf → scenarios | k6.config.ts        # k6 (TypeScript)
+- .github/workflows/                     # GitHub Actions (CI/CD)
+- Makefile                               # Commandes unifiées
+- README.md
+
         
         
         
   
+
 
 
 
