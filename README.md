@@ -65,9 +65,17 @@ Cette plateforme n’est pas un projet de tests, mais une architecture QA indust
   
 ---> Aucune mise en production sans validation automatique.
 
+# Exécution simplifiée (Makefile)
+- make ui-smoke        # Smoke UI
+- make ui-regression   # Regression UI
+- make api             # API tests
+- make perf            # Performance tests
+- make all             # Full quality gate
+
 
         
   
+
 
 
 
