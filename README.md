@@ -52,10 +52,26 @@ La plateforme est construite selon les principes suivants :
 - GitHub Actions
 - Exécution conditionnelle
 - Décision automatique de merge
+
+# Quality Gates (approche client)
+  # Gate 1 – Smoke Tests (bloquant)
+- Parcours critiques UI
+- Doit être 100% OK
+- Échec = No-Go
+  # Gate 2 – Regression
+- Fonctionnel étendu
+- Exécuté avant release
+  # Gate 3 – Performance
+- Temps de réponse
+- Seuils définis (ex : p95 < 800ms)
+- Alerte si dérive
+
+Aucune mise en production sans validation QA automatique.
         
         
         
   
+
 
 
 
