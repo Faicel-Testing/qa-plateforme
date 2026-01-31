@@ -72,9 +72,62 @@ Cette plateforme n’est pas un projet de tests, mais une architecture QA indust
 - make perf            : Performance tests
 - make all             : Full quality gate
 
+# Intégration CI/CD
+La plateforme est conçue pour :
+- Pull Request → Smoke Tests
+- Merge → Regression
+- Nightly → Full Suite
+- Manuel → Par tag ou périmètre ciblé
+
+---> La QA devient un acteur de la décision produit.
+
+# Adaptée à plusieurs secteurs
+# E-commerce
+- Parcours achat
+- Paiement
+- Panier / commandes
+- Pics de charge (soldes, promos)
+
+# Transport
+- Réservations
+- Billetterie
+- Disponibilité temps réel
+- Robustesse des API
+
+# Énergie
+- Portails clients
+- Relevés / facturation
+- Fiabilité des flux backend
+
+# Secteur public
+- Portails citoyens
+- Accessibilité
+- Robustesse et stabilité
+
+# Tech / SaaS
+- Releases fréquentes
+- Scalabilité
+- Sécurité des parcours clés
+
+---> Même architecture, périmètres adaptés.
+
+# Auteur / Positionnement
+# Faicel Ghanem
+# QA Automation Architect – Freelance
+
+Spécialités :
+- Architecture QA
+- UI / API / Performance Automation
+- CI/CD & Quality Gates
+- Environnements complexes et multi-équipes
+
+# À propos de ce repository
+Ce dépôt est une vitrine d’architecture QA.
+Les implémentations client réelles sont maintenues dans des repositories privés.
 
         
   
+
 
 
 
