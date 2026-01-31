@@ -38,10 +38,36 @@ Cette plateforme n’est pas un projet de tests, mais une architecture QA indust
 ---> Une seule plateforme, plusieurs niveaux de validation, une décision finale claire.
 
 # Périmètre fonctionnel
+# UI Automation
+- Sécurisation des parcours critiques
+- BDD (lisible métier)
+- Tags : @smoke, @regression
+# API Automation
+- Validation des flux backend
+- Contrats API
+- Tests rapides et stables
+# Performance
+- Détection des régressions de charge
+- Seuils métier (temps de réponse, throughput)
+- Anticipation des incidents en production
+
+# Quality Gates
+   # Gate 1 – Smoke (bloquant)
+- Parcours critiques
+- Échec = No-Go immédiat
+   # Gate 2 – Regression
+- Couverture fonctionnelle étendue
+- Validation avant release
+   # Gate 3 – Performance
+- Temps de réponse
+- Seuils définis avec le client
+- Alerte proactive
+---> Aucune mise en production sans validation automatique.
 
 
         
   
+
 
 
 
