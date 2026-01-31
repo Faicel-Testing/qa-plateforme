@@ -32,10 +32,31 @@ La plateforme est construite selon les principes suivants :
 - Makefile                               # Commandes unifiées
 - README.md
 
+# Technologies utilisées
+# UI Automation
+- Selenium WebDriver
+- Cucumber (BDD)
+- Java / Maven
+- Page Object Model
+- Tags : @smoke, @regression
+# API Automation
+- Python
+- Pytest
+- Requests
+- Validation des statuts, schémas, contrats
+# Performance
+- k6
+- Tests de charge ciblés
+- Seuils de performance intégrés aux quality gates
+# CI/CD
+- GitHub Actions
+- Exécution conditionnelle
+- Décision automatique de merge
         
         
         
   
+
 
 
 
