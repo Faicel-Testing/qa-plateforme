@@ -62,11 +62,13 @@ Cette plateforme n’est pas un projet de tests, mais une architecture QA indust
 - Temps de réponse
 - Seuils définis avec le client
 - Alerte proactive
+  
 ---> Aucune mise en production sans validation automatique.
 
 
         
   
+
 
 
 
