@@ -25,12 +25,13 @@ La plateforme est construite selon les principes suivants :
 
 # Structure du repository (Monorepo) :
 #qa-plateforme 
-ui -> src/test | pom.xml | README.md
-api
+- ui -> src/test | pom.xml | README.md
+- api
         
         
         
   
+
 
 
 
