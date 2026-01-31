@@ -17,31 +17,8 @@ La plateforme est construite selon les principes suivants :
 - Scalabilité et maintenabilité
 - Séparation claire des responsabilités
 
-# QA-PLATEFORME
-├── UI Tests        → Sécurisation des parcours utilisateurs
-├── API Tests       → Validation des contrats et flux backend
-├── Performance     → Détection des régressions de charge
-└── CI/CD           → Décision automatique Go / No-Go
-
-# Structure du repository (Monorepo)
-qa-plateforme/
-├── ui/                     # Selenium + Cucumber (Java)
-│   ├── src/test
-│   ├── pom.xml
-│   └── README.md
-│
-├── api/                    # Pytest + Requests (Python)
-│   ├── tests
-│   └── requirements.txt
-│
-├── perf/                   # k6 (TypeScript)
-│   ├── scenarios
-│   └── k6.config.ts
-│
-├── .github/workflows/      # GitHub Actions (CI/CD)
-│
-├── Makefile                # Commandes unifiées
-└── README.md
-
-
-
+# QA-PLATEFORME :
+- UI Tests → Sécurisation des parcours utilisateurs
+- API Tests → Validation des contrats et flux backend
+- Performance → Détection des régressions de charge
+- CI/CD → Décision automatique Go / No-Go
