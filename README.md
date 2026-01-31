@@ -24,12 +24,13 @@ La plateforme est construite selon les principes suivants :
 - CI/CD → Décision automatique Go / No-Go
 
 # Structure du repository (Monorepo) :
-qa-plateforme 
+#qa-plateforme 
 ui -> src/test | pom.xml | README.md
 api
         
         
         
   
+
 
 
