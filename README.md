@@ -52,7 +52,7 @@ Cette plateforme n’est pas un projet de tests, mais une architecture QA indust
 - Anticipation des incidents en production
 
 # Quality Gates
-    # Gate 1 – Smoke (bloquant)
+  # Gate 1 – Smoke (bloquant)
 - Parcours critiques
 - Échec = No-Go immédiat
    # Gate 2 – Regression
@@ -68,6 +68,7 @@ Cette plateforme n’est pas un projet de tests, mais une architecture QA indust
 
         
   
+
 
 
 
