@@ -3,11 +3,11 @@ from api.resources.api_resources import ApiResources
 import pytest
 
 
-@pytest.mark.regression
+
 def _build_url(library_url: str, endpoint: str) -> str:
     return urljoin(library_url.rstrip("/") + "/", endpoint.lstrip("/"))
 
-
+@pytest.mark.regression
 def test_get_book_without_author_param_returns_200_and_empty_body(http_session, library_url):
     """
     Cas négatif réaliste (basé sur le comportement réel de l'API) :
