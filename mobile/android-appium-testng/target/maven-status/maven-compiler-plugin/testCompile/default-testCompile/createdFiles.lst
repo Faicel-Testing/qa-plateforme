@@ -1,0 +1,8 @@
+mobile\utils\RetryListener.class
+mobile\utils\TestListener.class
+mobile\Tests\Test01_Login.class
+mobile\utils\RetryRules.class
+mobile\utils\RetryTransformer.class
+mobile\core\BaseTest.class
+mobile\utils\RetryAnalyzer.class
+mobile\Tests\Test02_Signup.class

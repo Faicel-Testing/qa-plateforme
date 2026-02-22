@@ -1,0 +1,5 @@
+mobile\utils\WaitUtils.class
+mobile\config\ConfigLoader.class
+mobile\pages\Test01_LoginPage.class
+mobile\pages\Test02_SignupPage.class
+mobile\core\DriverFactory.class
