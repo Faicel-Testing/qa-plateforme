@@ -1,8 +1,0 @@
-target
-.git
-.idea
-.vscode
-*.log
-*.tmp
-node_modules
-.DS_Store
