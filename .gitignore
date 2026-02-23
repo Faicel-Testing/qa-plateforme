@@ -1,0 +1,6 @@
+**/target/
+**/allure-results/
+**/.allure/
+.venv/
+**/.pytest_cache/
+node_modules/
