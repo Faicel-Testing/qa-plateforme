@@ -119,7 +119,7 @@ jobs:
             adb devices
 
             # Run your TestNG suite
-            mvn -q clean test -Dsurefire.suiteXmlFiles=testng.xml
+            mvn -q clean test -Denv=qa -Dsurefire.suiteXmlFiles=testng.xml
 
       - name: Upload artifacts (Appium logs + reports)
         if: always()
