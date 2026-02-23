@@ -1,0 +1,13 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
+<suite name="Mobile Suite" verbose="1">
+  <listeners>
+    <listener class-name="mobile.utils.TestListener"/>
+    <listener class-name="mobile.utils.RetryTransformer"/>
+  </listeners>
+
+  <test name="ALL">
+    <packages>
+      <package name="mobile.Tests.*"/>
+    </packages>
+  </test>
+</suite>
