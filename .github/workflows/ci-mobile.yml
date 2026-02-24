@@ -1,17 +1,18 @@
 name: CI - Mobile (Appium TestNG)
-on:
-  workflow_dispatch:
+
 on:
   push:
     branches: [ "main" ]
     paths:
       - "mobile/android-appium-testng/**"
       - ".github/workflows/ci-mobile.yml"
+
   pull_request:
     branches: [ "main" ]
     paths:
       - "mobile/android-appium-testng/**"
       - ".github/workflows/ci-mobile.yml"
+
   workflow_dispatch:
     inputs:
       run_emulator:
@@ -27,7 +28,6 @@ jobs:
   build:
     name: Build / Unit checks (no device)
     runs-on: ubuntu-latest
-
     defaults:
       run:
         working-directory: mobile/android-appium-testng
@@ -46,12 +46,6 @@ jobs:
       - name: Maven - validate & compile
         run: mvn -q -DskipTests=true clean validate compile
 
-      # Si tu as des tests "unit" qui ne nécessitent pas Appium/device, garde ça:
-      # Sinon commente ce step.
-      - name: Maven - run tests (safe)
-        run: mvn -q test -Dgroups="unit" -DskipITs=true
-        continue-on-error: true
-
       - name: Upload test reports (if any)
         if: always()
         uses: actions/upload-artifact@v4
@@ -67,7 +61,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_emulator == 'true' }}
-
     defaults:
       run:
         working-directory: mobile/android-appium-testng
@@ -87,22 +80,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
 
-      - name: Install Appium
+      - name: Install Appium + uiautomator2
         run: |
           npm i -g appium@latest
-          appium -v
-
-      - name: Install Appium uiautomator2 driver
-        run: |
           appium driver install uiautomator2
+          appium -v
           appium driver list --installed
 
-      - name: Install Android SDK components
-        uses: android-actions/setup-android@v3
-
-      - name: Create & start emulator
+      - name: Create & start emulator + run tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 33
@@ -111,15 +97,10 @@ jobs:
           profile: pixel_5
           emulator-options: -no-window -no-audio -no-snapshot -gpu swiftshader_indirect
           disable-animations: true
-          working-directory: mobile/android-appium-testng
           script: |
-            # Start Appium in background
+            cd mobile/android-appium-testng
             nohup appium --log-level info --base-path /wd/hub --port 4723 > appium.log 2>&1 &
-
-            # Optional: show devices
             adb devices
-
-            # Run your TestNG suite
             mvn -q clean test -Denv=qa -Dsurefire.suiteXmlFiles=testng.xml
 
       - name: Upload artifacts (Appium logs + reports)
