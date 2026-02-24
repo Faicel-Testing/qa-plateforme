@@ -8,10 +8,16 @@
 
     <groupId>com.fgautomationpro</groupId>
     <artifactId>android-appium-testng</artifactId>
-    <version>1.0.0</version>
+
+    <!-- Architecte: version pilotée par propriété (Release Please / CI bump friendly) -->
+    <version>${revision}</version>
+
     <packaging>jar</packaging>
 
     <properties>
+        <!-- Architecte: version unique à bumper automatiquement -->
+        <revision>1.0.0-SNAPSHOT</revision>
+
         <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
@@ -22,6 +28,21 @@
         <testng.version>7.10.2</testng.version>
         <slf4j.version>2.0.13</slf4j.version>
         <allure.version>2.27.0</allure.version>
+
+        <!-- Plugins -->
+        <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
+        <maven.surefire.plugin.version>3.2.5</maven.surefire.plugin.version>
+        <allure.maven.plugin.version>2.12.0</allure.maven.plugin.version>
+        <maven.enforcer.plugin.version>3.5.0</maven.enforcer.plugin.version>
+        <maven.source.plugin.version>3.3.1</maven.source.plugin.version>
+        <maven.javadoc.plugin.version>3.7.0</maven.javadoc.plugin.version>
+
+        <!-- Gouvernance / reproductibilité -->
+        <maven.min.version>3.9.0</maven.min.version>
+
+        <!-- CI knobs -->
+        <skipTests>false</skipTests>
+        <allure.results.dir>${project.build.directory}/allure-results</allure.results.dir>
     </properties>
 
     <dependencyManagement>
@@ -73,27 +94,55 @@
     <build>
         <plugins>
 
+            <!-- Architecte: verrouille la stack (Java/Maven) => build reproductible -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven.enforcer.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>enforce-java-maven</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[${java.version},)</version>
+                                </requireJavaVersion>
+                                <requireMavenVersion>
+                                    <version>[${maven.min.version},)</version>
+                                </requireMavenVersion>
+                            </rules>
+                            <fail>true</fail>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                <version>${maven.compiler.plugin.version}</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
+                    <!-- optionnel: garde ton design, juste plus strict -->
+                    <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
+                <version>${maven.surefire.plugin.version}</version>
                 <configuration>
+                    <skipTests>${skipTests}</skipTests>
                     <suiteXmlFiles>
                         <suiteXmlFile>testng.xml</suiteXmlFile>
                     </suiteXmlFiles>
-                    <!-- Allure results folder -->
                     <systemPropertyVariables>
-                        <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
+                        <allure.results.directory>${allure.results.dir}</allure.results.directory>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
@@ -101,10 +150,63 @@
             <plugin>
                 <groupId>io.qameta.allure</groupId>
                 <artifactId>allure-maven</artifactId>
-                <version>2.12.0</version>
+                <version>${allure.maven.plugin.version}</version>
+            </plugin>
+
+            <!-- Architecte: prêt pour distribution interne (sources/javadoc) sans impacter les tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>${maven.source.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>${maven.javadoc.plugin.version}</version>
+                <configuration>
+                    <!-- évite de casser le build en CI si javadoc stricte -->
+                    <failOnError>false</failOnError>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>
     </build>
+
+    <!-- Architecte: profiles CI / local sans casser ton usage actuel -->
+    <profiles>
+        <profile>
+            <id>ci</id>
+            <properties>
+                <!-- Exemple: en CI tu peux faire -Pci -DskipTests=false -->
+                <skipTests>false</skipTests>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>no-tests</id>
+            <properties>
+                <skipTests>true</skipTests>
+            </properties>
+        </profile>
+    </profiles>
 
 </project>

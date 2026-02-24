@@ -1,0 +1,27 @@
+name: build-mobile-on-tag
+
+on:
+  push:
+    tags:
+      - "android-appium-testng-v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Build
+        working-directory: mobile/android-appium-testng
+        run: ./mvnw -q -DskipTests package
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-appium-testng
+          path: mobile/android-appium-testng/target/*.jar

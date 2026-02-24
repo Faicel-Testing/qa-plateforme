@@ -1,0 +1,20 @@
+name: release-mobile-framework
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          # Maven project, monorepo path
+          release-type: maven
+          path: mobile/android-appium-testng
+          package-name: android-appium-testng

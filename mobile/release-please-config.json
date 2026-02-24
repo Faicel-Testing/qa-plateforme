@@ -1,0 +1,9 @@
+{
+  "packages": {
+    "mobile/android-appium-testng": {
+      "release-type": "maven",
+      "package-name": "android-appium-testng",
+      "pull-request-title-pattern": "chore(release): mobile framework ${version}"
+    }
+  }
+}
