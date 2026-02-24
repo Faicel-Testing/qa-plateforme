@@ -5,52 +5,40 @@ import java.util.Properties;
 
 public class ConfigLoader {
 
-    private static final Properties baseProps = new Properties();
-    private static final Properties envProps  = new Properties();
+    private static final Properties props = new Properties();
 
     static {
-        // 1) Charger config.properties (base)
-        loadProperties(baseProps, "config.properties", true);
+        try {
+            // 1) load default config.properties
+            try (InputStream is = ConfigLoader.class
+                    .getClassLoader()
+                    .getResourceAsStream("config.properties")) {
 
-        // 2) Charger config-{env}.properties (override), si env défini
-        String env = resolveEnv(); // qa / staging / ...
-        if (env != null && !env.isBlank()) {
-            String envFile = "config-" + env.trim().toLowerCase() + ".properties";
-            loadProperties(envProps, envFile, false); // false => optionnel
-        }
-    }
-
-    private static void loadProperties(Properties target, String resourceName, boolean required) {
-        try (InputStream is = ConfigLoader.class.getClassLoader().getResourceAsStream(resourceName)) {
-            if (is == null) {
-                if (required) {
-                    throw new RuntimeException(resourceName + " introuvable dans src/test/resources");
+                if (is == null) {
+                    throw new RuntimeException("config.properties introuvable dans src/test/resources");
                 }
-                return; // optionnel: ne rien faire
+                props.load(is);
             }
-            target.load(is);
+
+            // 2) load env-specific config: config/{env}.properties
+            String env = getOptional("env");
+            if (env == null || env.isBlank()) {
+                env = "qa";
+            }
+            String envFile = "config/" + env.trim() + ".properties";
+
+            try (InputStream eis = ConfigLoader.class
+                    .getClassLoader()
+                    .getResourceAsStream(envFile)) {
+
+                if (eis != null) {
+                    props.load(eis);
+                }
+            }
+
         } catch (Exception e) {
-            throw new RuntimeException("Erreur chargement " + resourceName, e);
+            throw new RuntimeException("Erreur chargement configuration", e);
         }
-    }
-
-    private static String resolveEnv() {
-        // Priorité: -Denv=qa | staging
-        String sysEnv = System.getProperty("env");
-        if (sysEnv != null && !sysEnv.isBlank()) {
-            return sysEnv.trim();
-        }
-
-        // Variable d'environnement: ENV
-        String osEnv = System.getenv("ENV");
-        if (osEnv != null && !osEnv.isBlank()) {
-            return osEnv.trim();
-        }
-
-        // Option: si tu veux un default (ex: qa), décommente:
-        // return "qa";
-
-        return null;
     }
 
     public static String get(String key) {
@@ -68,19 +56,22 @@ public class ConfigLoader {
             return envVal.trim();
         }
 
-        // 3️⃣ priorité config-<env>.properties (override) si présent
-        String envFileVal = envProps.getProperty(key);
-        if (envFileVal != null && !envFileVal.isBlank()) {
-            return envFileVal.trim();
-        }
-
-        // 4️⃣ fallback config.properties
-        String val = baseProps.getProperty(key);
+        // 3️⃣ fallback properties (merged)
+        String val = props.getProperty(key);
         if (val == null || val.isBlank()) {
             throw new RuntimeException("Clé manquante: " + key);
         }
 
         return val.trim();
+    }
+
+    public static String getOptional(String key) {
+        try {
+            String v = get(key);
+            return (v == null || v.isBlank()) ? null : v.trim();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public static boolean getBool(String key) {

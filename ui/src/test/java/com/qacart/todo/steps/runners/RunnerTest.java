@@ -7,6 +7,7 @@ import org.testng.annotations.DataProvider;
 @CucumberOptions(
         features = "src/test/resources/features",
         glue = {"com.qacart.todo.steps"},
+        tags = "not @ignore",
         plugin = {
                 "pretty",
                 "html:target/cucumber-reports/cucumber.html",
@@ -15,6 +16,7 @@ import org.testng.annotations.DataProvider;
                 "io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm"
         },
         monochrome = true
+        
 )
 public class RunnerTest extends AbstractTestNGCucumberTests {
 

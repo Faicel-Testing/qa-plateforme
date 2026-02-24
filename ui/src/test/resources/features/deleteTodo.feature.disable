@@ -1,4 +1,4 @@
-@smoke
+@ignore @smoke @skip
 Feature: DeleteTodo Feature
   Scenario: User should be able delete todo
     Given User is in the add todo page

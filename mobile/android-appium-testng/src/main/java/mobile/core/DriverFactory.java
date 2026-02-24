@@ -48,15 +48,19 @@ public class DriverFactory {
             String appPath = resolveAppPath(ConfigLoader.get("app.path"));
             System.out.println("✅ APK resolved path = " + appPath);
 
-            UiAutomator2Options options = new UiAutomator2Options()
-                    .setPlatformName(ConfigLoader.get("platformName"))
-                    .setAutomationName(ConfigLoader.get("automationName"))
-                    .setDeviceName(ConfigLoader.get("deviceName"))
-                    .setUdid(ConfigLoader.get("udid"))
-                    .setApp(appPath)
-                    .setNoReset(noReset)
-                    .setNewCommandTimeout(Duration.ofSeconds(ConfigLoader.getInt("newCommandTimeout")))
-                    .setAutoGrantPermissions(true);
+           UiAutomator2Options options = new UiAutomator2Options()
+        .setPlatformName(ConfigLoader.get("platformName"))
+        .setAutomationName(ConfigLoader.get("automationName"))
+        .setDeviceName(ConfigLoader.get("deviceName"))
+        .setApp(appPath)
+        .setNoReset(noReset)
+        .setNewCommandTimeout(Duration.ofSeconds(ConfigLoader.getInt("newCommandTimeout")))
+        .setAutoGrantPermissions(true);
+
+String udid = ConfigLoader.getOptional("udid");
+if (udid != null) {
+    options.setUdid(udid);
+}
 
             System.out.println("🔥 CAPABILITIES = " + options.asMap());
 
