@@ -101,44 +101,62 @@ jobs:
       - name: Create & start emulator + run tests (robust boot)
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 33
+          api-level: 30              # ✅ plus stable en CI que 33 (tu peux remettre 33 après)
           target: google_apis
           arch: x86_64
           profile: pixel_5
+
+          # ✅ IMPORTANT: évite les problèmes de snapshot/restore en CI
+          force-avd-creation: true
           emulator-options: >-
             -no-window
             -no-audio
             -no-snapshot
+            -no-snapshot-save
+            -wipe-data
             -no-boot-anim
             -gpu swiftshader_indirect
             -camera-back none
             -camera-front none
             -netdelay none
             -netspeed full
+
+          # ✅ Timeout géré par l'action (sinon elle kill trop tôt)
+          emulator-boot-timeout: 900   # 15 min
+
           disable-animations: true
           script: |
-            adb devices
+            bash -lc '
+              set -euo pipefail
 
-            echo "Waiting for device to be available..."
-            adb wait-for-device
+              echo "ADB devices:"
+              adb devices
 
-            echo "Waiting for sys.boot_completed=1..."
-            boot_completed=""
-            until [ "$boot_completed" = "1" ]; do
-              boot_completed=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
-              echo "sys.boot_completed=$boot_completed"
-              sleep 5
-            done
+              echo "Waiting for device..."
+              adb wait-for-device
 
-            # Unlock screen (best-effort)
-            adb shell input keyevent 82 || true
+              echo "Waiting for sys.boot_completed=1..."
+              boot_completed="0"
+              for i in {1..180}; do
+                boot_completed="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")"
+                echo "sys.boot_completed=$boot_completed"
+                [ "$boot_completed" = "1" ] && break
+                sleep 5
+              done
 
-            # Start Appium in background
-            nohup appium --log-level info --base-path /wd/hub --port 4723 > appium.log 2>&1 &
-            sleep 5
+              echo "Unlock screen (best-effort)"
+              adb shell input keyevent 82 || true
 
-            # Quick health check (best-effort)
-            curl -s http://127.0.0.1:4723/wd/hub/status || true
+              echo "Start Appium"
+              nohup appium --log-level info --base-path /wd/hub --port 4723 > appium.log 2>&1 &
+              sleep 8
+              curl -s http://127.0.0.1:4723/wd/hub/status || true
+
+              echo "Run Maven"
+              mvn -q clean test \
+                -Denv=qa \
+                -Dudid=emulator-5554 \
+                -Dsurefire.suiteXmlFiles=testng.xml
 
             # ✅ Ajout demandé : forcer udid
             mvn -q clean test -Denv=qa -Dudid=emulator-5554 -Dsurefire.suiteXmlFiles=testng.xml
