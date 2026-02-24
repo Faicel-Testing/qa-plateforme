@@ -8,7 +8,9 @@ public class TodoPage extends BasePage {
     public TodoPage(WebDriver driver) {
         super(driver);
     }
-    private final By welcomeMessage = By.cssSelector("[data-testid=\"welcome\"]");
+    // private final By welcomeMessage = By.cssSelector("[data-testid=\"welcome\"]");
+    private final By welcomeMessage = By.xpath("//h2[normalize-space()='Ready to mark some Todos as completed?']");
+    //The email and password
     private final By plusButton = By.cssSelector("[data-testid=add]");
     //private final By DeleteTheAddTodoPage = By.cssSelector("[data-testid=\"delete\"]");
     private final By TodoPageIsDeleteDisplayed = By.cssSelector("[data-testid=\"no-todos\"]");
