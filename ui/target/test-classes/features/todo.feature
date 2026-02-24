@@ -1,7 +1,0 @@
-@regression
-Feature: Todo Feature
-  Scenario: User should be able add a todo
-    Given User is in the todo page
-    When User add a new todo
-    Then Todo should added correctly
-
