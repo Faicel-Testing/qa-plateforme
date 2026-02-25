@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@v4
         with:
-          # Maven project, monorepo path
           release-type: maven
           path: mobile/android-appium-testng
-          package-name: android-appium-testng
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
