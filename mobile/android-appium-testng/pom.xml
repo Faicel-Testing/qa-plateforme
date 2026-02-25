@@ -188,6 +188,15 @@
         </plugins>
     </build>
 
+<!-- Publication artifact après Release -->
+<distributionManagement>
+    <repository>
+        <id>github</id>
+        <name>GitHub Packages</name>
+        <url>https://maven.pkg.github.com/Faicel-Testing/qa-plateforme</url>
+    </repository>
+</distributionManagement>
+
     <!-- Architecte: profiles CI / local sans casser ton usage actuel -->
     <profiles>
         <profile>
