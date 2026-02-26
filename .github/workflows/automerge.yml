@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   automerge:
-    if: github.actor == 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Enable auto-merge (squash)
