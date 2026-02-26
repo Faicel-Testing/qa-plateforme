@@ -18,8 +18,8 @@ env:
   SELENIUM_REMOTE_URL: "http://localhost:4444/wd/hub"
 
 jobs:
-  smoke:
-    name: smoke
+  ui-smoke:
+    name: UI - Smoke (Quality Gate)
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
