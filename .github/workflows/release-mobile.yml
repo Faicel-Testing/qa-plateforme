@@ -12,18 +12,8 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@v4
-        with:
-          release-type: maven
-          path: mobile/android-appium-testng
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
-
-          jobs:
-  release-please:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: googleapis/release-please-action@v4
+      - name: Release Please
+        uses: googleapis/release-please-action@v4
         id: rp
         with:
           release-type: maven
