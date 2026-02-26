@@ -12,6 +12,8 @@ on:
     paths:
       - "mobile/android-appium-testng/**"
       - ".github/workflows/ci-mobile.yml"
+      - ".release-please-manifest.json"
+      - "release-please-config.json"
 
   workflow_dispatch:
     inputs:
