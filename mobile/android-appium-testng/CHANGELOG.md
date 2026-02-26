@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.1](https://github.com/Faicel-Testing/qa-plateforme/compare/v1.1.0...v1.1.1) (2026-02-26)
+
+
+### Bug Fixes
+
+* **mobile:** small change ([498b9ae](https://github.com/Faicel-Testing/qa-plateforme/commit/498b9ae615a48c27bc7eaba47a3ac3fdb618f360))
+* **mobile:** trigger auto merge ([fa25095](https://github.com/Faicel-Testing/qa-plateforme/commit/fa25095bb9f7202d4f7cb6d801c8b42a9f4f77f8))
+
 ## [1.1.0](https://github.com/Faicel-Testing/qa-plateforme/compare/v1.0.0...v1.1.0) (2026-02-26)
 
 
