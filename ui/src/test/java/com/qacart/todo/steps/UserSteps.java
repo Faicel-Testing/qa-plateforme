@@ -27,7 +27,7 @@ public class UserSteps {
     public void welcomeMessageShouldBeDisplayed(){
        boolean isWelcomeDisplayed = new TodoPage(driver).isWelcomeDisplayed();
         Assert.assertTrue(isWelcomeDisplayed);
-    //    driver.quit();
+    //    driver.quit()
     }
 
 }
