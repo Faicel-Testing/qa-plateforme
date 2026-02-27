@@ -11,7 +11,7 @@ permissions:
 jobs:
   automerge:  
     # Auto-merge uniquement pour les PR Release Please
-    if: startsWith(github.head_ref, 'release-please--branches--')
+    if: startsWith(github.head_ref, 'UI - Smoke (Quality Gate)--')
     runs-on: ubuntu-latest
     steps:
       - name: Enable auto-merge (squash)
