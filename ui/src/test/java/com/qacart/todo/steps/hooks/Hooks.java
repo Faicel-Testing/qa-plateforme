@@ -21,7 +21,7 @@ public class Hooks {
                     scenario.attach(screenshot, "image/png", "FAILED_STEP_SCREENSHOT");
                 }
             } catch (Exception ignored) {
-                // ne pas faire échouer le teardown si screenshot impossible;
+                // ne pas faire échouer le teardown si screenshot impossible
             }
         }
     }
