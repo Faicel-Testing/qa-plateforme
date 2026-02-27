@@ -1,6 +1,6 @@
 # QA-Plateforme 
 # Unified Quality Engineering Platform – Ready for Enterprise Delivery
-# QA Automation Architect – UI | API | Performance | CI/CD
+# QA Automation Architect – UI | API | Performance | CI/CD &
 
 # Pourquoi cette plateforme existe
 Dans la majorité des projets, la qualité est :
