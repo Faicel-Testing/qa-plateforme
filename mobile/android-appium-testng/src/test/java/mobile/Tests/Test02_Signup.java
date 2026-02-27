@@ -6,7 +6,7 @@ import mobile.core.BaseTest;
 import mobile.pages.Test02_SignupPage;
 
 public class Test02_Signup extends BaseTest {
-  //jjj
+  //jjjkkkk
     @Test(groups = {"regression", "quarantine"})
     public void signup() {
 
