@@ -10,8 +10,15 @@ permissions:
 
 jobs:
   automerge:
+<<<<<<< Faicel-Testing-patch-3
+    # Auto-merge uniquement pour PR des bots (release)
+    if: >
+      github.event.pull_request.user.login == 'github-actions[bot]' ||
+      github.event.pull_request.user.login == 'release-please[bot]'
+=======
     # Auto-merge uniquement pour les PR Release Please
     if: startsWith(github.head_ref, 'release-please--branches--')
+>>>>>>> main
     runs-on: ubuntu-latest
     steps:
       - name: Enable auto-merge (squash)
