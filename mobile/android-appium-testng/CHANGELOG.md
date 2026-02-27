@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/Faicel-Testing/qa-plateforme/compare/v1.1.1...v1.1.2) (2026-02-27)
+
+
+### Bug Fixes
+
+* **test:** update ([ba9be87](https://github.com/Faicel-Testing/qa-plateforme/commit/ba9be87d1e3d55fad34373ce39d2682fd87326cd))
+
 ## [1.1.1](https://github.com/Faicel-Testing/qa-plateforme/compare/v1.1.0...v1.1.1) (2026-02-26)
 
 
