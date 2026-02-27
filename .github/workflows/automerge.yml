@@ -9,9 +9,13 @@ permissions:
   pull-requests: write
 
 jobs:
-  automerge:  
-    # Auto-merge uniquement pour les PR Release Please
-    if: startsWith(github.head_ref, 'release-please--branches--')
+  automerge:
+    # Auto-merge pour :
+    # 1) PR Release Please (branche release-please--branches--*)
+    # 2) PR humaines si label "automerge" est présent
+    if: >
+      startsWith(github.head_ref, 'release-please--branches--') ||
+      contains(join(github.event.pull_request.labels.*.name, ','), 'automerge')
     runs-on: ubuntu-latest
     steps:
       - name: Enable auto-merge (squash)
