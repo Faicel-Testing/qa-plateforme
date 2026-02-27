@@ -7,7 +7,7 @@
     <artifactId>android-appium-testng</artifactId>
 
     <!-- Architecte: version pilotée par propriété (Release Please / CI bump friendly) -->
-    <version>1.1.4</version>
+    <version>1.1.5-SNAPSHOT</version>
 
     <packaging>jar</packaging>
 
