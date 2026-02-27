@@ -2,7 +2,7 @@ name: Auto-merge
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
+    types: [opened, reopened, synchronize, ready_for_review, labeled]
 
 permissions:
   contents: write
@@ -10,9 +10,6 @@ permissions:
 
 jobs:
   automerge:
-    # Auto-merge pour :
-    # 1) PR Release Please (branche release-please--branches--*)
-    # 2) PR humaines si label "automerge" est présent
     if: >
       startsWith(github.head_ref, 'release-please--branches--') ||
       contains(join(github.event.pull_request.labels.*.name, ','), 'automerge')

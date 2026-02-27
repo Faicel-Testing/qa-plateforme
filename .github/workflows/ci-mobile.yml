@@ -11,9 +11,14 @@ on:
     branches: [ "main" ]
     paths:
       - "mobile/android-appium-testng/**"
-      - ".github/workflows/ci-mobile.yml"
+      - "ui/**"
+      - "mobile/**"
+      - "api/**"
+      - "perf/**"
+      - ".github/workflows/**"
+      - "CHANGELOG.md"
       - ".release-please-manifest.json"
-      - "release-please-config.json"
+      - "README.md"
 
   workflow_dispatch:
     inputs:
