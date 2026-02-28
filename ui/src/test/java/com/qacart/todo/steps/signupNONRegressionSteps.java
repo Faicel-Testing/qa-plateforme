@@ -32,7 +32,7 @@ public class signupNONRegressionSteps {
 
     @Then("GOOD2 AFTERNOON EE should be visible")
     public void GOOD2AFTERNOONEEshouldbevisible() {
-        // boolean isMessageDisplayed = driver.findElement(By.cssSelector("[data-testid=\"go-login\"]")).isDisplayed();
+
         // Assert.assertTrue(isMessageDisplayed);
         //driver.findElement(By.cssSelector("[data-testid=submit]")).click();
     }
