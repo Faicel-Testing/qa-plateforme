@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
   schedule:
-    - cron: "20 24 * * 0" # Dimanche 08:00 UTC (modifie si besoin)
+    - cron: "20 0 * * 0" # Dimanche 08:00 UTC (modifie si besoin)
 
 env:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
