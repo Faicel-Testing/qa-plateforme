@@ -19,19 +19,12 @@ public class SignupSteps {
     public void UserIsInTheSignupPage() {
         driver = DriverFactory.getDriver();
         new SignupPage(driver).load("https://qacart-todo.herokuapp.com/");
-
-
     }
 
     @When("User fill the {string} and {string} and {string} and {string} and {string} in the field")
     public void UserFillTheFirstnameAndLastnameAndEmailAndPasswordAndConfirmPasswordInTheField(String firstname, String lastname, String email, String password, String confirm_password) {
         new SignupPage(driver).signup("Faysal", "Testing", "faical@exemple.com", "1234AZE", "1234AZE");
 
-       //driver.findElement(By.cssSelector("[data-testid=first-name]")).sendKeys(firstname);
-        //driver.findElement(By.cssSelector("[data-testid=last-name]")).sendKeys(lastname);
-        //driver.findElement(By.cssSelector("[data-testid=email]")).sendKeys(email);
-        //driver.findElement(By.cssSelector("[data-testid=password]")).sendKeys(password);
-        //driver.findElement(By.cssSelector("[data-testid=confirm-password]")).sendKeys(confirm_password);
     }
 
     @Then("Signup is done correctly")
