@@ -10,13 +10,16 @@ permissions:
 
 jobs:
   automerge:
-    if: >
-      startsWith(github.head_ref, 'release-please--branches--') ||
-      contains(join(github.event.pull_request.labels.*.name, ','), 'automerge')
+    # Merge uniquement si (release-please branch) OU (label automerge présent)
+    if: ${{ startsWith(github.head_ref, 'release-please--branches--') || contains(join(github.event.pull_request.labels.*.name, ','), 'automerge') }}
     runs-on: ubuntu-latest
+
     steps:
-      - name: Enable auto-merge (squash)
+      - name: Auto-merge (squash) when checks are green
         uses: pascalgn/automerge-action@v0.16.4
         env:
           GITHUB_TOKEN: ${{ github.token }}
           MERGE_METHOD: squash
+          # optionnel mais recommandé :
+          UPDATE_METHOD: rebase
+          MERGE_DELETE_BRANCH: "true"
