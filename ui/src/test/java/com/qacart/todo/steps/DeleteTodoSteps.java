@@ -22,7 +22,7 @@ public class DeleteTodoSteps {
         driver = DriverFactory.getDriver();
         new LoginPage(driver).load("https://qacart-todo.herokuapp.com/");
         new DeleteTodoPage(driver).DeleteTodo("hatem@example.com","Test1234");
-        //driver.findElement(By.cssSelector("[data-testid=email]")).sendKeys("hatem@example.com");
+        //dfdfddriver.findElement(By.cssSelector("[data-testid=email]")).sendKeys("hatem@example.com");
         //driver.findElement(By.cssSelector("[data-testid=\"password\"]")).sendKeys("Test1234");
         //driver.findElement(By.cssSelector("[data-testid=\"submit\"]")).click();
         //driver.findElement(By.cssSelector("[data-testid=add]")).click();
