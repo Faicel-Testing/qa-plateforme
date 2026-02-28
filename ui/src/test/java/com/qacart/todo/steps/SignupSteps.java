@@ -19,7 +19,10 @@ public class SignupSteps {
     public void UserIsInTheSignupPage() {
         driver = DriverFactory.getDriver();
         new SignupPage(driver).load("https://qacart-todo.herokuapp.com/");
+<<<<<<< feature/todosteps-update
         // driver.findElement(By.cssSelector("[data-testid=signup]")).click()!
+=======
+>>>>>>> main
 
 
     }
