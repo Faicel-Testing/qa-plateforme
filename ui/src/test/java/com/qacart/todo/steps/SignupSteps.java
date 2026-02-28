@@ -31,7 +31,7 @@ public class SignupSteps {
     public void SignupIsDoneCorrectly() {
         boolean isMessageDisplayed = new SignupPage(driver).isMessageDisplayed();
         Assert.assertTrue(isMessageDisplayed);
-            //driver.findElement(By.cssSelector("[data-testid=submit]")).click();
+           
         }
     }
 
