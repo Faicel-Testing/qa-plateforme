@@ -22,7 +22,7 @@ public class SignupSteps {
     }
 
     @When("User fill the {string} and {string} and {string} and {string} and {string} in the field")
-    public void UserFillTheFirstnameAndLastnameAndEmailAndPasswordAndConfirmPasswordInTheField(String firstname, String lastname, String email, String password, String confirm_password) {
+    public void UserFillkTheFirstnameAndLastnameAndEmailAndPasswordAndConfirmPasswordInTheField(String firstname, String lastname, String email, String password, String confirm_password) {
         new SignupPage(driver).signup("Faysal", "Testing", "faical@exemple.com", "1234AZE", "1234AZE");
 
     }
