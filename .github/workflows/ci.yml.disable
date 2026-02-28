@@ -1,0 +1,111 @@
+name: Quality Gate - Smoke Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      cucumber_tag:
+        description: "Cucumber tag to run (@smoke, @regression, @smoke and not @wip)"
+        required: true
+        default: "@smoke"
+
+env:
+  HEADLESS: "true"
+  REMOTE_URL: "http://localhost:4444/wd/hub"
+  SELENIUM_REMOTE_URL: "http://localhost:4444/wd/hub"
+
+jobs:
+  ui-smoke:
+    name: UI - Smoke (Quality Gate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      selenium:
+        image: selenium/standalone-chrome:latest
+        ports:
+          - 4444:4444
+        options: >-
+          --shm-size=2g
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl wget unzip
+
+      - name: Wait for Selenium
+        run: |
+          echo "Waiting for Selenium..."
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:4444/status | grep -q '"ready"[[:space:]]*:[[:space:]]*true'; then
+              echo "Selenium is ready"
+              break
+            fi
+            echo "Still waiting ($i)..."
+            sleep 2
+          done
+          # Hard fail if not ready after waiting
+          curl -fsS http://localhost:4444/status | grep -q '"ready"[[:space:]]*:[[:space:]]*true'
+
+      - name: Decide tag (PR/push => @smoke, manual => input)
+        id: tag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "value=${{ github.event.inputs.cucumber_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=@smoke" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ✅ QUALITY GATE: PAS DE "|| true" ICI
+      - name: Run Cucumber tests (QUALITY GATE)
+        env:
+          HEADLESS: ${{ env.HEADLESS }}
+          REMOTE_URL: ${{ env.REMOTE_URL }}
+          SELENIUM_REMOTE_URL: ${{ env.SELENIUM_REMOTE_URL }}
+        run: |
+          echo "Running tag: ${{ steps.tag.outputs.value }}"
+          mvn -B -e clean test \
+            -Dcucumber.filter.tags="${{ steps.tag.outputs.value }}" \
+            -Dheadless="${HEADLESS}"
+
+      - name: Download Allure CLI
+        if: always()
+        run: |
+          wget -q https://github.com/allure-framework/allure2/releases/download/2.27.0/allure-2.27.0.zip -O /tmp/allure.zip
+          unzip -q /tmp/allure.zip -d /opt/
+
+      - name: Generate Allure report
+        if: always()
+        run: |
+          if [ -d "target/allure-results" ] && [ "$(ls -A target/allure-results 2>/dev/null)" ]; then
+            /opt/allure-2.27.0/bin/allure generate target/allure-results -o target/allure-report --clean || true
+          else
+            echo "No allure-results directory found or empty"
+          fi
+
+      - name: Upload reports (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          retention-days: 7
+          path: |
+            target/surefire-reports/
+            target/cucumber-reports/
+            target/allure-results/
+            target/allure-report/
