@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [ "main" ]
 
-  # Lancement manuel (Run workflow)
   workflow_dispatch:
     inputs:
       suite:
@@ -14,16 +13,10 @@ on:
         required: true
         default: "smoke"
         type: choice
-        options:
-          - smoke
-          - regression
+        options: [smoke, regression]
 
-  # Programmation (cron en UTC)
   schedule:
-    # 17h20 Paris (CET hiver) = 16h20 UTC
     - cron: "20 16 * * 1-5"
-    # 17h20 Paris (CEST été) = 15h20 UTC
-    # - cron: "20 15 * * 1-5"
 
 jobs:
   smoke:
@@ -66,20 +59,21 @@ jobs:
           echo "Selenium not ready"
           exit 1
 
-      - name: Decide tag (PR/push => smoke, manual => input)
+      - name: Pick tag
         id: pick
+        shell: bash
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "TAG=@${{ inputs.suite }}" >> $GITHUB_OUTPUT
+            echo "TAG=@${{ inputs.suite }}" >> "$GITHUB_OUTPUT"
           else
-            echo "TAG=@smoke" >> $GITHUB_OUTPUT
+            echo "TAG=@smoke" >> "$GITHUB_OUTPUT"
           fi
-          echo "Selected TAG=${TAG}"
 
       - name: Run Cucumber tests (QUALITY GATE)
-        working-directory: ui
         run: |
-          mvn -B clean test -Dcucumber.filter.tags="${{ steps.pick.outputs.TAG }}" -Dheadless="${HEADLESS}"
+          mvn -f ui/pom.xml -B clean test \
+            -Dcucumber.filter.tags="${{ steps.pick.outputs.TAG }}" \
+            -Dheadless="${HEADLESS}"
 
       - name: Upload test reports (always)
         if: always()

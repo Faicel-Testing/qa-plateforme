@@ -32,7 +32,7 @@ public class TodoSteps {
         //driver.findElement(By.cssSelector("[data-testid=\"newtodo\"]")).sendKeys("Learn selenium");
         new NewTodoPage(driver).addTodo("Learn selenium");
         //new TodoPage(driver).SubmitNewTodo("Learn selenium")
-      //driver.findElement(By.cssSelector("[data-testid=\"submit-newTask\"]")).click();
+      //driver.findElement(By.cssSelector("[data-testid=\"submit-newTask\"]")).click()
     }
     @Then("Todo should added correctly")
     public void TodoShouldAddedCorrectly(){
