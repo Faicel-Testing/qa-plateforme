@@ -12,7 +12,7 @@ public class Test01_Login extends BaseTest {
     @Test(groups = {"smoke", "regression"})
     public void openWebApplication() {
         
-        // au lieu d'utiliser "driver" directement;
+        // au lieu d'utiliser "driver" directement;!!!
         AndroidDriver driver = getDriver(); 
 
         Test01_LoginPage loginPage = new Test01_LoginPage(driver);
