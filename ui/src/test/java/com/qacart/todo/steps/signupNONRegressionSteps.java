@@ -21,8 +21,7 @@ public class signupNONRegressionSteps {
 
     @When("User2 fill the {string} and {string} and {string} and {string} and {string} in the field")
     public void User2FillTheFirstnameAndLastnameAndEmailAndPasswordAndConfirmPasswordInTheField(String firstname, String lastname, String email, String password, String confirm_password) {
-       // new SignupPage(driver).signup("Faysal", "Testing", "faical@exemple.com", "1234AZE", "1234AZE");
-
+      
         driver.findElement(By.cssSelector("[data-testid=first-name]")).sendKeys(firstname);
         driver.findElement(By.cssSelector("[data-testid=last-name]")).sendKeys(lastname);
         driver.findElement(By.cssSelector("[data-testid=email]")).sendKeys(email);
