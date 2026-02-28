@@ -1,7 +1,7 @@
 name: Auto-merge
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review, labeled]
 
 permissions:
@@ -9,17 +9,23 @@ permissions:
   pull-requests: write
 
 jobs:
-  automerge:
-    # Merge uniquement si (release-please branch) OU (label automerge présent)
-    if: ${{ startsWith(github.head_ref, 'release-please--branches--') || contains(join(github.event.pull_request.labels.*.name, ','), 'automerge') }}
+  enable_automerge:
+    # Merge uniquement si branch release-please OU label automerge
+    if: >
+      startsWith(github.event.pull_request.head.ref, 'release-please--branches--') ||
+      contains(join(github.event.pull_request.labels.*.name, ','), 'automerge')
+
     runs-on: ubuntu-latest
 
     steps:
-      - name: Auto-merge (squash) when checks are green
-        uses: pascalgn/automerge-action@v0.16.4
+      - name: Enable GitHub auto-merge (squash) + delete branch
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-          MERGE_METHOD: squash
-          # optionnel mais recommandé :
-          UPDATE_METHOD: rebase
-          MERGE_DELETE_BRANCH: "true"
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh pr merge "$PR_NUMBER" \
+            --repo "$REPO" \
+            --auto \
+            --squash \
+            --delete-branch
