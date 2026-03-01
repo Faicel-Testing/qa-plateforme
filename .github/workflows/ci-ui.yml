@@ -34,7 +34,7 @@ jobs:
     env:
       SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub
       HEADLESS: "true"
-      UI_DIR: ui/selenium-cucumber-testng   # ✅ ton module UI
+      UI_DIR: ui   # ✅ ton module UI
 
     steps:
       - name: Checkout
