@@ -34,20 +34,13 @@ jobs:
     env:
       SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub
       HEADLESS: "true"
-      UI_DIR: ui   # ✅ ton module UI
+      UI_DIR: ui
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Debug paths (only if failing)
-        run: |
-          echo "Listing UI folder..."
-          ls -la ui || true
-          echo "Searching pom.xml..."
-          find . -maxdepth 5 -name pom.xml
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -80,11 +73,31 @@ jobs:
           fi
 
       - name: Run Cucumber tests (QUALITY GATE)
+        id: run_tests
         working-directory: ${{ env.UI_DIR }}
         run: |
           mvn -B clean test \
             -Dcucumber.filter.tags="${{ steps.pick.outputs.TAG }}" \
             -Dheadless="${HEADLESS}"
+
+      # ✅ Debug uniquement si le step Maven échoue
+      - name: Debug UI module after failure
+        if: failure()
+        run: |
+          echo "=== Repo root ==="
+          ls -la
+
+          echo "=== UI folder (${UI_DIR}) ==="
+          ls -la "${UI_DIR}" || true
+
+          echo "=== Find pom.xml (maxdepth 5) ==="
+          find . -maxdepth 5 -name pom.xml -print || true
+
+          echo "=== Show ui/pom.xml (first 140 lines) ==="
+          sed -n '1,140p' "${UI_DIR}/pom.xml" || true
+
+          echo "=== Show ui/pom.xml lines 55-85 with line numbers ==="
+          nl -ba "${UI_DIR}/pom.xml" | sed -n '55,85p' || true
 
       - name: Upload test reports (always)
         if: always()
