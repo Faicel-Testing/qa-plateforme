@@ -71,7 +71,7 @@ jobs:
 
       - name: Run Cucumber tests (QUALITY GATE)
         run: |
-          mvn -f ui/pom.xml -B clean test \
+          mvn -f ui/selenium-cucumber-testng/pom.xml -B clean test \
             -Dcucumber.filter.tags="${{ steps.pick.outputs.TAG }}" \
             -Dheadless="${HEADLESS}"
 
