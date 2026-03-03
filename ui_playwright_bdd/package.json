@@ -1,0 +1,20 @@
+{
+  "name": "ui_playwright_cucumber_ts",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "cucumber-js --require-module ts-node/register --require src/hooks/**/*.ts --require src/steps/**/*.ts --publish-quiet",
+    "test:signup": "npm run test -- --tags \"@Id01\"",
+    "test:login": "npm run test -- --tags \"@Id02\"",
+    "test:all": "npm run test:signup && npm run test:login"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^11.0.0",
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^22.0.0",
+    "dotenv": "^16.0.0",
+    "rimraf": "^6.0.0",
+    "ts-node": "^10.0.0",
+    "typescript": "^5.0.0"
+  }
+}

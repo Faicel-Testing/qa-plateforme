@@ -23,6 +23,7 @@
     </properties>
 
     <dependencies>
+    
         <!-- Selenium -->
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
@@ -63,7 +64,6 @@
             <artifactId>allure-cucumber7-jvm</artifactId>
             <version>${allure.version}</version>
         </dependency>
-
         <!-- Allure TestNG -->
         <dependency>
             <groupId>io.qameta.allure</groupId>
