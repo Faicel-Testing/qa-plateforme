@@ -1,4 +1,4 @@
-@ui @signup @Id01
+@ui @signup @Id01 @smoke @regression @critical
 Feature: Signup
 
   Scenario: Id01_SignupTest - user can signup successfully

@@ -1,22 +1,29 @@
 import fs from 'fs';
 import path from 'path';
+import { TestUser } from './testData';
 
-export type UserCreds = { email: string; password: string; name: string };
+const fixtureDir = path.resolve('src/fixtures');
+const fixturePath = path.join(fixtureDir, 'user.json');
 
-const FIXTURE_PATH = path.resolve(__dirname, '..', 'fixtures', 'user.json');
+export function saveUser(user: TestUser): void {
+  if (!fs.existsSync(fixtureDir)) {
+    fs.mkdirSync(fixtureDir, { recursive: true });
+  }
 
-export function saveUser(user: UserCreds): void {
-  fs.mkdirSync(path.dirname(FIXTURE_PATH), { recursive: true });
-  fs.writeFileSync(FIXTURE_PATH, JSON.stringify(user, null, 2), 'utf-8');
+  fs.writeFileSync(fixturePath, JSON.stringify(user, null, 2), 'utf-8');
 }
 
-export function loadUser(): UserCreds | null {
-  if (!fs.existsSync(FIXTURE_PATH)) return null;
-  const raw = fs.readFileSync(FIXTURE_PATH, 'utf-8').trim();
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as UserCreds;
-  } catch {
+export function loadUser(): TestUser | null {
+  if (!fs.existsSync(fixturePath)) {
     return null;
+  }
+
+  const raw = fs.readFileSync(fixturePath, 'utf-8');
+  return JSON.parse(raw) as TestUser;
+}
+
+export function clearUser(): void {
+  if (fs.existsSync(fixturePath)) {
+    fs.unlinkSync(fixturePath);
   }
 }

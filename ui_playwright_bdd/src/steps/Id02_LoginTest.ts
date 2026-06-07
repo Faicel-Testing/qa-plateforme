@@ -1,27 +1,30 @@
 import { Given, When, Then } from '@cucumber/cucumber';
 import { CustomWorld } from '../core/world';
 import { loadUser, saveUser } from '../support/fixtureStore';
+import { LoginPage } from '../pages/Id02_LoginPage';
+import { SignupPage } from '../pages/Id01_SignupPage';
 import { randomUser } from '../support/testData';
-import { SignupPage } from '../pages/SignupPage';
-import { LoginPage } from '../pages/LoginPage';
 
-Given('I have a user in fixture (create one if missing)', async function (this: CustomWorld) {
-  const user = loadUser();
+async function ensureValidFixtureUser(world: CustomWorld): Promise<void> {
+  let user = loadUser();
+
   if (user) {
-    this.user = user;
+    world.user = user;
     return;
   }
 
-  // Pas de fixture => on crée un user via signup (robuste, même si Id02 est exécuté seul)
   const newUser = randomUser();
-  const signup = new SignupPage(this.page);
+  world.user = newUser;
+  const signup = new SignupPage(world.page);
 
   await signup.open();
-  await signup.signup(newUser.name, newUser.email, newUser.password);
+  await signup.signup(newUser.firstName, newUser.lastName, newUser.email, newUser.password);
   await signup.assertSignedUp();
-
   saveUser(newUser);
-  this.user = newUser;
+}
+
+Given('I have a user in fixture', async function (this: CustomWorld) {
+  await ensureValidFixtureUser(this);
 });
 
 Given('I open the login page', async function (this: CustomWorld) {
@@ -30,9 +33,15 @@ Given('I open the login page', async function (this: CustomWorld) {
 });
 
 When('I login using fixture user', async function (this: CustomWorld) {
-  if (!this.user) throw new Error('Fixture user not loaded');
+  const user = this.user;
+
+  if (!user) {
+    throw new Error('User not found in World context');
+  }
+
   const login = new LoginPage(this.page);
-  await login.login(this.user.email, this.user.password);
+  await login.login(user.email, user.password);
+  await login.assertLoggedIn();
 });
 
 Then('I should be logged in', async function (this: CustomWorld) {

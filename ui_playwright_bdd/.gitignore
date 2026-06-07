@@ -1,0 +1,37 @@
+# ── Dépendances ───────────────────────────────────────────────────────────────
+node_modules/
+
+# ── Variables d'environnement (NE JAMAIS COMMITTER) ──────────────────────────
+.env
+.env.local
+.env.staging
+.env.prod
+.env.*.local
+
+# ── Rapports et résultats de tests ───────────────────────────────────────────
+allure-results/
+allure-results-chrome/
+allure-results-firefox/
+allure-report/
+test-results/
+
+# ── Fichiers temporaires ──────────────────────────────────────────────────────
+tmp_*.js
+*.log
+*.tmp
+
+# ── Fixtures utilisateur (données générées) ──────────────────────────────────
+src/fixtures/user.json
+
+# ── Build TypeScript ──────────────────────────────────────────────────────────
+dist/
+*.js.map
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

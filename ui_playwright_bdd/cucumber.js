@@ -1,12 +1,18 @@
 module.exports = {
   default: {
-    require: ["src/steps/**/*.ts", "src/core/hooks.ts"],
-    format: [
-      "progress",
-      "allure-playwright"
+    formatOptions: {
+      resultsDir: 'allure-results'
+    },
+    requireModule: ['ts-node/register'],
+    require: [
+      'src/core/world.ts',
+      'src/hooks/**/*.ts',
+      'src/steps/**/*.ts'
     ],
-    requireModule: ["ts-node/register"],
-    paths: ["src/features/**/*.feature"],
-    timeout: 60000
+    paths: ['src/features/**/*.feature'],
+    format: ['progress', 'allure-cucumberjs/reporter'],
+    formatOptions: {
+      resultsDir: 'allure-results'
+    }
   }
 };
