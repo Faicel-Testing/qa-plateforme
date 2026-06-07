@@ -1,36 +1,18 @@
-package com.qacart.todo.steps.hooks;
+package com.qacart.todo.hooks;
 
-import com.qacart.todo.steps.factory.DriverFactory;
-import io.cucumber.java.*;
-import org.openqa.selenium.*;
+import com.qacart.todo.factory.DriverService;
+import io.cucumber.java.After;
+import io.cucumber.java.Before;
 
 public class Hooks {
 
     @Before
-    public void setup() {
-        DriverFactory.initDriver();
-    }
-
-    @AfterStep
-    public void afterStep(Scenario scenario) {
-        if (scenario.isFailed()) {
-            try {
-                WebDriver driver = DriverFactory.getDriver();
-                if (driver != null) {
-                    byte[] screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
-                    scenario.attach(screenshot, "image/png", "FAILED_STEP_SCREENSHOT");
-                }
-            } catch (Exception ignored) {
-                // ne pas faire échouer le teardown si screenshot impossible
-            }
-        }
+    public void beforeScenario() {
+        DriverService.start();
     }
 
     @After
-    public void teardown() {
-        WebDriver driver = DriverFactory.getDriver();
-        if (driver != null) {
-            driver.quit();
-        }
+    public void afterScenario() {
+        DriverService.stop();
     }
 }

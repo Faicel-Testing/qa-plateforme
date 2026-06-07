@@ -1,5 +1,11 @@
+# Workflow GitHub Actions pour exécuter la QA Platform UI (Selenium + Cucumber + Maven)
 name: QA Platform - UI (Selenium Cucumber Maven)
 
+# Déclencheurs :
+# - push sur main
+# - PR vers main
+# - exécution manuelle avec choix du tag Cucumber (smoke/regression)
+# - planification (lun→ven) à 16:20 UTC
 on:
   push:
     branches: [ "main" ]
@@ -19,29 +25,38 @@ on:
     - cron: "20 16 * * 1-5"
 
 jobs:
+  # Job principal : exécuter la suite Smoke comme Quality Gate (rapide + bloquante)
   smoke:
     name: UI - Smoke (Quality Gate)
     runs-on: ubuntu-latest
 
     services:
+      # Service Selenium Grid “standalone-chrome” exposé sur 4444
+      # Utilisé par les tests pour exécuter le navigateur en mode remote
       selenium:
         image: selenium/standalone-chrome:latest
         ports:
           - 4444:4444
         options: >-
+          # Augmente /dev/shm pour limiter les crash Chrome (renderer / out of shared memory)
           --shm-size=2g
 
     env:
+      # URL du Selenium Remote WebDriver (service container accessible via localhost + port mappé)
       SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub
+      # Headless activé par défaut pour CI (stabilité + perf)
       HEADLESS: "true"
+      # Dossier du module UI (multi-module repo)
       UI_DIR: ui
 
     steps:
+      # Récupère le code (fetch-depth=0 utile si tu relies versioning/changelog/metadata git)
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # Installe Java 17 + cache Maven pour accélérer les builds
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -49,6 +64,8 @@ jobs:
           java-version: "17"
           cache: maven
 
+      # Attente active du Selenium container : on ne lance pas Maven tant que Grid n’est pas READY
+      # Timeout ~120s (60 * 2s)
       - name: Wait for Selenium
         run: |
           for i in {1..60}; do
@@ -62,6 +79,9 @@ jobs:
           echo "Selenium not ready"
           exit 1
 
+      # Sélection dynamique du tag Cucumber :
+      # - en manuel (workflow_dispatch) => tag = @<inputs.suite>
+      # - sinon (push/PR/schedule) => tag = @smoke par défaut (quality gate)
       - name: Pick tag
         id: pick
         shell: bash
@@ -72,6 +92,10 @@ jobs:
             echo "TAG=@smoke" >> "$GITHUB_OUTPUT"
           fi
 
+      # Exécution Maven dans le module UI :
+      # - clean test
+      # - filtre Cucumber par tag
+      # - passe le headless en propriété système
       - name: Run Cucumber tests (QUALITY GATE)
         id: run_tests
         working-directory: ${{ env.UI_DIR }}
@@ -80,7 +104,8 @@ jobs:
             -Dcucumber.filter.tags="${{ steps.pick.outputs.TAG }}" \
             -Dheadless="${HEADLESS}"
 
-      # ✅ Debug uniquement si le step Maven échoue
+      # Bloc de diagnostic : ne s’exécute que si le job est en échec
+      # Objectif : accélérer l’investigation (structure repo, pom, chemins, etc.)
       - name: Debug UI module after failure
         if: failure()
         run: |
@@ -99,6 +124,10 @@ jobs:
           echo "=== Show ui/pom.xml lines 55-85 with line numbers ==="
           nl -ba "${UI_DIR}/pom.xml" | sed -n '55,85p' || true
 
+      # Upload des artefacts de test, même si ça échoue (always)
+      # - surefire-reports : rapport TestNG/JUnit
+      # - cucumber-reports : rapports Cucumber
+      # - allure-results : données brutes Allure pour génération HTML ultérieure
       - name: Upload test reports (always)
         if: always()
         uses: actions/upload-artifact@v4
