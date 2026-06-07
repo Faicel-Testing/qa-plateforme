@@ -1,5 +1,10 @@
 # QA Platform — Playwright BDD + AI Agents
 
+![CI](https://github.com/Faicel-Testing/qa-plateforme/actions/workflows/playwright.yml/badge.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Agents](https://img.shields.io/badge/AI%20Agents-11-green.svg)
+![Playwright](https://img.shields.io/badge/Playwright-1.x-orange.svg)
+
 > **Playwright + CucumberJS + Groq AI** — Un framework de test qui se pilote, s'analyse et se documente lui-même.
 
 ---
@@ -13,6 +18,10 @@ Spec métier  →  User Stories  →  Feature files  →  Tests  →  Rapport  �
 ```
 
 Un seul fichier markdown suffit pour générer des scénarios Gherkin, les implémenter, les exécuter, analyser les échecs, créer les tickets Jira et produire un rapport. **Sans intervention manuelle.**
+
+## Rapport Allure
+
+![Allure Report](docs/screenshots/allure-report.png)
 
 ---
 
