@@ -4,7 +4,7 @@
 
 ---
 
-## Ce que ce framework fait en 30 secondes
+## Vue d'ensemble
 
 ```
 Spec métier  →  User Stories  →  Feature files  →  Tests  →  Rapport  →  Tickets Jira
