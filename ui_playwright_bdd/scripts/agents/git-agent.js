@@ -10,7 +10,8 @@
 //   npm run agent:git -- --pr --base=main   → PR vers main (défaut)
 //   npm run agent:git -- --release=v1.2.0   → commit + push + GitHub release
 //   npm run agent:git -- --status           → résumé du repo sans commit
-//   npm run agent:git -- --dry-run          → affiche sans exécuter
+//   npm run agent:git -- --dry-run  
+//         → affiche sans exécuter
 //
 // Output:
 //   Console — résumé des actions effectuées
