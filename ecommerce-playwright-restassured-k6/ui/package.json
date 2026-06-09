@@ -1,0 +1,29 @@
+{
+  "name": "ecommerce-ui-playwright-bdd",
+  "version": "1.0.0",
+  "description": "UI BDD tests for AutomationExercise — Playwright + Cucumber.js + TypeScript",
+  "scripts": {
+    "test": "cucumber-js",
+    "test:smoke": "cucumber-js --tags @smoke",
+    "test:critical": "cucumber-js --tags @critical",
+    "test:regression": "cucumber-js --tags @regression",
+    "test:auth": "cucumber-js --tags @auth",
+    "test:cart": "cucumber-js --tags @cart",
+    "test:checkout": "cucumber-js --tags @checkout",
+    "allure:generate": "allure generate allure-results -o allure-report --clean",
+    "allure:serve": "allure serve allure-results"
+  },
+  "dependencies": {
+    "@cucumber/cucumber": "^10.3.1",
+    "@playwright/test": "^1.44.0",
+    "playwright": "^1.44.0",
+    "allure-cucumberjs": "^3.0.0",
+    "allure-js-commons": "^3.0.0",
+    "dotenv": "^16.4.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7"
+  }
+}
