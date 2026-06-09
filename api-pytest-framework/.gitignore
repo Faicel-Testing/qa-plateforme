@@ -1,0 +1,28 @@
+# Environnement
+.env
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Tests
+allure-results/
+allure-report/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Docs générés
+docs/qa-report.md
+docs/traceability.md
+docs/spec-output.json
