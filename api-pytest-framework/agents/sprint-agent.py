@@ -8,6 +8,9 @@
 #   python agents/sprint-agent.py close  <sprintId>
 #   python agents/sprint-agent.py issues <sprintId>
 #   python agents/sprint-agent.py add    <sprintId> HBAPI-3 HBAPI-4
+#   python agents/sprint-agent.py backlog                       → issues hors sprint (backlog)
+#   python agents/sprint-agent.py move HBAPI-11 "En cours"     → transition manuelle
+#   python agents/sprint-agent.py board                         → tableau Kanban du sprint actif
 # ============================================================
 
 import sys
@@ -195,11 +198,206 @@ def cmd_add(jira, sprint_id, issue_keys):
     print()
 
 
+# ── Backlog ───────────────────────────────────────────────────────────────────
+
+def cmd_backlog(jira):
+    print(C.bold(f"\n[>] Backlog du projet {PROJECT}"))
+    board_id = get_board_id(jira)
+
+    data   = jira._agile(
+        "get", f"/board/{board_id}/backlog",
+        params={
+            "maxResults": 100,
+            "fields":     "summary,status,assignee,priority,issuetype,labels",
+        }
+    )
+    issues = data.get("issues", [])
+
+    if not issues:
+        print(C.ok("  Backlog vide -- toutes les issues sont dans un sprint."))
+        return
+
+    # Grouper par type d'issue
+    groups = {}
+    for i in issues:
+        itype = (i["fields"].get("issuetype") or {}).get("name", "?")
+        groups.setdefault(itype, []).append(i)
+
+    total = len(issues)
+    print(f"  {total} issue(s) dans le backlog\n")
+
+    for itype, items in sorted(groups.items()):
+        print(f"  {C.info(itype.upper())} ({len(items)})")
+        print(f"  {'─' * 70}")
+        for i in items:
+            status   = i["fields"]["status"]["name"]
+            priority = (i["fields"].get("priority") or {}).get("name", "-")
+            assignee = ((i["fields"].get("assignee") or {}).get("displayName") or "libre")
+            labels   = " ".join(f"[{l}]" for l in (i["fields"].get("labels") or []))
+            status_c = _status_color(status)
+            print(f"  {C.bold(i['key']):<14} {status_c:<22} {C.dim(priority):<10} "
+                  f"{i['fields']['summary'][:42]}  {C.dim(assignee)}")
+            if labels:
+                print(f"  {' ' * 12}  {C.dim(labels)}")
+        print()
+
+
+# ── Move (transition manuelle) ────────────────────────────────────────────────
+
+def _status_color(name: str) -> str:
+    n = name.lower()
+    if "faire" in n or "todo" in n or "open" in n:
+        return C.dim(f"[ ] {name}")
+    if "cours" in n or "progress" in n or "doing" in n:
+        return C.info(f"[~] {name}")
+    if "termin" in n or "done" in n or "closed" in n:
+        return C.ok(f"[v] {name}")
+    return f"    {name}"
+
+
+def cmd_move(jira, issue_key: str, target: str):
+    print(C.bold(f"\n[>] Transition : {issue_key} -> \"{target}\""))
+
+    # Statut actuel
+    issue          = jira._get(f"/issue/{issue_key}?fields=status,summary")
+    current_status = issue["fields"]["status"]["name"]
+    summary        = issue["fields"]["summary"][:60]
+
+    print(f"  Issue   : {C.bold(issue_key)}  {C.dim(summary)}")
+    print(f"  Actuel  : {_status_color(current_status)}")
+
+    if current_status.lower().strip() == target.lower().strip():
+        print(C.ok(f"  [OK] Statut deja correct : {current_status}"))
+        return
+
+    # Recuperer les transitions disponibles
+    tr_data      = jira._get(f"/issue/{issue_key}/transitions")
+    transitions  = tr_data.get("transitions", [])
+
+    # Recherche par nom de transition OU nom du statut destination (partiel, insensible casse)
+    target_lower = target.lower().strip()
+    matched_id   = None
+    matched_name = None
+
+    for tr in transitions:
+        tr_name = tr.get("name", "").lower().strip()
+        to_name = tr.get("to", {}).get("name", "").lower().strip()
+        if target_lower in to_name or target_lower in tr_name or to_name in target_lower:
+            matched_id   = tr["id"]
+            matched_name = tr.get("to", {}).get("name", tr.get("name"))
+            break
+
+    if not matched_id:
+        print(C.err(f"  [ERR] Transition vers \"{target}\" introuvable."))
+        print(f"  Transitions disponibles :")
+        for tr in transitions:
+            print(f"    ID={tr['id']}  \"{tr['name']}\"  ->  \"{tr['to']['name']}\"")
+        return
+
+    # Appliquer la transition (POST renvoie 204 No Content)
+    import requests as _req
+    resp = _req.post(
+        f"{jira.base}/issue/{issue_key}/transitions",
+        json={"transition": {"id": matched_id}},
+        auth=jira.auth,
+        headers=jira.headers,
+        verify=False,
+    )
+    resp.raise_for_status()
+
+    print(C.ok(f"  [OK] {issue_key} : {current_status}  -->  {matched_name}"))
+    print()
+
+
+# ── Board (tableau Kanban du sprint actif) ────────────────────────────────────
+
+def cmd_board(jira):
+    print(C.bold(f"\n[>] Tableau Kanban -- sprint actif ({PROJECT})"))
+    board_id = get_board_id(jira)
+
+    # Trouver le sprint actif
+    data    = jira._agile("get", f"/board/{board_id}/sprint", params={"state": "active"})
+    sprints = data.get("values", [])
+
+    if not sprints:
+        print(C.warn("  Aucun sprint actif. Utilisez 'sprint-agent.py start <id>'."))
+        return
+
+    sprint = sprints[0]
+    print(f"  Sprint  : {C.bold(sprint['name'])}  [{sprint['id']}]")
+    print(f"  Periode : {fmt_date(sprint.get('startDate'))} -> {fmt_date(sprint.get('endDate'))}")
+    if sprint.get("goal"):
+        print(f"  Objectif: {C.dim(sprint['goal'])}")
+
+    # Recuperer les issues du sprint actif
+    issues_data = jira._agile(
+        "get", f"/sprint/{sprint['id']}/issue",
+        params={
+            "maxResults": 100,
+            "fields":     "summary,status,assignee,priority,issuetype,labels",
+        }
+    )
+    issues = issues_data.get("issues", [])
+
+    if not issues:
+        print(C.warn("\n  Aucune issue dans ce sprint."))
+        return
+
+    # Grouper par colonne (categorie de statut)
+    COLUMNS = {
+        "new":        ("A FAIRE",   []),
+        "indeterminate": ("EN COURS",  []),
+        "done":       ("TERMINE",   []),
+    }
+    for i in issues:
+        cat = i["fields"]["status"]["statusCategory"]["key"]
+        if cat in COLUMNS:
+            COLUMNS[cat][1].append(i)
+        else:
+            COLUMNS.setdefault(cat, (cat.upper(), []))[1].append(i)
+
+    total = len(issues)
+    done  = len(COLUMNS.get("done", ("", []))[1])
+    pct   = round(done / total * 100) if total else 0
+
+    # Barre de progression du sprint
+    bar_ok  = C.ok("█" * (pct // 5))
+    bar_ko  = "░" * (20 - pct // 5)
+    print(f"\n  [{bar_ok}{bar_ko}] {pct}%  ({done}/{total} terminees)")
+
+    # Afficher les colonnes
+    col_renderers = {
+        "new":           lambda s: C.dim(f"[ ] {s}"),
+        "indeterminate": lambda s: C.info(f"[~] {s}"),
+        "done":          lambda s: C.ok(f"[v] {s}"),
+    }
+
+    for cat_key, (col_name, col_issues) in COLUMNS.items():
+        if not col_issues:
+            continue
+        renderer = col_renderers.get(cat_key, lambda s: f"    {s}")
+        header   = f"  ── {col_name} ({len(col_issues)}) "
+        print(f"\n{C.bold(header)}{'─' * (60 - len(header))}")
+
+        for i in col_issues:
+            status   = i["fields"]["status"]["name"]
+            priority = (i["fields"].get("priority") or {}).get("name", "-")
+            assignee = ((i["fields"].get("assignee") or {}).get("displayName") or "libre")[:18]
+            labels   = " ".join(f"[{l}]" for l in (i["fields"].get("labels") or [])[:3])
+            itype    = (i["fields"].get("issuetype") or {}).get("name", "")[:8]
+            print(f"  {renderer(i['key']):<22} {i['fields']['summary'][:42]:<43} "
+                  f"{C.dim(assignee):<20} {C.dim(priority)}")
+            if labels:
+                print(f"  {'':22} {C.dim(labels)}")
+
+    print()
+
+
 def print_help():
     print(f"""
-{C.bold('Sprint Agent -- Gestion des sprints Jira')}
+{C.bold('Sprint Agent -- Gestion complete des sprints et du backlog Jira')}
 
-{C.bold('Usage :')}
+{C.bold('Cycle de vie du sprint :')}
   python agents/sprint-agent.py list
   python agents/sprint-agent.py create "Nom Sprint" YYYY-MM-DD YYYY-MM-DD [objectif]
   python agents/sprint-agent.py start  <sprintId>
@@ -207,12 +405,25 @@ def print_help():
   python agents/sprint-agent.py issues <sprintId>
   python agents/sprint-agent.py add    <sprintId> KEY1 KEY2 ...
 
+{C.bold('Backlog et board :')}
+  python agents/sprint-agent.py backlog                      Issues hors sprint (backlog produit)
+  python agents/sprint-agent.py board                        Tableau Kanban du sprint actif
+  python agents/sprint-agent.py move <KEY> "<statut>"        Transition manuelle d'une issue
+
+{C.bold('Statuts disponibles pour move :')}
+  "A faire"    |  "En cours"    |  "Termine"
+  (matching partiel insensible a la casse)
+
 {C.bold('Exemples :')}
   python agents/sprint-agent.py list
-  python agents/sprint-agent.py create "Sprint 2 - Auth" 2026-07-01 2026-07-21 "Couvrir US-001 a US-003"
+  python agents/sprint-agent.py create "Sprint 2" 2026-07-01 2026-07-21 "US-001 a US-003"
   python agents/sprint-agent.py start 38
-  python agents/sprint-agent.py issues 38
+  python agents/sprint-agent.py board
+  python agents/sprint-agent.py move HBAPI-11 "En cours"
+  python agents/sprint-agent.py move HBAPI-11 "Termine"
+  python agents/sprint-agent.py backlog
   python agents/sprint-agent.py add 38 HBAPI-3 HBAPI-4 HBAPI-5
+  python agents/sprint-agent.py issues 38
   python agents/sprint-agent.py close 38
 """)
 
@@ -268,6 +479,19 @@ def main():
                 print(C.err("[ERR] Usage : add <sprintId> KEY1 KEY2 ..."))
                 sys.exit(1)
             cmd_add(jira, args[0], args[1:])
+
+        elif cmd == "backlog":
+            cmd_backlog(jira)
+
+        elif cmd == "board":
+            cmd_board(jira)
+
+        elif cmd == "move":
+            if len(args) < 2:
+                print(C.err('[ERR] Usage : move <KEY> "<statut>"'))
+                print(C.dim('  Ex : move HBAPI-11 "En cours"'))
+                sys.exit(1)
+            cmd_move(jira, args[0], " ".join(args[1:]))
 
         else:
             print(C.err(f"[ERR] Commande inconnue : {cmd}"))

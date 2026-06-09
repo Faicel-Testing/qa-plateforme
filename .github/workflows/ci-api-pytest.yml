@@ -1,0 +1,251 @@
+name: API Tests BDD (Python pytest-bdd)
+
+# Declencheurs :
+#   - push sur main ou feature/** si api-pytest-framework/ est modifie
+#   - PR vers main
+#   - declenchement manuel avec choix de la suite et de la branche
+#   - planification : lun-ven 06:00 UTC (08:00 Paris)
+on:
+  push:
+    branches: ["main", "feature/**"]
+    paths:
+      - "api-pytest-framework/**"
+      - ".github/workflows/ci-api-pytest.yml"
+
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "api-pytest-framework/**"
+
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: "Suite a executer"
+        required: false
+        default: "all"
+        type: choice
+        options:
+          - all
+          - auth
+          - booking_list
+          - booking_get
+          - booking_create
+          - booking_update
+          - booking_patch
+          - booking_delete
+          - health
+
+  schedule:
+    - cron: "0 6 * * 1-5"
+
+env:
+  PYTHON_VERSION: "3.12"
+  FRAMEWORK_DIR: "api-pytest-framework"
+  ALLURE_VERSION: "2.36.0"
+
+# ── Job principal : execution des tests BDD ────────────────────────────────
+jobs:
+  test:
+    name: API Tests BDD
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: api-pytest-framework/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          cd ${{ env.FRAMEWORK_DIR }}
+          pip install -r requirements.txt
+
+      - name: Run BDD tests (suite = ${{ github.event.inputs.suite || 'all' }})
+        env:
+          SUITE: ${{ github.event.inputs.suite || 'all' }}
+        run: |
+          cd ${{ env.FRAMEWORK_DIR }}
+          mkdir -p allure-results
+
+          if [ "$SUITE" = "all" ]; then
+            echo "[CI] Execution de toutes les suites BDD"
+            python -m pytest tests/ -v \
+              --alluredir=allure-results \
+              --tb=short \
+              -q || true
+          else
+            TARGET="tests/test_${SUITE}_bdd.py"
+            echo "[CI] Execution de la suite : $TARGET"
+            python -m pytest "$TARGET" -v \
+              --alluredir=allure-results \
+              --tb=short \
+              -q || true
+          fi
+
+      - name: Install Allure CLI
+        if: always()
+        run: |
+          wget -q \
+            https://github.com/allure-framework/allure2/releases/download/${{ env.ALLURE_VERSION }}/allure-${{ env.ALLURE_VERSION }}.zip \
+            -O /tmp/allure.zip
+          unzip -q /tmp/allure.zip -d /opt/
+          sudo ln -sf /opt/allure-${{ env.ALLURE_VERSION }}/bin/allure /usr/local/bin/allure
+          allure --version
+
+      - name: Generate Allure report
+        if: always()
+        run: |
+          cd ${{ env.FRAMEWORK_DIR }}
+          if [ -d allure-results ] && [ "$(ls -A allure-results 2>/dev/null)" ]; then
+            allure generate allure-results -o allure-report --clean
+            echo "[CI] Rapport Allure genere"
+          else
+            echo "[CI] Aucun resultat -- rapport ignore"
+          fi
+
+      - name: Test summary (annotations GitHub)
+        if: always()
+        run: |
+          cd ${{ env.FRAMEWORK_DIR }}
+          python - <<'PY'
+          import json, glob, os
+
+          files = glob.glob("allure-results/*-result.json")
+          stats = {"passed": 0, "failed": 0, "broken": 0, "skipped": 0}
+          fails = []
+
+          for f in files:
+              try:
+                  with open(f) as fp:
+                      d = json.load(fp)
+                  s = d.get("status", "unknown")
+                  if s in stats:
+                      stats[s] += 1
+                  if s in ("failed", "broken"):
+                      msg = (d.get("statusDetails") or {}).get("message", "")[:120]
+                      fails.append(f"{d.get('name','?')} -- {msg}")
+              except Exception:
+                  pass
+
+          total = sum(stats.values())
+          pct   = round(stats["passed"] / total * 100) if total else 0
+          bar   = "#" * (pct // 5) + "." * (20 - pct // 5)
+
+          print(f"::notice title=API Tests BDD Results::[{bar}] {pct}% | "
+                f"Total:{total} PASS:{stats['passed']} FAIL:{stats['failed']} BROKEN:{stats['broken']}")
+
+          for f in fails[:5]:
+              print(f"::warning title=Test FAIL::{f}")
+
+          if stats["failed"] > 0 or stats["broken"] > 0:
+              print(f"::error title=Tests en echec::{stats['failed']+stats['broken']} test(s) ont echoue")
+
+          # Exit code non-zero si failures (pour conclusion du job)
+          if stats["failed"] > 0 or stats["broken"] > 0:
+              raise SystemExit(1)
+          PY
+
+      - name: Upload allure-results (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: api-pytest-framework/allure-results/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload allure-report (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: api-pytest-framework/allure-report/
+          retention-days: 30
+          if-no-files-found: warn
+
+# ── Job notification email ─────────────────────────────────────────────────
+  notify:
+    name: Email notification
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: always()
+
+    steps:
+      - name: Send email (Gmail SMTP)
+        env:
+          MAIL_TO: "faicel.ganem@gmail.com"
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          TEST_RESULT: ${{ needs.test.result }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          SUITE: ${{ github.event.inputs.suite || 'all' }}
+          TRIGGER: ${{ github.event_name }}
+        run: |
+          python - <<'PY'
+          import os, smtplib
+          from email.mime.text import MIMEText
+
+          smtp_user = os.getenv("SMTP_USER")
+          smtp_pass = os.getenv("SMTP_PASS")
+          to_addr   = os.getenv("MAIL_TO")
+
+          if not (smtp_user and smtp_pass and to_addr):
+              print("[CI] SMTP non configure -- email ignore")
+              raise SystemExit(0)
+
+          repo    = os.getenv("GITHUB_REPOSITORY", "")
+          branch  = os.getenv("GITHUB_REF_NAME", "")
+          sha     = (os.getenv("GITHUB_SHA") or "")[:7]
+          run_id  = os.getenv("GITHUB_RUN_ID", "")
+          server  = os.getenv("GITHUB_SERVER_URL", "https://github.com")
+          status  = os.getenv("TEST_RESULT", "unknown").upper()
+          suite   = os.getenv("SUITE", "all")
+          trigger = os.getenv("TRIGGER", "?")
+          run_url = f"{server}/{repo}/actions/runs/{run_id}"
+
+          icon    = "OK" if status == "SUCCESS" else "FAIL"
+
+          body = f"""[{icon}] API Tests BDD -- {repo}
+
+Status    : {status}
+Suite     : {suite}
+Declencheur: {trigger}
+Branche   : {branch}
+Commit    : {sha}
+
+Run URL   : {run_url}
+
+Artifacts disponibles :
+  - allure-results (raw JSON)
+  - allure-report  (HTML)
+
+Telecharger localement :
+  gh run download {run_id} --repo {repo}
+
+-- GitHub Actions / api-pytest-framework
+"""
+          msg            = MIMEText(body, "plain", "utf-8")
+          msg["Subject"] = f"[GitHub Actions] [{icon}] API Tests BDD -- {branch} (suite:{suite})"
+          msg["From"]    = smtp_user
+          msg["To"]      = to_addr
+
+          with smtplib.SMTP("smtp.gmail.com", 587) as s:
+              s.ehlo()
+              s.starttls()
+              s.login(smtp_user, smtp_pass)
+              s.send_message(msg)
+
+          print(f"[CI] Email envoye a : {to_addr}")
+          PY
