@@ -9,6 +9,7 @@
 [![LLM](https://img.shields.io/badge/LLM-Groq%20LLaMA%203.3-purple)](https://console.groq.com/)
 
 > **pytest-bdd + Requests + Groq AI** — Un framework de test API qui se pilote, se synchronise et se documente lui-même.
+> **17 agents IA** · GO/NO-GO production · Détection flaky · Dashboard KPI client-ready
 
 ---
 
@@ -20,7 +21,7 @@ Spec métier  →  Features Gherkin  →  Tests API  →  Allure Report  →  Ji
      └─────────────── 14 agents IA pilotent tout ─────────┘
 ```
 
-51 cas de test BDD couvrant l'API REST [restful-booker](https://restful-booker.herokuapp.com), avec synchronisation automatique des statuts dans Jira, pipeline CI/CD GitHub Actions et rapports Allure générés à chaque exécution.
+51 cas de test BDD couvrant l'API REST [restful-booker](https://restful-booker.herokuapp.com), avec synchronisation automatique des statuts dans Jira, pipeline CI/CD GitHub Actions, rapports Allure générés à chaque exécution et **dashboard KPI professionnel** (Pass Rate, Flaky Rate, GO/NO-GO production).
 
 ---
 
@@ -178,6 +179,14 @@ Spec métier  →  Features Gherkin  →  Tests API  →  Allure Report  →  Ji
 | `user-stories-agent.py` | `python agents/user-stories-agent.py` | Génère des user stories depuis une spec |
 | `create_story.py` | `python agents/create_story.py` | Crée directement des stories dans Jira |
 
+### Agents Qualité & Production
+
+| Agent | Commande | Ce qu'il fait |
+|-------|----------|---------------|
+| `smoke-regression-agent.py` | `python agents/smoke-regression-agent.py gono-go` | Lance les tests @smoke + @critical, émet un verdict GO/NO-GO, crée un bug Jira si bloquant |
+| `flaky-agent.py` | `python agents/flaky-agent.py detect --runs=3` | Détecte les tests instables sur N runs, calcule un score de flakiness, mise en quarantaine Jira |
+| `kpi-agent.py` | `python agents/kpi-agent.py` | Génère l'ENVIRONMENT widget Allure + un dashboard HTML KPI client-ready |
+
 ### Agents Git / GitHub
 
 | Agent | Commande | Ce qu'il fait |
@@ -294,7 +303,7 @@ python agents/github-agent.py ci full
 
 ```
 api-pytest-framework/
-├── agents/                      # 14 agents IA
+├── agents/                      # 17 agents IA
 │   ├── llm.py                   # Client Groq partagé
 │   ├── jira_fetcher_agent.py    # Client Jira partagé
 │   ├── status-agent.py          # Allure → Jira statuts
@@ -311,7 +320,10 @@ api-pytest-framework/
 │   ├── jira-agent.py            # Traçabilité
 │   ├── jira-ticket-agent.py     # Tickets Bug automatiques
 │   ├── user-stories-agent.py    # Génération user stories
-│   └── create_story.py          # Création stories Jira
+│   ├── create_story.py          # Création stories Jira
+│   ├── smoke-regression-agent.py # GO/NO-GO production (smoke + critical)
+│   ├── flaky-agent.py           # Détection + quarantaine tests instables
+│   └── kpi-agent.py             # Dashboard KPI + Allure ENVIRONMENT
 ├── features/                    # Scénarios Gherkin (8 suites)
 │   ├── steps/                   # Step definitions Python
 │   └── *.feature
@@ -350,6 +362,18 @@ python agents/test-case-agent.py             # Génération TCs
 python agents/qa-agent.py                    # Analyse qualité
 python agents/bug-analyzer.py                # Analyse échecs
 python agents/api-reporter-agent.py          # Rapport professionnel
+
+# Qualité & Production
+python agents/smoke-regression-agent.py smoke          # 5 TCs @smoke
+python agents/smoke-regression-agent.py critical       # 9 TCs @critical
+python agents/smoke-regression-agent.py gono-go        # Verdict GO/NO-GO production
+python agents/flaky-agent.py detect --runs=3           # Détecter les flaky tests
+python agents/flaky-agent.py report                    # Rapport flaky
+python agents/flaky-agent.py gono-go                   # Flaky GO/NO-GO critique
+python agents/kpi-agent.py                             # Dashboard KPI complet
+python agents/kpi-agent.py summary                     # Résumé console
+python agents/kpi-agent.py env                         # environment.properties Allure
+python agents/kpi-agent.py dashboard                   # docs/kpi-dashboard.html
 
 # Jira
 python agents/status-agent.py sync           # Allure → Jira statuts
@@ -400,6 +424,9 @@ python agents/github-agent.py changelog      # Générer changelog
 | Créer des commits descriptifs | `git-agent` génère le message via LLM |
 | Déboguer les échecs à la main | `bug-analyzer` identifie les causes racines |
 | Rédiger les features à la main | `api-spec-agent` les génère depuis une spec |
+| Valider un déploiement en production | `smoke-regression-agent gono-go` → GO ✅ ou NO-GO ❌ + bug Jira automatique |
+| Détecter les tests instables | `flaky-agent detect` → score de flakiness + quarantaine Jira |
+| Présenter les KPIs au client | `kpi-agent` → dashboard HTML + widget Allure ENVIRONMENT |
 
 ---
 
