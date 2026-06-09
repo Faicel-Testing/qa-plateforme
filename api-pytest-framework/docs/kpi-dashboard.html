@@ -92,6 +92,26 @@
   /* Section title */
   .section-title { font-size: 16px; font-weight: 700; color: #fff;
     margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+  /* Quality Gate */
+  .gate-banner { border-radius: 12px; padding: 20px 28px; margin-bottom: 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    border: 1px solid; }
+  .gate-banner.passed { background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.4); }
+  .gate-banner.failed { background: rgba(239,68,68,.1);  border-color: rgba(239,68,68,.4); }
+  .gate-verdict { font-size: 32px; font-weight: 900; letter-spacing: .05em; }
+  .gate-verdict.passed { color: #10b981; }
+  .gate-verdict.failed { color: #ef4444; }
+  .gate-label { font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--muted); margin-bottom: 4px; }
+  .gate-score { font-size: 18px; font-weight: 700; color: var(--text); }
+  .gate-criteria { display: flex; flex-direction: column; gap: 6px; }
+  .gate-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .gate-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .gate-dot.ok { background: #10b981; }
+  .gate-dot.ko { background: #ef4444; }
+  .gate-name { color: var(--text); }
+  .gate-val  { color: var(--muted); margin-left: auto; font-size: 12px; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -105,11 +125,29 @@
   <div class="header-meta">
     <div>pytest-bdd 7.3 + Requests 2.32</div>
     <div>LLM · Groq LLaMA 3.3 70B</div>
-    <div>Généré le 2026-06-09 23:16</div>
+    <div>Généré le 2026-06-09 23:53</div>
   </div>
 </div>
 
 <div class="main">
+
+  <!-- QUALITY GATE BANNER -->
+  
+  <div class="gate-banner failed">
+    <div>
+      <div class="gate-label">Quality Gate</div>
+      <div class="gate-verdict failed">❌ FAILED</div>
+      <div class="gate-score" style="margin-top:6px">2/5 critères satisfaits</div>
+    </div>
+    <div class="gate-criteria">
+      <div class="gate-row"><div class="gate-dot ko"></div><span class="gate-name">Pass Rate >= 90%</span><span class="gate-val">88.2%</span></div>
+<div class="gate-row"><div class="gate-dot ko"></div><span class="gate-name">Fail Rate <= 5%</span><span class="gate-val">5.5%</span></div>
+<div class="gate-row"><div class="gate-dot ko"></div><span class="gate-name">Anomaly Rate <= 10%</span><span class="gate-val">11.8%</span></div>
+<div class="gate-row"><div class="gate-dot ok"></div><span class="gate-name">Flaky Rate <= 20%</span><span class="gate-val">0.0%</span></div>
+<div class="gate-row"><div class="gate-dot ok"></div><span class="gate-name">Automation Coverage >= 80%</span><span class="gate-val">100.0%</span></div>
+
+    </div>
+  </div>
 
   <!-- KPI CARDS -->
   <div class="kpi-grid">
@@ -275,7 +313,7 @@
 
 <div class="footer">
   Généré par <strong>kpi-agent.py</strong> · Framework <strong>pytest-bdd 7.3 + Requests 2.32</strong> ·
-  LLM <strong>Groq LLaMA 3.3 70B</strong> · 2026-06-09 23:16
+  LLM <strong>Groq LLaMA 3.3 70B</strong> · 2026-06-09 23:53
 </div>
 
 <script>
@@ -330,10 +368,10 @@ new Chart(document.getElementById('trendChart'), {
   data: {
     labels: ["Run 1", "Run 2", "Run 3", "Run 4"],
     datasets: [
-      { label: 'Passés', data: [46, 48, 48, 48],
+      { label: 'Passés', data: [46, 48, 48, 49],
         borderColor: COLORS.green, backgroundColor: 'rgba(16,185,129,.15)',
         fill: true, tension: .4, pointRadius: 5, pointHoverRadius: 7 },
-      { label: 'Échoués', data: [5, 3, 3, 3],
+      { label: 'Échoués', data: [5, 3, 3, 10],
         borderColor: COLORS.red, backgroundColor: 'rgba(239,68,68,.1)',
         fill: true, tension: .4, pointRadius: 5, pointHoverRadius: 7 }
     ]

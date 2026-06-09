@@ -31,7 +31,7 @@ Spec métier  →  Features Gherkin  →  Tests API  →  Allure Report  →  Ji
 
 ![Allure Report](docs/allure-screenshot.png)
 
-*Rapport Allure : KPIs intégrés (Pass Rate 88.2% · Flaky 0% · Anomalies 11.8%) — Trend 4 runs — ENVIRONMENT widget généré automatiquement par `kpi-agent.py`*
+*Rapport Allure : Quality Gate intégré (PASSED/FAILED · critères détaillés) — KPIs Pass Rate · Fail Rate · Anomaly Rate · Flaky Tests — Trend 4 runs — généré automatiquement par `kpi-agent.py`*
 
 ---
 

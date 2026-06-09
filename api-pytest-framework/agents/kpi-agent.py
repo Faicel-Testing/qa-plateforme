@@ -93,15 +93,35 @@ def collect_kpis() -> dict:
     avg_ms  = total_exec_ms / len(durations) if durations else 0
     total_tcs_defined = 51  # TCs définis dans le projet
 
+    pass_rate      = round(passed / total * 100, 1)
+    fail_rate      = round(failed / total * 100, 1)
+    broken_rate    = round(broken / total * 100, 1)
+    anomaly_rate   = round(anomalies / total * 100, 1)
+    flaky_rate     = round(flaky_n / total_tcs_defined * 100, 1)
+    coverage       = round(len(tc_tags) / total_tcs_defined * 100, 1)
+
+    # ── Quality Gate ──────────────────────────────────────────
+    # Seuils professionnels — chaque critère contribue au verdict final
+    GATE = [
+        ("Pass Rate >= 90%",         pass_rate >= 90,    f"{pass_rate}%"),
+        ("Fail Rate <= 5%",          fail_rate <= 5,     f"{fail_rate}%"),
+        ("Anomaly Rate <= 10%",      anomaly_rate <= 10, f"{anomaly_rate}%"),
+        ("Flaky Rate <= 20%",        flaky_rate <= 20,   f"{flaky_rate}%"),
+        ("Automation Coverage >= 80%", coverage >= 80,   f"{coverage}%"),
+    ]
+    gate_passed  = [g for g in GATE if g[1]]
+    gate_failed  = [g for g in GATE if not g[1]]
+    gate_verdict = "PASSED" if not gate_failed else "FAILED"
+
     return {
         "stats": stats,
-        "pass_rate":      round(passed / total * 100, 1),
-        "fail_rate":      round(failed / total * 100, 1),
-        "broken_rate":    round(broken / total * 100, 1),
-        "anomaly_rate":   round(anomalies / total * 100, 1),
+        "pass_rate":      pass_rate,
+        "fail_rate":      fail_rate,
+        "broken_rate":    broken_rate,
+        "anomaly_rate":   anomaly_rate,
         "flaky_count":    flaky_n,
-        "flaky_rate":     round(flaky_n / total_tcs_defined * 100, 1),
-        "automation_coverage": round(len(tc_tags) / total_tcs_defined * 100, 1),
+        "flaky_rate":     flaky_rate,
+        "automation_coverage": coverage,
         "total_exec_ms":  total_exec_ms,
         "avg_test_ms":    round(avg_ms),
         "exec_time_fmt":  fmt_duration(total_exec_ms),
@@ -115,6 +135,10 @@ def collect_kpis() -> dict:
         "framework":      "pytest-bdd 7.3 + Requests 2.32",
         "llm":            "Groq LLaMA 3.3 70B",
         "api_under_test": "Restful-Booker REST API",
+        "gate":           GATE,
+        "gate_passed":    gate_passed,
+        "gate_failed":    gate_failed,
+        "gate_verdict":   gate_verdict,
     }
 
 
@@ -130,7 +154,12 @@ def fmt_duration(ms: float) -> str:
 # ── 1. environment.properties ──────────────────────────────────────────────
 
 def write_env_properties(kpi: dict):
+    verdict = kpi["gate_verdict"]
+    blocked = " | ".join(f"{g[0]} ({g[2]})" for g in kpi["gate_failed"]) or "None"
     lines = [
+        f"Quality.Gate={verdict}",
+        f"Gate.Criteria.Passed={len(kpi['gate_passed'])}/{len(kpi['gate'])}",
+        f"Gate.Blockers={blocked}",
         f"Pass.Rate={kpi['pass_rate']}%",
         f"Fail.Rate={kpi['fail_rate']}%",
         f"Broken.Rate={kpi['broken_rate']}%",
@@ -154,6 +183,29 @@ def write_env_properties(kpi: dict):
 
 
 # ── 2. KPI Dashboard HTML ─────────────────────────────────────────────────
+
+def _gate_banner(kpi: dict) -> str:
+    verdict  = kpi["gate_verdict"]
+    css      = "passed" if verdict == "PASSED" else "failed"
+    icon     = "✅" if verdict == "PASSED" else "❌"
+    n_ok     = len(kpi["gate_passed"])
+    n_total  = len(kpi["gate"])
+    rows = ""
+    for name, ok, val in kpi["gate"]:
+        dot = "ok" if ok else "ko"
+        rows += f'<div class="gate-row"><div class="gate-dot {dot}"></div><span class="gate-name">{name}</span><span class="gate-val">{val}</span></div>\n'
+    return f"""
+  <div class="gate-banner {css}">
+    <div>
+      <div class="gate-label">Quality Gate</div>
+      <div class="gate-verdict {css}">{icon} {verdict}</div>
+      <div class="gate-score" style="margin-top:6px">{n_ok}/{n_total} critères satisfaits</div>
+    </div>
+    <div class="gate-criteria">
+      {rows}
+    </div>
+  </div>"""
+
 
 def write_dashboard(kpi: dict):
     os.makedirs(DOCS_DIR, exist_ok=True)
@@ -298,6 +350,26 @@ def write_dashboard(kpi: dict):
   /* Section title */
   .section-title {{ font-size: 16px; font-weight: 700; color: #fff;
     margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }}
+
+  /* Quality Gate */
+  .gate-banner {{ border-radius: 12px; padding: 20px 28px; margin-bottom: 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    border: 1px solid; }}
+  .gate-banner.passed {{ background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.4); }}
+  .gate-banner.failed {{ background: rgba(239,68,68,.1);  border-color: rgba(239,68,68,.4); }}
+  .gate-verdict {{ font-size: 32px; font-weight: 900; letter-spacing: .05em; }}
+  .gate-verdict.passed {{ color: #10b981; }}
+  .gate-verdict.failed {{ color: #ef4444; }}
+  .gate-label {{ font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--muted); margin-bottom: 4px; }}
+  .gate-score {{ font-size: 18px; font-weight: 700; color: var(--text); }}
+  .gate-criteria {{ display: flex; flex-direction: column; gap: 6px; }}
+  .gate-row {{ display: flex; align-items: center; gap: 10px; font-size: 13px; }}
+  .gate-dot {{ width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }}
+  .gate-dot.ok {{ background: #10b981; }}
+  .gate-dot.ko {{ background: #ef4444; }}
+  .gate-name {{ color: var(--text); }}
+  .gate-val  {{ color: var(--muted); margin-left: auto; font-size: 12px; font-weight: 600; }}
 </style>
 </head>
 <body>
@@ -316,6 +388,9 @@ def write_dashboard(kpi: dict):
 </div>
 
 <div class="main">
+
+  <!-- QUALITY GATE BANNER -->
+  {_gate_banner(kpi)}
 
   <!-- KPI CARDS -->
   <div class="kpi-grid">
@@ -506,9 +581,16 @@ new Chart(document.getElementById('trendChart'), {{
 
 def print_summary(kpi: dict):
     s = kpi["stats"]
+    verdict = kpi["gate_verdict"]
+    gcolor  = G if verdict == "PASSED" else R
     print(f"\n{W}{'='*55}{E}")
     print(f"{W}  QA KPI SUMMARY — {kpi['generated_at']}{E}")
     print(f"{W}{'='*55}{E}")
+    print(f"\n  QUALITY GATE : {gcolor}{W} {verdict} {E}  ({len(kpi['gate_passed'])}/{len(kpi['gate'])} critères)")
+    for name, ok, val in kpi["gate"]:
+        sym = f"{G}✓{E}" if ok else f"{R}✗{E}"
+        print(f"  {sym}  {name:<35} {val}")
+    print()
     print(f"\n  {'KPI':<30} {'Valeur':>12}")
     print(f"  {'-'*44}")
 
