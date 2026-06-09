@@ -1,0 +1,6 @@
+requests==2.32.3
+pytest==8.3.3
+pytest-bdd==7.3.0
+allure-pytest==2.13.5
+python-dotenv==1.0.1
+jsonschema==4.23.0
