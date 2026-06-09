@@ -31,7 +31,7 @@ Spec métier  →  Features Gherkin  →  Tests API  →  Allure Report  →  Ji
 
 ![Allure Report](docs/allure-screenshot.png)
 
-*Rapport Allure : 51 TCs BDD — 48 passés (94%) — 3 en cours d'investigation*
+*Rapport Allure : KPIs intégrés (Pass Rate 88.2% · Flaky 0% · Anomalies 11.8%) — Trend 4 runs — ENVIRONMENT widget généré automatiquement par `kpi-agent.py`*
 
 ---
 
