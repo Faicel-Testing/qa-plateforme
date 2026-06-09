@@ -1,5 +1,13 @@
 # QA Platform — API pytest-bdd + AI Agents
 
+[![CI](https://github.com/Faicel-Testing/qa-plateforme/actions/workflows/ci-api-pytest.yml/badge.svg)](https://github.com/Faicel-Testing/qa-plateforme/actions/workflows/ci-api-pytest.yml)
+[![Tests](https://img.shields.io/badge/Tests-51%20BDD-blue)](https://github.com/Faicel-Testing/qa-plateforme/actions/workflows/ci-api-pytest.yml)
+[![Pass](https://img.shields.io/badge/Pass-48%2F51-brightgreen)](https://faicel-testing.github.io/qa-plateforme/api-pytest-framework/)
+[![Allure Report](https://img.shields.io/badge/Allure-Report-orange)](https://faicel-testing.github.io/qa-plateforme/api-pytest-framework/)
+[![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)](https://www.python.org/)
+[![pytest-bdd](https://img.shields.io/badge/pytest--bdd-7.3-green)](https://github.com/pytest-dev/pytest-bdd)
+[![LLM](https://img.shields.io/badge/LLM-Groq%20LLaMA%203.3-purple)](https://console.groq.com/)
+
 > **pytest-bdd + Requests + Groq AI** — Un framework de test API qui s'exécute, se synchronise et se pilote lui-même, de la spec Gherkin jusqu'au tableau Jira.
 
 ---
@@ -13,6 +21,16 @@ Spec métier  →  Features Gherkin  →  Tests API  →  Allure Report  →  Ji
 ```
 
 51 cas de test BDD couvrant l'API REST [restful-booker](https://restful-booker.herokuapp.com), avec synchronisation automatique des statuts dans Jira, pipeline CI/CD GitHub Actions et rapports Allure générés à chaque exécution.
+
+---
+
+## Rapport Allure — Live
+
+> **[Voir le rapport en direct](https://faicel-testing.github.io/qa-plateforme/api-pytest-framework/)** — mis à jour automatiquement à chaque push sur `main`.
+
+![Allure Report](docs/allure-screenshot.png)
+
+*Rapport Allure : 51 TCs BDD — 48 passés (94%) — 3 en cours d'investigation*
 
 ---
 

@@ -171,6 +171,35 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
+# ── Job publication GitHub Pages ──────────────────────────────────────────
+  deploy-pages:
+    name: Deploy Allure Report → GitHub Pages
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: always() && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download allure-report artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-report
+          path: allure-report/
+        continue-on-error: true
+
+      - name: Publish to GitHub Pages (gh-pages branch)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./allure-report
+          destination_dir: api-pytest-framework
+          keep_files: true
+          commit_message: "ci: update Allure report [skip ci]"
+
 # ── Job notification email ─────────────────────────────────────────────────
   notify:
     name: Email notification
