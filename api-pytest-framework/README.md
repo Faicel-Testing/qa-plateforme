@@ -35,6 +35,30 @@ Spec métier  →  Features Gherkin  →  Tests API  →  Allure Report  →  Ji
 
 ---
 
+## Quality Gate
+
+Le **Quality Gate** est calculé automatiquement par `kpi-agent.py` à chaque exécution et affiché dans le widget **ENVIRONMENT** du rapport Allure.
+
+| Critère | Seuil | Valeur actuelle | Statut |
+|---------|-------|-----------------|--------|
+| Pass Rate | ≥ 90% | 88.2% | ❌ |
+| Fail Rate | ≤ 5% | 5.5% | ❌ |
+| Anomaly Rate | ≤ 10% | 11.8% | ❌ |
+| Flaky Rate | ≤ 20% | 0.0% | ✅ |
+| Automation Coverage | ≥ 80% | 100.0% | ✅ |
+| **Verdict** | | **2/5 critères** | **FAILED** |
+
+> Le verdict `QUALITY GATE: FAILED` est visible directement dans Allure → widget **ENVIRONMENT** → `Quality.Gate`.
+> Pour passer en `PASSED`, les 3 critères en échec doivent être corrigés (tests Booking Update en cours d'investigation).
+
+```bash
+# Régénérer le Quality Gate après exécution des tests
+python agents/kpi-agent.py
+allure generate allure-results -o allure-report --clean
+```
+
+---
+
 ## Architecture
 
 ```
