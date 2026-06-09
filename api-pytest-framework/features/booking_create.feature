@@ -6,7 +6,7 @@ Feature: US-004 -- Creer une reservation (POST /booking)
   Background:
     Given l'API est disponible
 
-  @positif @tc-020  # HBAPI-30
+  @smoke @critical @positif @tc-020  # HBAPI-30
   Scenario: TC-020 -- Creation avec tous les champs valides (POST /booking)
     When j'envoie POST /booking
     Then le status code est 200 ou 201

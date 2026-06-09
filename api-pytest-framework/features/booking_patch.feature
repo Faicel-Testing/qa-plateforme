@@ -8,7 +8,7 @@ Feature: US-006 -- Mise a jour partielle (PATCH /booking/{id})
     And j'ai un token d'authentification valide
     And une reservation existe avec son ID
 
-  @positif @tc-038  # HBAPI-48
+  @critical @positif @tc-038  # HBAPI-48
   Scenario: TC-038 -- PATCH firstname uniquement (PATCH /booking/{id})
     When j'envoie PATCH /booking/{id} avec {"firstname": "UpdatedName"}
     Then le status code est 200

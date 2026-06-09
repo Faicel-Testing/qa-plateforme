@@ -6,7 +6,7 @@ Feature: US-008 -- Health Check (GET /ping)
   Background:
     Given l'API est disponible
 
-  @positif @tc-051  # HBAPI-61
+  @smoke @critical @positif @tc-051  # HBAPI-61
   Scenario: TC-051 -- Health check standard (GET /ping)
     When j'envoie GET /ping
     Then le status code est 201

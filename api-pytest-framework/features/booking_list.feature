@@ -6,7 +6,7 @@ Feature: US-002 -- Lister les reservations (GET /booking)
   Background:
     Given l'API est disponible
 
-  @positif @tc-006  # HBAPI-16
+  @smoke @critical @positif @tc-006  # HBAPI-16
   Scenario: TC-006 -- Liste complete sans filtre (GET /booking)
     When j'envoie GET /booking
     Then le status code est 200

@@ -6,7 +6,7 @@ Feature: US-001 -- Authentification (POST /auth)
   Background:
     Given l'API est disponible
 
-  @positif @tc-001  # HBAPI-11
+  @smoke @critical @positif @tc-001  # HBAPI-11
   Scenario: TC-001 -- Token valide (POST /auth)
     When j'envoie POST /auth avec username "admin" et password "password123"
     Then le status code est 200

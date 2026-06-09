@@ -7,7 +7,7 @@ Feature: US-003 -- Recuperer une reservation (GET /booking/{id})
     Given l'API est disponible
     And une reservation existe avec un ID valide
 
-  @positif @tc-013  # HBAPI-23
+  @smoke @critical @positif @tc-013  # HBAPI-23
   Scenario: TC-013 -- Reservation existante valide (GET /booking/{id})
     Given j'ai cree une reservation et recupere son ID
     When j'envoie GET /booking/{id}
