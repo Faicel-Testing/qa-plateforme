@@ -100,6 +100,14 @@ jobs:
           sudo ln -sf /opt/allure-${{ env.ALLURE_VERSION }}/bin/allure /usr/local/bin/allure
           allure --version
 
+      - name: Generate KPI data (environment.properties)
+        if: always()
+        run: |
+          cd ${{ env.FRAMEWORK_DIR }}
+          if [ -d allure-results ] && [ "$(ls -A allure-results 2>/dev/null)" ]; then
+            python agents/kpi-agent.py env || echo "[CI] kpi-agent env failed, continuing"
+          fi
+
       - name: Generate Allure report
         if: always()
         run: |
