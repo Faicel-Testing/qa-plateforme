@@ -8,7 +8,7 @@
 [![pytest-bdd](https://img.shields.io/badge/pytest--bdd-7.3-green)](https://github.com/pytest-dev/pytest-bdd)
 [![LLM](https://img.shields.io/badge/LLM-Groq%20LLaMA%203.3-purple)](https://console.groq.com/)
 
-> **pytest-bdd + Requests + Groq AI** — Un framework de test API qui s'exécute, se synchronise et se pilote lui-même, de la spec Gherkin jusqu'au tableau Jira.
+> **pytest-bdd + Requests + Groq AI** — Un framework de test API qui se pilote, se synchronise et se documente lui-même.
 
 ---
 
