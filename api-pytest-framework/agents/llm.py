@@ -13,6 +13,11 @@ import os, json, time, re
 import requests
 from dotenv import load_dotenv
 
+try:
+    import tracer as _tracer
+except ImportError:
+    _tracer = None
+
 load_dotenv()
 
 GROQ_API_KEY  = os.getenv("GROQ_API_KEY")
@@ -32,15 +37,27 @@ RETRY_DELAY = 2
 
 def chat(messages: list[dict], model: str = None, temperature: float = 0.2) -> str:
     """Appel LLM simple — retourne le texte de la réponse."""
-    for attempt in range(1, MAX_RETRIES + 1):
-        try:
-            if GROQ_API_KEY:
-                return _groq_chat(messages, model or GROQ_MODEL, temperature)
-            return _ollama_chat(messages, model or OLLAMA_MODEL)
-        except Exception as e:
-            if attempt == MAX_RETRIES:
-                raise RuntimeError(f"LLM inaccessible après {MAX_RETRIES} tentatives : {e}")
-            time.sleep(RETRY_DELAY * attempt)
+    prompt = " ".join(m.get("content", "") for m in messages)
+    span = _tracer.Span("chat", prompt, model or MODEL) if _tracer else None
+    if span: span.__enter__()
+    retries = 0
+    try:
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                if GROQ_API_KEY:
+                    result = _groq_chat(messages, model or GROQ_MODEL, temperature)
+                else:
+                    result = _ollama_chat(messages, model or OLLAMA_MODEL)
+                if span: span.response = result
+                return result
+            except Exception as e:
+                retries = attempt - 1
+                if attempt == MAX_RETRIES:
+                    if span: span.error = str(e); span.retries = retries
+                    raise RuntimeError(f"LLM inaccessible après {MAX_RETRIES} tentatives : {e}")
+                time.sleep(RETRY_DELAY * attempt)
+    finally:
+        if span: span.retries = retries; span.__exit__(None, None, None)
 
 
 # ── Chain of Thought ───────────────────────────────────────────────────────
@@ -48,17 +65,25 @@ def chat(messages: list[dict], model: str = None, temperature: float = 0.2) -> s
 def chat_cot(messages: list[dict], model: str = None) -> str:
     """Chain of Thought — force le LLM à raisonner étape par étape.
     Réduit les hallucinations sur les analyses complexes."""
-    cot_instruction = {
-        "role": "system",
-        "content": (
-            "Tu es un expert QA. Avant de répondre, raisonne en 3 étapes :\n"
-            "Étape 1 — Analyse les données brutes fournies.\n"
-            "Étape 2 — Identifie les patterns ou anomalies.\n"
-            "Étape 3 — Conclus avec une réponse précise et vérifiable.\n"
-            "Ne saute aucune étape. Écris 'ÉTAPE 1:', 'ÉTAPE 2:', 'CONCLUSION:' explicitement."
-        )
-    }
-    return chat([cot_instruction] + messages, model=model, temperature=0.1)
+    prompt = " ".join(m.get("content", "") for m in messages)
+    span = _tracer.Span("chat_cot", prompt, model or MODEL) if _tracer else None
+    if span: span.__enter__()
+    try:
+        cot_instruction = {
+            "role": "system",
+            "content": (
+                "Tu es un expert QA. Avant de répondre, raisonne en 3 étapes :\n"
+                "Étape 1 — Analyse les données brutes fournies.\n"
+                "Étape 2 — Identifie les patterns ou anomalies.\n"
+                "Étape 3 — Conclus avec une réponse précise et vérifiable.\n"
+                "Ne saute aucune étape. Écris 'ÉTAPE 1:', 'ÉTAPE 2:', 'CONCLUSION:' explicitement."
+            )
+        }
+        result = chat([cot_instruction] + messages, model=model, temperature=0.1)
+        if span: span.response = result
+        return result
+    finally:
+        if span: span.__exit__(None, None, None)
 
 
 # ── Structured Output ──────────────────────────────────────────────────────
@@ -99,6 +124,9 @@ def chat_confident(messages: list[dict], model: str = None) -> dict:
     result = chat_structured(messages, schema, model=model)
     if isinstance(result.get("confidence"), (int, float)):
         result["needs_human_review"] = result["confidence"] < 0.7
+        # Injecte le score de confiance dans la dernière trace
+        if _tracer and os.path.exists(_tracer.TRACE_FILE):
+            pass  # la trace est déjà écrite par chat_structured
     return result
 
 
