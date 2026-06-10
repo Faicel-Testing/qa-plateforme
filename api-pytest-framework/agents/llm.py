@@ -18,6 +18,11 @@ try:
 except ImportError:
     _tracer = None
 
+try:
+    import circuit_breaker as _cb
+except ImportError:
+    _cb = None
+
 load_dotenv()
 
 GROQ_API_KEY  = os.getenv("GROQ_API_KEY")
@@ -44,10 +49,7 @@ def chat(messages: list[dict], model: str = None, temperature: float = 0.2) -> s
     try:
         for attempt in range(1, MAX_RETRIES + 1):
             try:
-                if GROQ_API_KEY:
-                    result = _groq_chat(messages, model or GROQ_MODEL, temperature)
-                else:
-                    result = _ollama_chat(messages, model or OLLAMA_MODEL)
+                result = _resilient_call(messages, model, temperature, fn_name="chat")
                 if span: span.response = result
                 return result
             except Exception as e:
@@ -272,6 +274,73 @@ def _ollama_chat(messages: list[dict], model: str) -> str:
     resp = requests.post(f"{OLLAMA_BASE_URL}/api/chat", json=payload, timeout=120)
     resp.raise_for_status()
     return resp.json()["message"]["content"].strip()
+
+
+def _resilient_call(messages: list[dict], model: str = None,
+                    temperature: float = 0.2, fn_name: str = "chat") -> str:
+    """
+    Appel LLM avec Circuit Breaker + Fallback chain :
+      1. Groq  (primaire)
+      2. Ollama (fallback local)
+      3. Cache  (dernière réponse similaire)
+      4. Default (réponse de secours)
+    Transparent pour tous les agents — remplace les appels directs à Groq/Ollama.
+    """
+    cb = _cb.get_circuit_breaker() if _cb else None
+
+    # ── Étape 1 : Groq (primaire) ──────────────────────────────────
+    if GROQ_API_KEY:
+        if cb and not cb.allow_request():
+            pass  # Circuit ouvert → passer directement au fallback
+        else:
+            try:
+                result = _groq_chat(messages, model or GROQ_MODEL, temperature)
+                if cb:
+                    cb.record_success()
+                    s = cb._state["stats"]
+                    s["groq_calls"] = s.get("groq_calls", 0) + 1
+                    _cb._save_state(cb._state)
+                if _cb:
+                    _cb.cache_set(messages, result)
+                return result
+            except Exception as e:
+                if cb:
+                    cb.record_failure(e)
+
+    # ── Étape 2 : Ollama (fallback local) ─────────────────────────
+    try:
+        result = _ollama_chat(messages, model or OLLAMA_MODEL)
+        if cb:
+            s = cb._state["stats"]
+            s["ollama_calls"] = s.get("ollama_calls", 0) + 1
+            _cb._save_state(cb._state)
+        print(f"  {__import__('os').linesep.strip()}"
+              f"\033[33m[FALLBACK] Ollama utilisé à la place de Groq\033[0m")
+        if _cb:
+            _cb.cache_set(messages, result)
+        return result
+    except Exception:
+        pass
+
+    # ── Étape 3 : Cache ───────────────────────────────────────────
+    if _cb:
+        cached = _cb.cache_get(messages)
+        if cached:
+            if cb:
+                s = cb._state["stats"]
+                s["cache_hits"] = s.get("cache_hits", 0) + 1
+                _cb._save_state(cb._state)
+            print(f"  \033[33m[FALLBACK] Réponse en cache utilisée\033[0m")
+            return cached
+
+    # ── Étape 4 : Réponse par défaut ──────────────────────────────
+    if cb:
+        s = cb._state["stats"]
+        s["default_hits"] = s.get("default_hits", 0) + 1
+        _cb._save_state(cb._state)
+    default = _cb.get_default_response(fn_name) if _cb else "LLM unavailable."
+    print(f"  \033[31m[FALLBACK] Réponse par défaut — LLM entièrement indisponible\033[0m")
+    return default
 
 
 def _extract_json(text: str):
