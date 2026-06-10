@@ -158,6 +158,101 @@ def chat_adversarial(original_output: str, context: str, domain: str = "QA") -> 
     return chat_structured(messages, schema)
 
 
+# ── Self-Consistency ──────────────────────────────────────────────────────
+
+def chat_self_consistent(
+    messages: list[dict],
+    schema: dict,
+    verdict_key: str = "verdict",
+    n: int = 3,
+    model: str = None,
+) -> dict:
+    """Self-Consistency — pose la même question N fois, retourne le vote majoritaire.
+    Réduit les hallucinations sur les décisions critiques (go/no-go, sévérité...).
+
+    Args:
+        messages    : prompt à répéter
+        schema      : schéma Structured Output pour chaque réponse
+        verdict_key : clé JSON dont on vote la valeur majoritaire (ex: "verdict")
+        n           : nombre d'appels (3 par défaut)
+
+    Retourne :
+        {
+          "majority_verdict" : valeur gagnante du vote,
+          "agreement_rate"   : 0.0–1.0 (1.0 = unanime),
+          "is_unanimous"     : bool,
+          "votes"            : {"OUI": 2, "NON": 1},
+          "responses"        : [liste des N réponses complètes],
+          "minority_reasons" : [raisons des votes minoritaires]
+        }
+    """
+    # Températures variées pour obtenir de la diversité entre appels
+    temperatures = [0.1, 0.4, 0.7, 0.2, 0.5][:n]
+    responses = []
+
+    span = _tracer.Span("chat_self_consistent",
+                        " ".join(m.get("content","") for m in messages),
+                        model or MODEL) if _tracer else None
+    if span: span.__enter__()
+
+    try:
+        for i, temp in enumerate(temperatures):
+            schema_str = json.dumps(schema, ensure_ascii=False, indent=2)
+            struct_sys = {
+                "role": "system",
+                "content": (
+                    f"Tu dois répondre UNIQUEMENT avec un JSON valide.\n"
+                    f"Schema :\n{schema_str}\n"
+                    f"Pas de markdown, juste le JSON brut."
+                )
+            }
+            for attempt in range(1, MAX_RETRIES + 1):
+                try:
+                    raw = chat([struct_sys] + messages, model=model, temperature=temp)
+                    parsed = _extract_json(raw)
+                    if parsed is not None:
+                        parsed["_temp"] = temp
+                        parsed["_call"] = i + 1
+                        responses.append(parsed)
+                        break
+                except Exception:
+                    if attempt == MAX_RETRIES:
+                        responses.append({verdict_key: "ERROR", "_call": i + 1})
+                    time.sleep(1)
+
+        # Décompte des votes
+        votes = {}
+        for r in responses:
+            v = str(r.get(verdict_key, "UNKNOWN")).upper()
+            votes[v] = votes.get(v, 0) + 1
+
+        majority_verdict = max(votes, key=votes.get) if votes else "UNKNOWN"
+        majority_count   = votes.get(majority_verdict, 0)
+        agreement_rate   = majority_count / len(responses) if responses else 0.0
+
+        # Raisons des votes minoritaires
+        minority_reasons = [
+            r.get("reasoning", r.get("summary", ""))
+            for r in responses
+            if str(r.get(verdict_key,"")).upper() != majority_verdict
+               and r.get("reasoning") or r.get("summary")
+        ]
+
+        result = {
+            "majority_verdict": majority_verdict,
+            "agreement_rate":   round(agreement_rate, 2),
+            "is_unanimous":     agreement_rate == 1.0,
+            "votes":            votes,
+            "responses":        responses,
+            "minority_reasons": minority_reasons,
+        }
+        if span: span.response = majority_verdict; span.confidence = agreement_rate
+        return result
+
+    finally:
+        if span: span.__exit__(None, None, None)
+
+
 # ── Helpers internes ───────────────────────────────────────────────────────
 
 def _groq_chat(messages: list[dict], model: str, temperature: float = 0.2) -> str:
