@@ -1,15 +1,15 @@
 {
   "state": "CLOSED",
-  "failure_count": 1,
+  "failure_count": 2,
   "success_count": 0,
-  "last_failure_ts": 1781197222.2517965,
+  "last_failure_ts": 1781197262.109198,
   "opened_at": null,
   "stats": {
-    "total_calls": 7,
+    "total_calls": 8,
     "groq_calls": 1,
     "ollama_calls": 0,
     "cache_hits": 0,
-    "default_hits": 1,
+    "default_hits": 2,
     "circuit_opens": 1,
     "fast_fails": 3
   }
