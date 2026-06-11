@@ -7,10 +7,10 @@
 [![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)](https://www.python.org/)
 [![pytest-bdd](https://img.shields.io/badge/pytest--bdd-7.3-green)](https://github.com/pytest-dev/pytest-bdd)
 [![LLM](https://img.shields.io/badge/LLM-Groq%20LLaMA%203.3-purple)](https://console.groq.com/)
-[![Agents](https://img.shields.io/badge/AI%20Agents-30-blueviolet)](#les-30-agents-ia)
+[![Agents](https://img.shields.io/badge/AI%20Agents-31-blueviolet)](#les-31-agents-ia)
 
 > **pytest-bdd + Requests + Groq AI** — Un framework de test API qui se pilote, s'analyse et se documente lui-même.
-> **30 agents IA** · 12 techniques IA · GO/NO-GO production · Prédiction d'échecs · Circuit Breaker · Mémoire épisodique
+> **31 agents IA** · 12 techniques IA · GO/NO-GO production · Prédiction d'échecs · Circuit Breaker · Mémoire épisodique · Notification Slack/Teams
 
 ---
 
@@ -19,8 +19,8 @@
 ```
 Spec métier  →  Features Gherkin  →  Tests API  →  Allure Report  →  Jira TCs
      ↑                                                    ↓
-     └──────────────── 30 agents IA pilotent tout ────────┘
-              Triage · RCA · Patch · Prédiction · Gate
+     └──────────────── 31 agents IA pilotent tout ────────┘
+         Triage · RCA · Patch · Prédiction · Gate · Slack/Teams
 ```
 
 51 cas de test BDD couvrant l'API REST [restful-booker](https://restful-booker.herokuapp.com), avec
@@ -135,7 +135,7 @@ allure generate allure-results -o allure-report --clean
 
 ---
 
-## Les 30 agents IA
+## Les 31 agents IA
 
 ### Catégorie 1 — Exécution & Génération
 
@@ -146,7 +146,7 @@ allure generate allure-results -o allure-report --clean
 | `api-execute-agent.py` | `python agents/api-execute-agent.py` | Structured Output | Orchestre l'exécution complète avec analyse des résultats |
 | `api-reporter-agent.py` | `python agents/api-reporter-agent.py` | CoT + Structured Output | Génère un rapport professionnel depuis les résultats Allure |
 | `tc-generator-agent.py` | `python agents/tc-generator-agent.py` | Structured Output | Génère des cas de test structurés (positifs, négatifs, edge cases) |
-| `qa-agent.py` | `python agents/qa-agent.py` | CoT | Analyse la qualité globale de la suite BDD |
+| `qa-agent.py` | `python agents/qa-agent.py` | CoT + Structured Output | Lit les résultats Allure + features Gherkin — score qualité 0-100, tags manquants, scénarios à ajouter |
 
 ### Catégorie 2 — Analyse IA
 
@@ -196,6 +196,12 @@ allure generate allure-results -o allure-report --clean
 | `git-agent.py` | `python agents/git-agent.py` | Structured Output | Génère un message Conventional Commits via LLM, commit + push + release |
 | `github-agent.py` | `python agents/github-agent.py ci run` | Structured Output | CI/CD, PRs, releases, issues, changelog via `gh` CLI |
 
+### Catégorie 7 — Notifications
+
+| Agent | Commande | Technique IA | Ce qu'il fait |
+|-------|----------|-------------|---------------|
+| `notification-agent.py` | `python agents/notification-agent.py` | Structured Output | Envoie un résumé LLM du run vers Slack ou Teams via Incoming Webhook |
+
 ### Modules support (partagés)
 
 | Module | Rôle |
@@ -238,11 +244,13 @@ git push api-pytest-framework/**
   ci-api-pytest.yml
         ├── Setup Python 3.12 + pip install
         ├── pytest tests/ --alluredir=allure-results
+        ├── kpi-agent.py env ──────────────► environment.properties Allure
+        ├── [IA] triage-agent.py ──────────► Classification des échecs (Confidence Scoring)
+        ├── [IA] rca-agent.py ─────────────► Root Cause Analysis (Chain of Thought)
+        ├── [IA] jira-ticket-agent.py ─────► Tickets Bug automatiques
+        ├── [IA] release-advisor-agent.py ─► Verdict Go/No-Go (Self-Consistency ×3)
         ├── allure generate → allure-report/
         ├── Upload artifacts (30 jours)
-        ├── [IA] triage-agent.py ──────────► Classification des échecs
-        ├── [IA] kpi-agent.py ─────────────► Quality Gate + ENVIRONMENT widget
-        ├── [IA] jira-ticket-agent.py ─────► Tickets Bug automatiques
         └── [notify] Email Gmail → faicel.ganem@gmail.com
 ```
 
@@ -396,6 +404,11 @@ python agents/github-agent.py ci watch           # Suivre l'exécution
 python agents/github-agent.py pr create          # Créer une PR
 python agents/github-agent.py release create v1.4.0
 python agents/github-agent.py changelog          # Générer changelog
+
+# ── NOTIFICATIONS ────────────────────────────────────────────────────────────
+python agents/notification-agent.py              # Résumé LLM → Slack
+python agents/notification-agent.py teams        # Résumé LLM → Teams
+python agents/notification-agent.py --dry-run    # Aperçu sans envoi
 ```
 
 ---
@@ -452,13 +465,16 @@ api-pytest-framework/
 │   ├── user-stories-agent.py            # Génère 8 US dans Jira
 │   ├── test-case-agent.py               # Gestion TCs Jira + Gherkin
 │   │
-│   └── # ── GIT & GITHUB ────────────────────────────────────
-│       ├── git-agent.py                 # Commit/Push/Release LLM
-│       └── github-agent.py              # CI/CD · PR · Release · Changelog
+│   ├── # ── GIT & GITHUB ────────────────────────────────────
+│   │   ├── git-agent.py                 # Commit/Push/Release LLM
+│   │   └── github-agent.py              # CI/CD · PR · Release · Changelog
+│   │
+│   └── # ── NOTIFICATIONS ───────────────────────────────────
+│       └── notification-agent.py        # Résumé LLM → Slack / Teams webhook
 │
 ├── memory/                              # Persistance IA
-│   ├── episodes.jsonl                   # Historique des runs d'agents
-│   └── traces.jsonl                     # Traces des appels LLM
+│   ├── episodes.jsonl                   # Historique des runs d'agents (Episodic Memory)
+│   └── traces.jsonl                     # Traces des appels LLM (Observability)
 │
 ├── docs/                                # Rapports générés
 │   ├── kpi-dashboard.html               # Dashboard KPI (kpi-agent)
@@ -518,6 +534,7 @@ api-pytest-framework/
 | Prompts qui changent silencieusement | `prompt-versioning-agent` semver + rollback + A/B test |
 | Pas de mémoire entre les runs | `memory-agent` épisodes persistés, injectés dans les prompts |
 | Coût LLM invisible | `observability-agent` trace chaque appel (tokens, durée, confiance) |
+| Notifier l'équipe après chaque run | `notification-agent` → résumé LLM sur Slack/Teams |
 | Mettre à jour Jira manuellement | `status-agent` sync Allure → Jira en 1 commande |
 | Créer des commits descriptifs | `git-agent` Conventional Commits via LLM |
 | Présenter les KPIs au client | `kpi-agent` → dashboard HTML + widget Allure ENVIRONMENT |
