@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Guide Complet — 39 Agents QA Framework</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+
+  :root {
+    --bg:#0f1117; --card:#1a1d27; --card2:#1e2130; --border:#2a2d3e;
+    --text:#e2e8f0; --muted:#8892a4;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;font-size:14px}
+
+  @keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+  @keyframes borderGlow{0%,100%{box-shadow:0 0 15px rgba(108,99,255,.3)}50%{box-shadow:0 0 30px rgba(240,147,251,.5)}}
+  @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+  /* ── HERO ── */
+  .hero{background:linear-gradient(135deg,#0f1117 0%,#1a1d27 40%,#0d1b2a 100%);padding:60px 40px 50px;text-align:center;position:relative;overflow:hidden;border-bottom:1px solid var(--border)}
+  .hero::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at center,rgba(108,99,255,.08) 0%,transparent 60%);animation:spin 20s linear infinite}
+  .hero-tag{display:inline-block;background:linear-gradient(90deg,#6c63ff,#f093fb);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:11px;font-weight:700;letter-spacing:4px;text-transform:uppercase;margin-bottom:16px;animation:pulse 2s ease-in-out infinite}
+  .hero h1{font-size:46px;font-weight:900;background:linear-gradient(90deg,#6c63ff,#f093fb,#4facfe,#00f2fe,#43e97b,#ffd700,#6c63ff);background-size:300% 300%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:gradientShift 4s ease infinite;line-height:1.2;margin-bottom:12px}
+  .hero p{color:var(--muted);font-size:16px;max-width:650px;margin:0 auto 24px}
+  .hero-stats{display:flex;justify-content:center;gap:30px;flex-wrap:wrap;margin-top:20px}
+  .stat-item{text-align:center}
+  .stat-num{font-size:36px;font-weight:900;background:linear-gradient(135deg,#6c63ff,#f093fb);-webkit-background-clip:text;background-clip:text;color:transparent;display:block;animation:float 3s ease-in-out infinite}
+  .stat-lbl{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+
+  /* ── LAYOUT ── */
+  .container{max-width:1060px;margin:0 auto;padding:40px 30px}
+
+  /* ── CATEGORY SECTIONS ── */
+  .category-title{font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;padding:10px 20px;border-radius:25px;display:inline-block;margin:40px 0 20px}
+  .cat-exec  {background:rgba(250,112,154,.15);color:#fa709a;border:1px solid rgba(250,112,154,.3)}
+  .cat-ai    {background:rgba(108,99,255,.15);color:#a78bfa;border:1px solid rgba(108,99,255,.3)}
+  .cat-jira  {background:rgba(67,233,123,.15);color:#6ee7b7;border:1px solid rgba(67,233,123,.3)}
+  .cat-git   {background:rgba(79,172,254,.15);color:#7dd3fc;border:1px solid rgba(79,172,254,.3)}
+  .cat-resil {background:rgba(255,215,0,.15);color:#fcd34d;border:1px solid rgba(255,215,0,.3)}
+  .cat-ui    {background:rgba(0,242,254,.15);color:#67e8f9;border:1px solid rgba(0,242,254,.3)}
+
+  /* ── AGENT CARDS ── */
+  .agent-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px 26px;margin-bottom:20px;animation:fadeInUp .5s ease;transition:border-color .3s}
+  .agent-card:hover{border-color:rgba(108,99,255,.4)}
+  .agent-card.c-exec  {border-left:3px solid #fa709a}
+  .agent-card.c-ai    {border-left:3px solid #a78bfa}
+  .agent-card.c-jira  {border-left:3px solid #6ee7b7}
+  .agent-card.c-git   {border-left:3px solid #7dd3fc}
+  .agent-card.c-resil {border-left:3px solid #fcd34d}
+  .agent-card.c-ui    {border-left:3px solid #67e8f9}
+
+  .agent-header{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+  .agent-num{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;font-weight:900;font-size:13px;color:white;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+  .num-exec  {background:linear-gradient(135deg,#fa709a,#ee0979)}
+  .num-ai    {background:linear-gradient(135deg,#6c63ff,#f093fb)}
+  .num-jira  {background:linear-gradient(135deg,#43e97b,#38f9d7)}
+  .num-git   {background:linear-gradient(135deg,#4facfe,#00f2fe)}
+  .num-resil {background:linear-gradient(135deg,#ffd700,#f37335)}
+  .num-ui    {background:linear-gradient(135deg,#00f2fe,#0575e6)}
+
+  .agent-title-block{flex:1}
+  .agent-title{font-size:18px;font-weight:800;background:linear-gradient(90deg,#e2e8f0,#a78bfa 60%,#67e8f9);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shimmer 4s linear infinite}
+  .agent-subtitle{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:2px}
+  .tech-tag{display:inline-block;padding:3px 12px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:1px;white-space:nowrap}
+  .tag-ai   {background:rgba(108,99,255,.2);color:#c4b5fd;border:1px solid rgba(108,99,255,.3)}
+  .tag-int  {background:rgba(67,233,123,.2);color:#6ee7b7;border:1px solid rgba(67,233,123,.3)}
+  .tag-tool {background:rgba(79,172,254,.2);color:#7dd3fc;border:1px solid rgba(79,172,254,.3)}
+  .tag-orch {background:rgba(255,215,0,.2);color:#fcd34d;border:1px solid rgba(255,215,0,.3)}
+
+  /* ── DESC BOXES ── */
+  .desc-box{background:var(--card2);border-radius:8px;padding:12px 16px;margin-bottom:10px;border:1px solid rgba(255,255,255,.04);font-size:13px}
+  .desc-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+  .label-what{color:#a78bfa} .label-why{color:#67e8f9} .label-tech{color:#6ee7b7}
+
+  /* ── Q&A ── */
+  .qa-divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:14px 0}
+  .qa-block{background:rgba(108,99,255,.04);border:1px solid rgba(108,99,255,.12);border-radius:10px;padding:13px 16px;margin-bottom:10px}
+  .qa-q{font-weight:700;color:#fbbf24;font-size:12.5px;margin-bottom:7px;display:flex;align-items:flex-start;gap:8px}
+  .qa-q::before{content:"Q";display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:linear-gradient(135deg,#f59e0b,#ef4444);border-radius:4px;font-size:9px;font-weight:900;color:white;flex-shrink:0;margin-top:1px}
+  .qa-a{color:#cbd5e1;font-size:12.5px;line-height:1.65;padding-left:26px}
+  .qa-a::before{content:"→ ";color:#6c63ff;font-weight:700}
+
+  /* ── SUMMARY TABLE ── */
+  .summary-section{background:linear-gradient(135deg,#1a1d27,#1e2130);border:1px solid var(--border);border-radius:18px;padding:30px;margin:40px 0;animation:borderGlow 3s ease-in-out infinite}
+  .summary-title{font-size:24px;font-weight:900;background:linear-gradient(90deg,#ffd700,#fa709a,#4facfe,#43e97b);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shimmer 4s linear infinite;text-align:center;margin-bottom:22px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  thead tr{background:linear-gradient(90deg,rgba(108,99,255,.2),rgba(240,147,251,.1))}
+  th{padding:10px 14px;text-align:left;font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#a78bfa;border-bottom:1px solid rgba(108,99,255,.3)}
+  td{padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(108,99,255,.05)}
+  .td-a{font-family:'Courier New',monospace;color:#67e8f9;font-weight:600;font-size:11px}
+  .td-t{color:#c4b5fd;font-size:11px}
+  .td-p{color:#86efac;font-size:11px}
+
+  /* ── GENERAL QA ── */
+  .general-section{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:26px;margin-bottom:28px}
+  .general-title{font-size:18px;font-weight:800;background:linear-gradient(90deg,#ffd700,#fa709a);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+
+  /* ── MINI CARD (agents sans Q&A) ── */
+  .mini-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:14px;display:flex;align-items:flex-start;gap:14px}
+  .mini-body .mini-title{font-size:15px;font-weight:700;color:#e2e8f0;margin-bottom:4px}
+  .mini-body .mini-sub{font-size:11px;color:var(--muted);margin-bottom:6px}
+  .mini-body .mini-desc{font-size:12.5px;color:#cbd5e1;line-height:1.6}
+
+  /* ── PRINT BTN ── */
+  .print-btn{position:fixed;bottom:28px;right:28px;background:linear-gradient(135deg,#6c63ff,#f093fb);color:white;border:none;padding:13px 22px;border-radius:50px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 8px 28px rgba(108,99,255,.4);z-index:999;transition:transform .2s}
+  .print-btn:hover{transform:scale(1.06)}
+
+  /* ── DIVIDER ── */
+  .section-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(108,99,255,.4),rgba(240,147,251,.4),transparent);margin:10px 0 30px}
+
+  /* ── PRINT ── */
+  @media print{
+    body{background:white!important;color:#1a1a2e!important}
+    .hero{background:linear-gradient(135deg,#6c63ff,#f093fb)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .hero h1,.hero-tag{color:white!important;background:none!important;-webkit-text-fill-color:white}
+    .hero p,.stat-lbl{color:rgba(255,255,255,.8)!important}
+    .stat-num{color:white!important;background:none!important;-webkit-text-fill-color:white}
+    .agent-card,.mini-card{background:#f8f9ff!important;border:1px solid #e0e0ff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .agent-title{color:#6c63ff!important;background:none!important;-webkit-text-fill-color:#6c63ff}
+    .mini-body .mini-title{color:#2c3e50!important}
+    .desc-box{background:#f0f0ff!important}
+    .qa-block{background:#fff9f0!important;border:1px solid #ffe0a0!important}
+    .qa-q{color:#b7791f!important}
+    .qa-a{color:#374151!important}
+    .summary-section{background:#f5f3ff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .summary-title{color:#6c63ff!important;background:none!important;-webkit-text-fill-color:#6c63ff}
+    thead tr{background:#ede9fe!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    th{color:#6c63ff!important}
+    .td-a{color:#0891b2!important} .td-t{color:#7c3aed!important} .td-p{color:#059669!important}
+    .print-btn{display:none!important}
+    .agent-card,.mini-card,.qa-block,.summary-section{break-inside:avoid}
+    .agent-num{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .category-title{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .general-section{background:#f8f9ff!important;border:1px solid #e0e0ff!important}
+  }
+</style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">⬇ Sauvegarder PDF</button>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">Framework QA — Guide Complet</div>
+  <h1>39 Agents IA pour la QA</h1>
+  <p>Explication de chaque agent + Questions clients avec réponses<br>Python (pytest-bdd) · JavaScript (Playwright BDD) · Groq LLM</p>
+  <div class="hero-stats">
+    <div class="stat-item"><span class="stat-num">30</span><span class="stat-lbl">Agents Python</span></div>
+    <div class="stat-item"><span class="stat-num">9</span><span class="stat-lbl">Agents JavaScript</span></div>
+    <div class="stat-item"><span class="stat-num">10</span><span class="stat-lbl">Techniques IA</span></div>
+    <div class="stat-item"><span class="stat-num">2</span><span class="stat-lbl">Frameworks</span></div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ══════════════════════════════════════════════════════════════
+     CATÉGORIE 1 — TESTS & EXÉCUTION
+══════════════════════════════════════════════════════════════ -->
+<span class="category-title cat-exec">🚀 Tests &amp; Exécution — 5 agents</span>
+<div class="section-divider"></div>
+
+<!-- api-execute-agent -->
+<div class="agent-card c-exec">
+  <div class="agent-header">
+    <div class="agent-num num-exec">1</div>
+    <div class="agent-title-block">
+      <div class="agent-title">api-execute-agent.py</div>
+      <div class="agent-subtitle">Lance les tests pytest avec markers</div>
+    </div>
+    <span class="tech-tag tag-tool">EXECUTION</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Lance pytest avec des markers configurables (<code>--markers=smoke</code>), collecte les résultats dans allure-results, et pilote l'exécution de la suite complète ou partielle.</div>
+  <div class="desc-box"><div class="desc-label label-why">Pourquoi c'est utile</div>Point d'entrée unique pour déclencher les tests depuis n'importe quel contexte : local, CI/CD, ou autre agent.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Comment vous déclenchez les tests en CI ?</div><div class="qa-a">L'api-execute-agent est le point d'entrée unique. Il accepte des markers pytest (smoke, regression, critical) et collecte automatiquement les résultats dans allure-results. Le pipeline CI appelle cet agent avec le marker souhaité. On peut également l'appeler depuis d'autres agents, par exemple smoke-regression-agent l'utilise pour lancer 3 runs consécutifs lors de la détection de flaky tests.</div></div>
+</div>
+
+<!-- report-agent -->
+<div class="agent-card c-exec">
+  <div class="agent-header">
+    <div class="agent-num num-exec">2</div>
+    <div class="agent-title-block">
+      <div class="agent-title">report-agent.py</div>
+      <div class="agent-subtitle">Pipeline complet run → rapport Allure</div>
+    </div>
+    <span class="tech-tag tag-tool">REPORTING</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Orchestre le pipeline complet : exécuter les tests BDD, générer le rapport HTML Allure, l'ouvrir dans le navigateur. Commandes : <code>run / generate / serve / full</code>.</div>
+  <div class="desc-box"><div class="desc-label label-why">Pourquoi c'est utile</div>Une seule commande (<code>full</code>) remplace 3 commandes manuelles. En CI, il enchaîne automatiquement exécution → rapport → notification.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Comment vous consultez les résultats après un run ?</div><div class="qa-a">Le report-agent génère un rapport Allure HTML avec toutes les métriques : pass/fail rate, durée, trends historiques, screenshots d'échecs. En local, il ouvre automatiquement le navigateur. En CI, le rapport est publié comme artifact téléchargeable. Le rapport Allure est le standard industrie pour les rapports de tests — il contient les étapes BDD Given/When/Then et les détails de chaque assertion.</div></div>
+</div>
+
+<!-- api-reporter-agent -->
+<div class="agent-card c-exec">
+  <div class="agent-header">
+    <div class="agent-num num-exec">3</div>
+    <div class="agent-title-block">
+      <div class="agent-title">api-reporter-agent.py</div>
+      <div class="agent-subtitle">Génération rapport Allure standalone</div>
+    </div>
+    <span class="tech-tag tag-tool">ALLURE</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Génère le rapport Allure HTML depuis <code>allure-results/</code> existants. Utilisé quand les résultats sont déjà collectés et qu'on veut juste publier le rapport.</div>
+</div>
+
+<!-- smoke-regression-agent -->
+<div class="agent-card c-exec">
+  <div class="agent-header">
+    <div class="agent-num num-exec">4</div>
+    <div class="agent-title-block">
+      <div class="agent-title">smoke-regression-agent.py</div>
+      <div class="agent-subtitle">Smoke · Critical · Regression · Go/No-Go</div>
+    </div>
+    <span class="tech-tag tag-ai">GO/NO-GO</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Lance des suites ciblées : <code>smoke</code> (5 TCs rapides), <code>critical</code> (9 TCs bloquants), <code>regression</code> (suite complète), et émet un verdict <strong>GO / NO-GO</strong> pour la mise en production basé sur les résultats.</div>
+  <div class="desc-box"><div class="desc-label label-why">Pourquoi c'est utile</div>En pré-prod, on ne lance pas les 50 tests — on lance les 5 smoke tests en 2 minutes. Si ça passe, on déploie. Si un TC critique échoue, NO-GO automatique sans attendre le rapport complet.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Comment vous savez qu'une release peut partir en prod rapidement ?</div><div class="qa-a">Le smoke-regression-agent lance d'abord les 5 tests smoke critiques en 2 minutes. S'ils passent tous : GO provisoire. Ensuite les 9 tests critical en 5 minutes. S'ils passent : GO confirmé. Le verdict est automatique avec le détail des TCs en échec. C'est beaucoup plus rapide que d'attendre la suite de régression complète de 30 minutes avant de décider.</div></div>
+</div>
+
+<!-- api-spec-agent -->
+<div class="agent-card c-exec">
+  <div class="agent-header">
+    <div class="agent-num num-exec">5</div>
+    <div class="agent-title-block">
+      <div class="agent-title">api-spec-agent.py</div>
+      <div class="agent-subtitle">Extraction US depuis spec OpenAPI / Markdown</div>
+    </div>
+    <span class="tech-tag tag-ai">STRUCTURED OUTPUT</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Lit une spec API (fichier Markdown, OpenAPI YAML, ou texte libre) et extrait automatiquement les endpoints, méthodes HTTP, et user stories dans un fichier <code>docs/spec-output.json</code> consommable par api-generate-agent.</div>
+  <div class="desc-box"><div class="desc-label label-why">Pourquoi c'est utile</div>Permet de démarrer un projet QA depuis zéro à partir d'une spec. En entrée : un fichier spec. En sortie : les user stories structurées prêtes pour la génération de TCs.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Vous partez de quoi pour créer les tests d'une nouvelle API ?</div><div class="qa-a">On part de la spec API — OpenAPI YAML, Swagger, ou même un fichier Markdown de description. L'api-spec-agent lit ce fichier et extrait automatiquement tous les endpoints avec leurs méthodes HTTP, paramètres et réponses attendues. Le résultat est un JSON structuré que les agents suivants (tc-generator, api-generate) utilisent pour créer les TCs et le code de test. Pipeline complet : spec → user stories → feature files → code de test.</div></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     CATÉGORIE 2 — ANALYSE & INTELLIGENCE ARTIFICIELLE
+══════════════════════════════════════════════════════════════ -->
+<span class="category-title cat-ai">🧠 Analyse &amp; Intelligence Artificielle — 13 agents</span>
+<div class="section-divider"></div>
+
+<!-- triage-agent -->
+<div class="agent-card c-ai">
+  <div class="agent-header">
+    <div class="agent-num num-ai">6</div>
+    <div class="agent-title-block">
+      <div class="agent-title">triage-agent.py</div>
+      <div class="agent-subtitle">Confidence Scoring · Classification des échecs</div>
+    </div>
+    <span class="tech-tag tag-ai">CONFIDENCE SCORING</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Classe chaque échec Allure en : <code>real_bug</code>, <code>flaky</code>, <code>env_issue</code>, <code>false_positive</code> — avec un score de confiance 0.0-1.0. Si <code>confidence &lt; 0.70</code> → marqué pour revue humaine.</div>
+  <div class="desc-box"><div class="desc-label label-tech">Technique</div><code>chat_confident()</code> — retourne <code>{response, confidence, reasoning, needs_human_review}</code>. Pas de classification binaire — chaque décision est probabiliste.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Comment l'agent distingue un vrai bug d'un test flaky ?</div><div class="qa-a">Il analyse le message d'erreur, le stack trace et le nom du test. Un AssertionError sur une valeur métier = probable real_bug. Un ConnectionTimeout ou StaleElement = probable flaky. Le Confidence Scoring ajoute "j'en suis sûr à 82%" — si le score est bas (&lt;0.70), l'agent ne décide pas seul et marque pour revue humaine. On automatise les décisions à haute confiance, on escalade les cas douteux.</div></div>
+</div>
+
+<!-- rca-agent -->
+<div class="agent-card c-ai">
+  <div class="agent-header">
+    <div class="agent-num num-ai">7</div>
+    <div class="agent-title-block">
+      <div class="agent-title">rca-agent.py</div>
+      <div class="agent-subtitle">Chain of Thought · Root Cause Analysis</div>
+    </div>
+    <span class="tech-tag tag-ai">CHAIN OF THOUGHT</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Remonte jusqu'à la cause racine des échecs. Pas juste "TC-023 a échoué" mais "5 tests échouent parce que le service auth retourne un token expiré depuis la v2.1.0". Groupe les échecs par cause.</div>
+  <div class="desc-box"><div class="desc-label label-tech">Technique</div><strong>CoT</strong> Phase 1 (ÉTAPE 1→2→CONCLUSION) + <strong>Structured Output</strong> Phase 2 pour le rapport structuré.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">C'est quoi Chain of Thought et pourquoi ici ?</div><div class="qa-a">Chain of Thought force l'IA à raisonner étape par étape avant de conclure. Sans ça, le LLM saute directement à une conclusion qui peut être fausse. Avec CoT : "ÉTAPE 1 — j'analyse les patterns d'erreur. ÉTAPE 2 — je cherche les corrélations avec les changements récents. CONCLUSION — la cause est X." Ça réduit les erreurs d'analyse de 30-40% sur les diagnostics complexes.</div></div>
+</div>
+
+<!-- bug-analyzer -->
+<div class="agent-card c-ai">
+  <div class="agent-header">
+    <div class="agent-num num-ai">8</div>
+    <div class="agent-title-block">
+      <div class="agent-title">bug-analyzer.py</div>
+      <div class="agent-subtitle">CoT + Structured Output · Patch automatique</div>
+    </div>
+    <span class="tech-tag tag-ai">AUTO-PATCH</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Analyse un échec de test et génère un patch de correction. Avec <code>--apply</code> : applique automatiquement le patch avec backup dans <code>docs/bug-analyzer-backups/</code>.</div>
+  <div class="desc-box"><div class="desc-label label-tech">Technique</div>CoT Phase 1 + <code>PATCH_SCHEMA</code> : <code>file_path</code>, <code>original_code</code>, <code>fixed_code</code>, <code>safe_to_autofix</code>. Le champ <code>safe_to_autofix</code> empêche l'application des corrections risquées.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Vous n'avez pas peur que l'IA casse du code en appliquant des patches ?</div><div class="qa-a">C'est pour ça qu'on a safe_to_autofix. L'agent évalue lui-même si la correction est sans risque. Si la logique est complexe, safe_to_autofix = false et le patch est présenté pour revue sans être appliqué. Avant toute application, le fichier original est sauvegardé. La rollback est instantanée. On automatise uniquement les corrections à faible risque.</div></div>
+</div>
+
+<!-- coverage-agent -->
+<div class="agent-card c-ai">
+  <div class="agent-header">
+    <div class="agent-num num-ai">9</div>
+    <div class="agent-title-block">
+      <div class="agent-title">coverage-agent.py</div>
+      <div class="agent-subtitle">Chain of Thought · Analyse de couverture API</div>
+    </div>
+    <span class="tech-tag tag-ai">COT</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Lit les fichiers <code>.feature</code> et mappe la couverture sur 6 dimensions : CRUD, auth, erreurs HTTP, validations, edge cases, flows E2E. Génère un rapport HTML avec score par user story.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Comment tu sais que tes tests couvrent tous les endpoints ?</div><div class="qa-a">Le coverage-agent analyse tous les fichiers Gherkin et les mappe aux endpoints de la spec. Il calcule 6 types de couverture. Le résultat est un rapport HTML avec un score par user story. Si un endpoint n'est pas couvert, l'agent utilise Chain of Thought pour suggérer les scénarios à créer, avec le Gherkin prêt à copier-coller.</div></div>
+</div>
+
+<!-- tc-generator-agent -->
+<div class="agent-card c-ai">
+  <div class="agent-header">
+    <div class="agent-num num-ai">10</div>
+    <div class="agent-title-block">
+      <div class="agent-title">tc-generator-agent.py</div>
+      <div class="agent-subtitle">Structured Output · Génération de cas de tests</div>
+    </div>
+    <span class="tech-tag tag-ai">STRUCTURED OUTPUT</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Génère des cas de tests complets (Given/When/Then) depuis une User Story. Schema strict : <code>tc_id, us_id, type, priority, title, given, when, then, expected_status, tags</code>.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Pourquoi Structured Output plutôt que du texte libre ?</div><div class="qa-a">Sans Structured Output, le LLM répond en texte libre. Extraire tc_id ou expected_status nécessite du parsing regex qui casse dès que l'IA change sa formulation. Avec Structured Output, on impose un schéma JSON — le code reçoit directement un dictionnaire Python propre. C'est la différence entre une API documentée et scraper un site web.</div></div>
+</div>
+
+<!-- api-generate-agent -->
+<div class="agent-card c-ai">
+  <div class="agent-header">
+    <div class="agent-num num-ai">11</div>
+    <div class="agent-title-block">
+      <div class="agent-title">api-generate-agent.py</div>
+      <div class="agent-subtitle">Structured Output · Génération de code BDD</div>
+    </div>
+    <span class="tech-tag tag-ai">CODE GEN</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Lit les fichiers <code>.feature</code> et génère automatiquement les fichiers Python de tests BDD (<code>test_*_bdd.py</code>) avec imports, step definitions et structure pytest-bdd. Support <code>--dry-run</code>.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Vous générez du code automatiquement — comment vous gérez la qualité ?</div><div class="qa-a">L'agent propose un --dry-run pour prévisualiser avant écriture. Le code généré suit les conventions pytest-bdd et les imports du projet existant. On génère la structure mécanique (imports, fixtures, decorators) — la logique des steps reste écrite par les ingénieurs. C'est une automatisation de la plomberie, pas de la logique métier.</div></div>
+</div>
+
+<!-- verifier-agent -->
+<div class="agent-card c-ai">
+  <div class="agent-header">
+    <div class="agent-num num-ai">12</div>
+    <div class="agent-title-block">
+      <div class="agent-title">verifier-agent.py</div>
+      <div class="agent-subtitle">Adversarial Prompting · Vérification par contradiction</div>
+    </div>
+    <span class="tech-tag tag-ai">ADVERSARIAL</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Tente de <strong>réfuter</strong> les résultats produits par les autres agents. Vérifie 5 modes : gherkin, bug, kpi, sync, tc/all. Retourne VALID / INVALID / WARNING.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Comment tu garantis que ton IA ne fabrique pas de fausses alertes ?</div><div class="qa-a">Notre verifier-agent utilise l'Adversarial Prompting. Pour chaque résultat critique, un second agent a pour seul rôle de prouver que le premier a tort. Il compare la conclusion avec les données brutes. Si il ne trouve pas d'erreur : VALID. Si il y a une incohérence : INVALID. C'est la logique d'un audit indépendant — on ne laisse jamais un seul agent avoir le dernier mot sur une décision critique.</div></div>
+</div>
+
+<!-- flaky-agent -->
+<div class="agent-card c-ai">
+  <div class="agent-header">
+    <div class="agent-num num-ai">13</div>
+    <div class="agent-title-block">
+      <div class="agent-title">flaky-agent.py</div>
+      <div class="agent-subtitle">Détection flaky · Score instabilité · Quarantaine</div>
+    </div>
+    <span class="tech-tag tag-ai">FLAKY DETECTION</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Lance N runs consécutifs, calcule le score d'instabilité de chaque TC (flaky si échec sur ≥ 1/3 des runs), émet un Go/No-Go, et peut mettre un test en quarantaine dans Jira automatiquement.</div>
+  <div class="desc-box"><div class="desc-label label-tech">Technique</div>Seuil <code>FLAKY_THRESHOLD = 0.34</code>. Si TC échoue sur ≥ 34% des runs → flaky. Intégration Jira pour la quarantaine automatique.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Comment vous gérez les tests flaky qui polluent vos résultats de CI ?</div><div class="qa-a">Le flaky-agent lance automatiquement 3 runs consécutifs en cas de doute. Si un TC échoue sur au moins 1 run sur 3, il est classé flaky avec un score d'instabilité. L'agent peut automatiquement ouvrir un ticket Jira de quarantaine pour isoler ce test du pipeline principal. Les tests en quarantaine continuent à tourner mais leurs résultats n'impactent pas le verdict du Quality Gate. On ne supprime pas les flaky tests — on les isole le temps de les corriger.</div></div>
+</div>
+
+<!-- qa-agent -->
+<div class="agent-card c-ai">
+  <div class="agent-header">
+    <div class="agent-num num-ai">14</div>
+    <div class="agent-title-block">
+      <div class="agent-title">qa-agent.py</div>
+      <div class="agent-subtitle">Analyse qualité du code de tests via LLM</div>
+    </div>
+    <span class="tech-tag tag-ai">CODE REVIEW</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Lit tous les fichiers <code>test_*.py</code> et analyse via LLM : couverture des cas positifs/négatifs, qualité des assertions, lisibilité, bonnes pratiques. Produit <code>docs/qa-report.md</code>.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Qui revue la qualité de vos tests eux-mêmes ?</div><div class="qa-a">Le qa-agent. Il analyse chaque fichier de test et évalue : est-ce que tous les cas positifs et négatifs sont couverts ? Les assertions sont-elles précises ou trop génériques ? Les fixtures sont-elles bien utilisées ? Il produit un rapport Markdown avec les points forts, les axes d'amélioration et les recommandations prioritaires. C'est un code review automatique de la suite de tests, pas du code applicatif.</div></div>
+</div>
+
+<!-- kpi-agent -->
+<div class="agent-card c-ai">
+  <div class="agent-header">
+    <div class="agent-num num-ai">15</div>
+    <div class="agent-title-block">
+      <div class="agent-title">kpi-agent.py</div>
+      <div class="agent-subtitle">Dashboard KPIs · Quality Gate · Trends</div>
+    </div>
+    <span class="tech-tag tag-tool">KPI DASHBOARD</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Calcule et publie les KPIs QA : pass rate, fail rate, durée d'exécution, tendances historiques. Génère <code>environment.properties</code> (widget Allure) et <code>docs/kpi-dashboard.html</code>.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Comment vous mesurez la qualité de votre suite de tests sur la durée ?</div><div class="qa-a">Le kpi-agent calcule les métriques à chaque run et les stocke dans un baseline JSON. Le dashboard HTML montre les tendances : est-ce que le pass rate s'améliore d'un sprint à l'autre ? Quelle est la durée d'exécution moyenne ? Quels TCs ont le plus de flakiness ? Ces métriques permettent de prouver à un client que la qualité de la suite s'améliore dans le temps, pas seulement que les tests passent aujourd'hui.</div></div>
+</div>
+
+<!-- release-advisor-agent -->
+<div class="agent-card c-ai">
+  <div class="agent-header">
+    <div class="agent-num num-ai">16</div>
+    <div class="agent-title-block">
+      <div class="agent-title">release-advisor-agent.py</div>
+      <div class="agent-subtitle">Self-Consistency · Décision Go/No-Go</div>
+    </div>
+    <span class="tech-tag tag-ai">SELF-CONSISTENCY</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Agrège KPIs + résultats + métriques pour recommander Go/No-Go. Pose la même question 3× avec températures différentes → vote majoritaire.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Pourquoi 3 appels LLM au lieu d'un seul pour la décision de release ?</div><div class="qa-a">C'est la technique Self-Consistency. Un seul appel peut varier. En posant la même question 3 fois, on simule 3 experts indépendants. Si 3/3 disent NO-GO, la décision est solide. Si c'est 2/1, on a un accord majoritaire mais avec un signal de risque. Si c'est 1-1-1, on passe en revue humaine. C'est la logique d'un comité de release à 3 personnes.</div></div>
+</div>
+
+<!-- predictive-agent -->
+<div class="agent-card c-ai">
+  <div class="agent-header">
+    <div class="agent-num num-ai">17</div>
+    <div class="agent-title-block">
+      <div class="agent-title">predictive-agent.py</div>
+      <div class="agent-subtitle">Predictive Analytics · Prédire avant l'échec</div>
+    </div>
+    <span class="tech-tag tag-ai">PREDICTIVE AI</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Prédit quels TCs vont échouer au prochain run, si le Quality Gate va passer, quels tests deviennent flaky, et la pass rate dans 3 runs. Source : <code>memory/episodes.jsonl</code>.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Comment vous pouvez prédire quels tests vont échouer ?</div><div class="qa-a">On combine deux approches : analyse déterministe des tendances (failure_rate historique, direction de la courbe, score de volatilité) + LLM avec Chain of Thought pour la prédiction contextuelle. Ce n'est pas de la voyance, c'est de la régression statistique augmentée par du LLM pour les cas ambigus.</div></div>
+</div>
+
+<!-- observability-agent -->
+<div class="agent-card c-ai">
+  <div class="agent-header">
+    <div class="agent-num num-ai">18</div>
+    <div class="agent-title-block">
+      <div class="agent-title">observability-agent.py</div>
+      <div class="agent-subtitle">Tracing · Monitoring des agents IA</div>
+    </div>
+    <span class="tech-tag tag-ai">OBSERVABILITY</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Surveille les performances des agents IA : durée des appels LLM, taux d'erreur, coût estimé. Lit <code>logs/traces.jsonl</code> écrit automatiquement par <code>tracer.py</code> à chaque appel LLM.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Comment vous monitorez vos agents IA ?</div><div class="qa-a">Chaque appel LLM écrit automatiquement une trace dans logs/traces.jsonl avec : durée en ms, taille du prompt, score de confiance, modèle, erreurs, retries. L'observability-agent analyse ces traces et détecte les anomalies : appel &gt;8s, burst d'erreurs, confiance en chute. C'est l'APM (Application Performance Monitoring) appliqué aux agents IA — la même logique que Datadog pour les microservices.</div></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     CATÉGORIE 3 — JIRA & INTÉGRATION
+══════════════════════════════════════════════════════════════ -->
+<span class="category-title cat-jira">🔗 Jira &amp; Intégration — 7 agents</span>
+<div class="section-divider"></div>
+
+<!-- jira-agent -->
+<div class="agent-card c-jira">
+  <div class="agent-header">
+    <div class="agent-num num-jira">19</div>
+    <div class="agent-title-block">
+      <div class="agent-title">jira-agent.py</div>
+      <div class="agent-subtitle">Setup complet du projet Jira</div>
+    </div>
+    <span class="tech-tag tag-int">JIRA SETUP</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Crée le projet Jira complet : projet "Hotel Booking API Automation", board Scrum, sprint de 3 semaines, et upload du document de spécification complet en ADF (Atlassian Document Format).</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Comment vous démarrez un projet QA en partant de zéro ?</div><div class="qa-a">Le jira-agent crée tout en une commande : projet Jira avec la configuration correcte, board Scrum, premier sprint, et le document de spec publié dans Jira pour que toute l'équipe y ait accès. Ensuite user-stories-agent crée les 8 US, test-case-agent crée les sous-tâches TC, et sprint-agent planifie les TCs dans le sprint. En 5 commandes, on a un projet QA complet prêt à démarrer.</div></div>
+</div>
+
+<!-- user-stories-agent -->
+<div class="agent-card c-jira">
+  <div class="agent-header">
+    <div class="agent-num num-jira">20</div>
+    <div class="agent-title-block">
+      <div class="agent-title">user-stories-agent.py</div>
+      <div class="agent-subtitle">Création des 8 User Stories dans Jira</div>
+    </div>
+    <span class="tech-tag tag-int">JIRA STORIES</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Crée US-001 à US-008 dans le backlog du projet Jira HBAPI. Chaque story contient : user story BDD, critères d'acceptance, tableau des cas de test, endpoint et priorité — au format ADF.</div>
+</div>
+
+<!-- test-case-agent -->
+<div class="agent-card c-jira">
+  <div class="agent-header">
+    <div class="agent-num num-jira">21</div>
+    <div class="agent-title-block">
+      <div class="agent-title">test-case-agent.py</div>
+      <div class="agent-subtitle">Création TCs comme sous-tâches Jira</div>
+    </div>
+    <span class="tech-tag tag-int">JIRA TASKS</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Crée les cas de test comme sous-tâches liées à leur User Story dans Jira. Peut aussi générer des fichiers <code>features/*.feature</code> directement depuis les TCs Jira (<code>gherkin</code> mode).</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Comment vous assurez la traçabilité entre les TCs et les user stories ?</div><div class="qa-a">Le test-case-agent crée chaque TC comme une sous-tâche Jira liée à sa User Story parente. Le lien est bidirectionnel : depuis la US, on voit tous ses TCs. Depuis un TC, on voit sa US. De plus, les résultats de tests (passé/échoué) sont synchronisés vers Jira via le status-agent. Un chef de projet peut voir en temps réel l'avancement de chaque US et si les tests correspondants passent.</div></div>
+</div>
+
+<!-- jira-ticket-agent -->
+<div class="agent-card c-jira">
+  <div class="agent-header">
+    <div class="agent-num num-jira">22</div>
+    <div class="agent-title-block">
+      <div class="agent-title">jira-ticket-agent.py</div>
+      <div class="agent-subtitle">Création tickets Bug depuis les échecs Allure</div>
+    </div>
+    <span class="tech-tag tag-ai">LLM + JIRA</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Lit les résultats Allure, analyse chaque échec via LLM, génère des tickets Bug Jira structurés (summary, description, priority, labels) et vérifie les doublons avant création.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Comment vous évitez de créer des doublons dans Jira quand un test échoue plusieurs fois ?</div><div class="qa-a">Le jira-ticket-agent vérifie les tickets existants avant de créer. Il utilise le nom du test et le message d'erreur pour détecter si un ticket similaire est déjà ouvert. Si oui, il ajoute un commentaire sur le ticket existant avec la nouvelle occurrence. Ça évite le bruit dans le backlog et permet de suivre la récurrence d'un bug.</div></div>
+</div>
+
+<!-- sprint-agent -->
+<div class="agent-card c-jira">
+  <div class="agent-header">
+    <div class="agent-num num-jira">23</div>
+    <div class="agent-title-block">
+      <div class="agent-title">sprint-agent.py</div>
+      <div class="agent-subtitle">Gestion cycle de vie des sprints Jira</div>
+    </div>
+    <span class="tech-tag tag-int">JIRA SPRINTS</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Gère complètement les sprints Jira : list, create, start, close, add issues, board Kanban, backlog, transitions manuelles de statut. Interface CLI complète pour le cycle de vie Scrum.</div>
+</div>
+
+<!-- status-agent -->
+<div class="agent-card c-jira">
+  <div class="agent-header">
+    <div class="agent-num num-jira">24</div>
+    <div class="agent-title-block">
+      <div class="agent-title">status-agent.py</div>
+      <div class="agent-subtitle">Synchronisation Allure → Jira</div>
+    </div>
+    <span class="tech-tag tag-int">SYNC</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Lit les résultats Allure et met à jour automatiquement les statuts Jira : <code>passed → Done</code>, <code>failed → In Progress</code> (+ commentaire), <code>broken → In Progress</code>, <code>skipped → To Do</code>.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Le board Jira reflète-il l'état réel des tests en temps réel ?</div><div class="qa-a">Oui, c'est le rôle du status-agent. Après chaque run, il lit allure-results et met à jour automatiquement chaque issue Jira. Un test qui passe passe automatiquement en Done. Un test qui échoue repasse en In Progress avec un commentaire contenant le message d'erreur et la stack trace. Le Product Owner voit l'état réel du projet en ouvrant le board Jira sans attendre un rapport manuel.</div></div>
+</div>
+
+<!-- jira_fetcher_agent -->
+<div class="mini-card">
+  <div class="agent-num num-jira" style="margin-top:4px">25</div>
+  <div class="mini-body">
+    <div class="mini-title">jira_fetcher_agent.py — Client Jira REST partagé</div>
+    <div class="mini-sub">Module support · importé par tous les agents Jira</div>
+    <div class="mini-desc">Client HTTP Jira réutilisable : <code>get_stories</code>, <code>get_issue</code>, <code>create_story</code>, <code>create_epic</code>, <code>link_to_epic</code>, <code>add_comment</code>. Centralise l'authentification et les appels REST. Tous les agents Jira l'importent au lieu de répliquer le code HTTP.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     CATÉGORIE 4 — GIT & DEVOPS
+══════════════════════════════════════════════════════════════ -->
+<span class="category-title cat-git">⚙ Git &amp; DevOps — 2 agents</span>
+<div class="section-divider"></div>
+
+<!-- git-agent -->
+<div class="agent-card c-git">
+  <div class="agent-header">
+    <div class="agent-num num-git">26</div>
+    <div class="agent-title-block">
+      <div class="agent-title">git-agent.py</div>
+      <div class="agent-subtitle">Commit · Push · PR · Release via LLM</div>
+    </div>
+    <span class="tech-tag tag-ai">LLM COMMIT</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Analyse le diff git, génère un message de commit au format <strong>Conventional Commits</strong> via LLM, pousse sur GitHub et crée optionnellement une PR ou une release taguée.</div>
+  <div class="desc-box"><div class="desc-label label-why">Pourquoi c'est utile</div>Les messages de commit incohérents rendent l'historique git illisible. L'agent génère des messages standardisés (<code>feat(auth): add token refresh endpoint</code>) qui permettent de générer automatiquement le CHANGELOG.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Comment vous gérez les messages de commit sur un projet à plusieurs développeurs ?</div><div class="qa-a">Le git-agent lit le diff git et génère automatiquement un message de commit au format Conventional Commits (feat, fix, chore, test...). Tout le monde utilise l'agent au lieu d'écrire les messages manuellement, ce qui garantit la cohérence. L'avantage : on peut ensuite générer le CHANGELOG automatiquement depuis l'historique git car les messages sont standardisés.</div></div>
+</div>
+
+<!-- github-agent -->
+<div class="agent-card c-git">
+  <div class="agent-header">
+    <div class="agent-num num-git">27</div>
+    <div class="agent-title-block">
+      <div class="agent-title">github-agent.py</div>
+      <div class="agent-subtitle">CI/CD · PR · Release · Issues GitHub complet</div>
+    </div>
+    <span class="tech-tag tag-tool">GITHUB API</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Gestion complète GitHub : déclencher/surveiller les workflows CI, créer/merger des PRs (description LLM), créer des releases taguées, gérer les issues, générer CHANGELOG.md, lister les secrets.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Comment vous intégrez vos tests dans le pipeline CI GitHub ?</div><div class="qa-a">Le github-agent déclenche les workflows GitHub Actions, surveille leur avancement en temps réel, télécharge les artifacts Allure une fois terminés, et crée automatiquement des issues GitHub pour les nouveaux échecs. La commande ci full orchestre tout : trigger → watch → download results → create Jira tickets. On peut aussi déclencher uniquement une suite spécifique (auth, booking_list...) via --suite.</div></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     CATÉGORIE 5 — RÉSILIENCE & INFRASTRUCTURE IA
+══════════════════════════════════════════════════════════════ -->
+<span class="category-title cat-resil">🛡 Résilience &amp; Infrastructure IA — 5 agents</span>
+<div class="section-divider"></div>
+
+<!-- resilience-agent -->
+<div class="agent-card c-resil">
+  <div class="agent-header">
+    <div class="agent-num num-resil">28</div>
+    <div class="agent-title-block">
+      <div class="agent-title">resilience-agent.py</div>
+      <div class="agent-subtitle">Fallback · Circuit Breaker · 3 états</div>
+    </div>
+    <span class="tech-tag tag-orch">CIRCUIT BREAKER</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Si Groq est en panne : basculement automatique Groq → Ollama → Cache → Default. 3 états : CLOSED / OPEN (fail fast après 3 échecs) / HALF_OPEN (1 test après 30s).</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">C'est quoi la différence entre Circuit Breaker et un simple retry ?</div><div class="qa-a">Le retry dit : "essaie 3 fois avec 2s d'attente". Si le service est en panne 5 minutes, tu bloques 6s par appel multiplié par tous tes agents. Le Circuit Breaker dit : "après 3 échecs, je sais que le service est en panne, je ne gaspille plus de temps — je passe au fallback". C'est le pattern standard des microservices resilients, popularisé par Netflix Hystrix.</div></div>
+</div>
+
+<!-- memory-agent -->
+<div class="agent-card c-resil">
+  <div class="agent-header">
+    <div class="agent-num num-resil">29</div>
+    <div class="agent-title-block">
+      <div class="agent-title">memory-agent.py</div>
+      <div class="agent-subtitle">Episodic Memory · Mémoire persistante</div>
+    </div>
+    <span class="tech-tag tag-ai">EPISODIC MEMORY</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Chaque run d'agent est sauvegardé comme un "épisode" dans <code>memory/episodes.jsonl</code>. Les agents suivants lisent l'historique : TC-023 était flaky 3 fois → classifié flaky avec plus de confiance.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Comment vos agents s'améliorent avec le temps ?</div><div class="qa-a">Via la mémoire épisodique. Chaque exécution est sauvegardée. Quand un agent analyse TC-023 au run suivant, il injecte dans son prompt : "Historique TC-023 : flaky×3, real_bug×1, confiance moyenne 0.72, dernier run 2026-06-08". C'est le Context Engineering — enrichir le contexte de l'IA avec des données pertinentes. Plus l'historique est riche, plus les prédictions sont précises.</div></div>
+</div>
+
+<!-- prompt-versioning-agent -->
+<div class="agent-card c-resil">
+  <div class="agent-header">
+    <div class="agent-num num-resil">30</div>
+    <div class="agent-title-block">
+      <div class="agent-title">prompt-versioning-agent.py</div>
+      <div class="agent-subtitle">Semver · A/B test · Rollback de prompts</div>
+    </div>
+    <span class="tech-tag tag-orch">PROMPT VERSIONING</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Versioning semver (1.0.0 → 1.0.1 → 1.1.0) pour les prompts des agents. Chaque modification crée une version. A/B test compare les scores de confiance entre deux versions. Rollback en une commande.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Comment vous gérez la régression quand vous modifiez un prompt ?</div><div class="qa-a">Exactement comme du code : versioning semver. On lance un A/B test qui appelle deux versions du prompt sur les mêmes données et compare les scores de confiance. Si la nouvelle version est moins bonne, rollback en une commande. Tout l'historique est dans Git avec les notes de changement. Un changement de prompt est un diff visible et réversible comme n'importe quel changement de code.</div></div>
+</div>
+
+<!-- support modules -->
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px">
+  <div class="mini-card" style="flex:1;min-width:240px">
+    <div class="agent-num num-resil" style="margin-top:4px">—</div>
+    <div class="mini-body">
+      <div class="mini-title">tracer.py</div>
+      <div class="mini-sub">Support module — Tracing automatique</div>
+      <div class="mini-desc">Instrumente chaque appel LLM via <code>class Span</code>. Écrit automatiquement durée, taille du prompt, confiance, modèle dans <code>logs/traces.jsonl</code>. Importé par <code>llm.py</code>.</div>
+    </div>
+  </div>
+  <div class="mini-card" style="flex:1;min-width:240px">
+    <div class="agent-num num-resil" style="margin-top:4px">—</div>
+    <div class="mini-body">
+      <div class="mini-title">circuit_breaker.py</div>
+      <div class="mini-sub">Support module — Circuit Breaker + Cache</div>
+      <div class="mini-desc">Machine à 3 états (CLOSED/OPEN/HALF_OPEN), cache LLM SHA256 avec TTL 60min, réponses par défaut par fonction. Transparent pour tous les agents via <code>_resilient_call()</code>.</div>
+    </div>
+  </div>
+  <div class="mini-card" style="flex:1;min-width:240px">
+    <div class="agent-num num-resil" style="margin-top:4px">—</div>
+    <div class="mini-body">
+      <div class="mini-title">memory_store.py + prompt_store.py</div>
+      <div class="mini-sub">Support modules — Persistance</div>
+      <div class="mini-desc">Stores JSONL partagés pour la mémoire épisodique et le versioning des prompts. Exposent des APIs propres : <code>record_episode()</code>, <code>get_context_for()</code>, <code>save()</code>, <code>rollback()</code>.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     CATÉGORIE 6 — UI PLAYWRIGHT (JavaScript)
+══════════════════════════════════════════════════════════════ -->
+<span class="category-title cat-ui">🎭 UI Playwright BDD — 9 agents JavaScript</span>
+<div class="section-divider"></div>
+
+<!-- execute-agent.js -->
+<div class="agent-card c-ui">
+  <div class="agent-header">
+    <div class="agent-num num-ui">31</div>
+    <div class="agent-title-block">
+      <div class="agent-title">execute-agent.js</div>
+      <div class="agent-subtitle">Pipeline AI : tests → analyse → re-run</div>
+    </div>
+    <span class="tech-tag tag-ai">SELF-HEALING</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Orchestre le pipeline Playwright complet : lance les tests → si des échecs, appelle l'IA pour les analyser → relance uniquement les tests échoués après correction. Supporte <code>--features=Id01,Id02</code> pour cibler des features.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Votre pipeline UI se relance-t-il automatiquement après un échec ?</div><div class="qa-a">Oui, c'est le principe du Self-Healing Pipeline. L'execute-agent lance les tests, détecte les échecs, appelle l'IA pour analyser et tenter une correction, puis relance uniquement les tests échoués. Si un test passe au second run après correction automatique, le pipeline réussit sans intervention humaine. Pour les échecs nécessitant une intervention humaine, il génère un rapport détaillé avec la root cause.</div></div>
+</div>
+
+<!-- generate-agent.js -->
+<div class="agent-card c-ui">
+  <div class="agent-header">
+    <div class="agent-num num-ui">32</div>
+    <div class="agent-title-block">
+      <div class="agent-title">generate-agent.js</div>
+      <div class="agent-subtitle">Génère features + step definitions Playwright via LLM</div>
+    </div>
+    <span class="tech-tag tag-ai">CODE GEN</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Analyse les gaps de couverture dans les tests Playwright existants et génère de nouveaux fichiers <code>.feature</code> Gherkin + fichiers TypeScript de step definitions via LLM local (Ollama).</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Comment vous complétez la couverture des tests UI automatiquement ?</div><div class="qa-a">Le generate-agent scanne les features et steps existants, identifie les gaps de couverture, et génère de nouveaux fichiers feature + TypeScript. Il utilise Ollama en local — pas d'appel cloud, pas de données qui sortent. Le code généré est du TypeScript Playwright BDD standard que les ingénieurs révisent avant de committer.</div></div>
+</div>
+
+<!-- spec-agent.js -->
+<div class="agent-card c-ui">
+  <div class="agent-header">
+    <div class="agent-num num-ui">33</div>
+    <div class="agent-title-block">
+      <div class="agent-title">spec-agent.js</div>
+      <div class="agent-subtitle">Spec → User Stories → Features + Tickets</div>
+    </div>
+    <span class="tech-tag tag-ai">END-TO-END GEN</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Lit une spec (fichier Markdown, texte libre, ou issue Jira) et génère automatiquement : fichiers <code>.feature</code> Gherkin, step definitions TypeScript, et tickets Jira Stories. Pipeline complet spec → tests + Jira.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">Combien de temps pour démarrer les tests UI d'une nouvelle feature ?</div><div class="qa-a">Avec spec-agent : 5 minutes. Tu donnes la description de la feature, l'agent génère le fichier .feature avec les scénarios Gherkin, les step definitions TypeScript pour Playwright, et les tickets Jira correspondants. Tout est lié. L'ingénieur QA révise et enrichit plutôt que créer de zéro. Sans l'agent, ce travail prend 2-3 heures.</div></div>
+</div>
+
+<!-- mcp-agent.js -->
+<div class="agent-card c-ui">
+  <div class="agent-header">
+    <div class="agent-num num-ui">34</div>
+    <div class="agent-title-block">
+      <div class="agent-title">mcp-agent.js</div>
+      <div class="agent-subtitle">MCP + Playwright · Exploration IA de l'app</div>
+    </div>
+    <span class="tech-tag tag-ai">MCP PROTOCOL</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Démarre le serveur Playwright MCP en local, connecte l'IA (Ollama — 100% local) et lui donne accès à un vrai navigateur. L'IA explore l'application comme un utilisateur humain et documente ce qu'elle trouve.</div>
+  <div class="desc-box"><div class="desc-label label-tech">Technique</div><strong>Model Context Protocol (MCP)</strong> — standard Anthropic qui permet à un LLM d'utiliser des outils externes (ici un navigateur Playwright) via une interface standardisée.</div>
+  <div class="qa-divider"></div>
+  <div class="qa-block"><div class="qa-q">C'est quoi MCP et pourquoi vous l'utilisez ?</div><div class="qa-a">MCP (Model Context Protocol) est le standard créé par Anthropic pour connecter des LLMs à des outils externes. Le mcp-agent connecte l'IA directement à Playwright via MCP, ce qui lui donne un vrai navigateur contrôlable. L'IA peut cliquer, remplir des formulaires, prendre des screenshots, naviguer — exactement comme un testeur humain. Résultat : elle peut explorer l'application, détecter des bugs, et générer des scénarios de tests basés sur ce qu'elle observe réellement dans l'interface.</div></div>
+</div>
+
+<!-- qa-agent.js -->
+<div class="agent-card c-ui">
+  <div class="agent-header">
+    <div class="agent-num num-ui">35</div>
+    <div class="agent-title-block">
+      <div class="agent-title">qa-agent.js</div>
+      <div class="agent-subtitle">Analyse qualité BDD framework Playwright</div>
+    </div>
+    <span class="tech-tag tag-ai">CODE REVIEW</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Scanne le framework Playwright BDD complet et produit via LLM (streaming) une analyse de qualité : couverture, risques, recommandations. Produit <code>docs/QA_ANALYSIS.md</code> et enrichit le RAG.</div>
+</div>
+
+<!-- report-agent.js -->
+<div class="agent-card c-ui">
+  <div class="agent-header">
+    <div class="agent-num num-ui">36</div>
+    <div class="agent-title-block">
+      <div class="agent-title">report-agent.js</div>
+      <div class="agent-subtitle">Rapport exécution + root cause via LLM</div>
+    </div>
+    <span class="tech-tag tag-ai">LLM REPORT</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Lit les résultats Allure, génère via LLM (streaming Ollama) un rapport professionnel d'exécution avec root cause analysis des échecs. Produit <code>docs/LATEST_TEST_REPORT.md</code>.</div>
+</div>
+
+<!-- jira-agent.js -->
+<div class="agent-card c-ui">
+  <div class="agent-header">
+    <div class="agent-num num-ui">37</div>
+    <div class="agent-title-block">
+      <div class="agent-title">jira-agent.js</div>
+      <div class="agent-subtitle">Matrice traçabilité Jira ↔ features Playwright</div>
+    </div>
+    <span class="tech-tag tag-int">TRACEABILITY</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Récupère les user stories Jira, les mappe aux features Playwright via Groq, génère <code>docs/JIRA_TRACEABILITY.md</code> (matrice stories ↔ tests) et enrichit le RAG (<code>qa-knowledge.md</code>).</div>
+</div>
+
+<!-- jira-ticket-agent.js -->
+<div class="agent-card c-ui">
+  <div class="agent-header">
+    <div class="agent-num num-ui">38</div>
+    <div class="agent-title-block">
+      <div class="agent-title">jira-ticket-agent.js</div>
+      <div class="agent-subtitle">Tickets Bug depuis allure-results Playwright</div>
+    </div>
+    <span class="tech-tag tag-int">JIRA AUTO</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Lit les allure-results du framework Playwright, analyse les échecs UI avec Groq, crée des tickets Bug dans Jira avec vérification des doublons. Produit <code>docs/JIRA_TICKETS_CREATED.md</code>.</div>
+</div>
+
+<!-- git-agent.js -->
+<div class="agent-card c-ui">
+  <div class="agent-header">
+    <div class="agent-num num-ui">39</div>
+    <div class="agent-title-block">
+      <div class="agent-title">git-agent.js</div>
+      <div class="agent-subtitle">Commit · Push · PR · Release (JS version)</div>
+    </div>
+    <span class="tech-tag tag-ai">LLM COMMIT</span>
+  </div>
+  <div class="desc-box"><div class="desc-label label-what">Ce que c'est</div>Version JavaScript du git-agent pour le framework Playwright. Analyse le diff, génère un message Conventional Commits via Groq, pousse sur GitHub et crée optionnellement une PR ou release.</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     TABLEAU RÉCAPITULATIF
+══════════════════════════════════════════════════════════════ -->
+<div class="summary-section">
+  <div class="summary-title">Récapitulatif — 39 Agents · 10 Techniques IA</div>
+  <table>
+    <thead>
+      <tr><th>Technique IA</th><th>Agents</th><th>Problème résolu</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="td-t">Structured Output</td><td class="td-a">tc-generator, api-generate, bug-analyzer, rca-agent, api-spec-agent</td><td class="td-p">JSON garanti sans parsing fragile</td></tr>
+      <tr><td class="td-t">Chain of Thought</td><td class="td-a">rca-agent, coverage-agent, bug-analyzer, predictive-agent</td><td class="td-p">Raisonnement structuré, moins d'hallucinations</td></tr>
+      <tr><td class="td-t">Confidence Scoring</td><td class="td-a">triage-agent, flaky-agent</td><td class="td-p">Quantifier la certitude, escalader les cas douteux</td></tr>
+      <tr><td class="td-t">Adversarial Prompting</td><td class="td-a">verifier-agent</td><td class="td-p">Détecter les hallucinations par contradiction</td></tr>
+      <tr><td class="td-t">Self-Consistency</td><td class="td-a">release-advisor-agent</td><td class="td-p">Vote majoritaire sur les décisions critiques</td></tr>
+      <tr><td class="td-t">Observability/Tracing</td><td class="td-a">observability-agent + tracer.py</td><td class="td-p">Monitorer les LLM calls comme des microservices</td></tr>
+      <tr><td class="td-t">Prompt Versioning</td><td class="td-a">prompt-versioning-agent</td><td class="td-p">Traçabilité et rollback des prompts</td></tr>
+      <tr><td class="td-t">Fallback / Circuit Breaker</td><td class="td-a">resilience-agent + circuit_breaker.py</td><td class="td-p">Continuité opérationnelle si LLM en panne</td></tr>
+      <tr><td class="td-t">Episodic Memory</td><td class="td-a">memory-agent + memory_store.py</td><td class="td-p">Apprentissage des patterns sur le long terme</td></tr>
+      <tr><td class="td-t">Predictive Analytics</td><td class="td-a">predictive-agent</td><td class="td-p">Prévention avant l'échec plutôt que correction après</td></tr>
+      <tr><td class="td-t">MCP Protocol</td><td class="td-a">mcp-agent.js</td><td class="td-p">LLM avec accès à un vrai navigateur</td></tr>
+      <tr><td class="td-t">Self-Healing Pipeline</td><td class="td-a">execute-agent.js</td><td class="td-p">Tests UI auto-corrigés sans intervention humaine</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     QUESTIONS GÉNÉRALES
+══════════════════════════════════════════════════════════════ -->
+<div class="general-section">
+  <div class="general-title">Questions Générales sur l'Architecture</div>
+  <div class="qa-block"><div class="qa-q">Pourquoi Groq et pas OpenAI ?</div><div class="qa-a">Groq utilise des puces LPU spécialisées 10-20× plus rapides que les GPU. Pour un pipeline QA en CI, la latence compte : 800ms vs 8s change le temps total. De plus, les APIs Groq et OpenAI sont compatibles (même format /openai/v1/) — on peut basculer sur OpenAI en changeant une variable d'environnement.</div></div>
+  <div class="qa-block"><div class="qa-q">Pourquoi deux frameworks — Python pytest-bdd ET JavaScript Playwright ?</div><div class="qa-a">Ils couvrent deux périmètres différents. Le framework Python teste les APIs REST (backend) : appels HTTP, codes de retour, payload JSON. Le framework JavaScript teste l'UI (frontend) : navigation, formulaires, assertions visuelles. Les deux partagent la même philosophie BDD Gherkin et la même intégration Jira, mais les technologies sont adaptées à leur couche respective.</div></div>
+  <div class="qa-block"><div class="qa-q">Comment vous gérez les données sensibles dans les prompts ?</div><div class="qa-a">Les prompts n'envoient jamais de données de production — uniquement des métadonnées : nom du TC, code d'erreur, nom du fichier. Les données sensibles restent sur site. La clé API Groq est dans .env jamais committé dans Git. Pour les contraintes de sécurité strictes, le fallback Ollama permet de tout faire en local sans appel externe.</div></div>
+  <div class="qa-block"><div class="qa-q">Quel est le ROI de ce framework ?</div><div class="qa-a">Sur un projet de 500 TCs avec 2 runs quotidiens : le triage manuel de 50 échecs prend 1-2h. L'agent fait ça en 2 minutes. Sur un mois : 40-80h économisées rien que sur le triage. La génération de TCs et le patch auto ajoutent 20-30h. Pour un consultant à 600€/j, c'est 15-20k€ de valeur mensuelle que le framework délivre automatiquement.</div></div>
+  <div class="qa-block"><div class="qa-q">Quel est votre niveau avec tout ce que vous avez construit ?</div><div class="qa-a">Senior QA Automation Engineer + AI Testing Specialist. Ce framework combine trois domaines normalement séparés : l'automatisation QA (pytest-bdd, Playwright, Allure), le génie logiciel (CI/CD, design patterns), et l'ingénierie IA (LLM, prompting avancé, agents). Ce profil hybride est rare en 2026. TJM estimé Paris : 550-700€/j.</div></div>
+</div>
+
+</div><!-- /container -->
+
+<div style="text-align:center;padding:28px;color:var(--muted);font-size:12px;border-top:1px solid var(--border)">
+  <span style="background:linear-gradient(90deg,#6c63ff,#f093fb,#4facfe);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700">39 Agents IA</span> · Python pytest-bdd + JavaScript Playwright BDD · Groq + Ollama + MCP
+</div>
+
+<script>
+  const items = document.querySelectorAll('.agent-card,.mini-card');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        e.target.style.opacity='1';
+        e.target.style.transform='translateY(0)';
+      }
+    });
+  },{threshold:.08});
+  items.forEach(el=>{
+    el.style.opacity='0';
+    el.style.transform='translateY(18px)';
+    el.style.transition='opacity .45s ease,transform .45s ease';
+    obs.observe(el);
+  });
+</script>
+</body>
+</html>
