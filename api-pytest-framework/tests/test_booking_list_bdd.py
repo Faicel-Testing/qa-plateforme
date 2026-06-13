@@ -1,4 +1,4 @@
-"""US-002 -- GET /booking -- Lister les reservations."""
+"""US-002 -- GET /booking -- Lister reservations"""
 from pytest_bdd import scenarios
 from steps.common_steps import *
 from steps.booking_list_steps import *

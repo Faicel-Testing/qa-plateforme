@@ -15,3 +15,13 @@
 {"ts": "2026-06-11T17:00:27.162366Z", "agent": "git-agent", "fn": "chat", "model": "llama-3.3-70b-versatile", "duration_ms": 4937.6, "prompt_len": 3756, "response_len": 66, "success": true, "retries": 0}
 {"ts": "2026-06-11T17:01:06.332349Z", "agent": "git-agent", "fn": "chat", "model": "llama-3.3-70b-versatile", "duration_ms": 4247.2, "prompt_len": 2525, "response_len": 66, "success": true, "retries": 0}
 {"ts": "2026-06-11T17:13:41.825691Z", "agent": "git-agent", "fn": "chat", "model": "llama-3.3-70b-versatile", "duration_ms": 1534.9, "prompt_len": 2521, "response_len": 39, "success": true, "retries": 0}
+{"ts": "2026-06-11T17:16:54.330180Z", "agent": "git-agent", "fn": "chat", "model": "llama-3.3-70b-versatile", "duration_ms": 1061.7, "prompt_len": 2958, "response_len": 39, "success": true, "retries": 0}
+{"ts": "2026-06-11T17:18:59.716810Z", "agent": "github-agent", "fn": "chat", "model": "llama-3.3-70b-versatile", "duration_ms": 1042.9, "prompt_len": 337, "response_len": 617, "success": true, "retries": 0}
+{"ts": "2026-06-11T17:19:53.123024Z", "agent": "github-agent", "fn": "chat", "model": "llama-3.3-70b-versatile", "duration_ms": 2311.5, "prompt_len": 6593, "response_len": 3045, "success": true, "retries": 0}
+{"ts": "2026-06-13T19:23:55.855553Z", "agent": "api-generate-agent", "fn": "chat", "model": "llama-3.3-70b-versatile", "duration_ms": 2399.2, "prompt_len": 3189, "response_len": 2314, "success": true, "retries": 0}
+{"ts": "2026-06-13T19:25:40.367288Z", "agent": "qa-agent", "fn": "chat", "model": "llama-3.3-70b-versatile", "duration_ms": 2404.2, "prompt_len": 11313, "response_len": 1739, "success": true, "retries": 0}
+{"ts": "2026-06-13T19:33:35.108588Z", "agent": "jira-ticket-agent", "fn": "chat", "model": "llama-3.3-70b-versatile", "duration_ms": 2717.7, "prompt_len": 12287, "response_len": 2802, "success": true, "retries": 0}
+{"ts": "2026-06-13T19:46:19.520685Z", "agent": "memory-agent", "fn": "chat", "model": "llama-3.3-70b-versatile", "duration_ms": 3390.2, "prompt_len": 611, "response_len": 2421, "success": true, "retries": 0}
+{"ts": "2026-06-13T19:46:19.708996Z", "agent": "memory-agent", "fn": "chat_cot", "model": "llama-3.3-70b-versatile", "duration_ms": 3578.5, "prompt_len": 315, "response_len": 2421, "success": true, "retries": 0}
+{"ts": "2026-06-13T19:48:05.879044Z", "agent": "predictive-agent", "fn": "chat", "model": "llama-3.3-70b-versatile", "duration_ms": 1870.6, "prompt_len": 2280, "response_len": 1926, "success": true, "retries": 0}
+{"ts": "2026-06-13T19:49:00.598788Z", "agent": "notification-agent", "fn": "chat", "model": "llama-3.3-70b-versatile", "duration_ms": 1875.4, "prompt_len": 3963, "response_len": 613, "success": true, "retries": 0}

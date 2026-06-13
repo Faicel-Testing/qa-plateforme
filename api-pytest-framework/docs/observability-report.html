@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Observability — LLM Traces Dashboard</title>
+<style>
+  body{font-family:Arial,sans-serif;background:#f0f2f5;color:#333;margin:0;padding:20px}
+  h1{color:#2c3e50} h2{color:#34495e;margin-top:30px}
+  .stat{display:inline-block;background:#fff;border-radius:10px;padding:18px 28px;margin:8px;
+         box-shadow:0 2px 8px rgba(0,0,0,.1);text-align:center;min-width:110px}
+  .stat-val{font-size:30px;font-weight:bold}
+  .stat-lbl{font-size:12px;color:#888;margin-top:4px}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;
+         box-shadow:0 2px 8px rgba(0,0,0,.1);margin-top:12px}
+  th{background:#2c3e50;color:#fff;padding:10px 12px;text-align:left;font-size:13px}
+  td{padding:9px 12px;border-bottom:1px solid #ecf0f1}
+  tr:hover{background:#f8f9fa}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+  .leg{padding:3px 10px;border-radius:4px;color:#fff;font-size:12px}
+</style>
+</head>
+<body>
+<h1>Observability Agent — LLM Traces Dashboard</h1>
+
+<div>
+  <div class="stat"><div class="stat-val" style="color:#3498db">23</div><div class="stat-lbl">Appels LLM</div></div>
+  <div class="stat"><div class="stat-val" style="color:#27ae60">0.0%</div><div class="stat-lbl">Taux d'erreur</div></div>
+  <div class="stat"><div class="stat-val" style="color:#27ae60">1560ms</div><div class="stat-lbl">Durée moyenne</div></div>
+  <div class="stat"><div class="stat-val" style="color:#27ae60">4247ms</div><div class="stat-lbl">P95 durée</div></div>
+  <div class="stat"><div class="stat-val" style="color:#e67e22">0</div><div class="stat-lbl">Appels lents (>8s)</div></div>
+  <div class="stat"><div class="stat-val" style="color:#9b59b6">21,315</div><div class="stat-lbl">Tokens totaux</div></div>
+  <div class="stat"><div class="stat-val" style="color:#27ae60">$0.0134</div><div class="stat-lbl">Coût estimé</div></div>
+</div>
+
+<div class="legend">
+  <span class="leg" style="background:#3498db">chat — appel simple</span>
+  <span class="leg" style="background:#9b59b6">chat_cot — Chain of Thought</span>
+  <span class="leg" style="background:#27ae60">chat_structured — JSON garanti</span>
+  <span class="leg" style="background:#e67e22">chat_confident — Confidence Score</span>
+  <span class="leg" style="background:#e74c3c">chat_adversarial — Vérification</span>
+</div>
+
+<h2>Métriques par agent</h2>
+<table>
+  <tr><th>Agent</th><th>Appels</th><th>Succès</th><th>Taux succès</th><th>Moy (ms)</th><th>P95 (ms)</th><th>Coût ~</th></tr>
+  
+        <tr>
+          <td><b style="color:#3498db">triage-agent</b></td>
+          <td style="text-align:center">13</td>
+          <td style="text-align:center;color:#27ae60">13/13</td>
+          <td><div style="background:#eee;border-radius:4px;height:12px;width:100px;display:inline-block"><div style="background:#27ae60;width:100%;height:100%;border-radius:4px"></div></div> 100%</td>
+          <td style="color:#27ae60">956ms</td>
+          <td style="color:#333">1196ms</td>
+          <td style="font-family:monospace">$0.0040</td>
+        </tr>
+        <tr>
+          <td><b style="color:#3498db">git-agent</b></td>
+          <td style="text-align:center">5</td>
+          <td style="text-align:center;color:#27ae60">5/5</td>
+          <td><div style="background:#eee;border-radius:4px;height:12px;width:100px;display:inline-block"><div style="background:#27ae60;width:100%;height:100%;border-radius:4px"></div></div> 100%</td>
+          <td style="color:#27ae60">2516ms</td>
+          <td style="color:#333">4938ms</td>
+          <td style="font-family:monospace">$0.0023</td>
+        </tr>
+        <tr>
+          <td><b style="color:#3498db">github-agent</b></td>
+          <td style="text-align:center">2</td>
+          <td style="text-align:center;color:#27ae60">2/2</td>
+          <td><div style="background:#eee;border-radius:4px;height:12px;width:100px;display:inline-block"><div style="background:#27ae60;width:100%;height:100%;border-radius:4px"></div></div> 100%</td>
+          <td style="color:#27ae60">1677ms</td>
+          <td style="color:#333">2312ms</td>
+          <td style="font-family:monospace">$0.0017</td>
+        </tr>
+        <tr>
+          <td><b style="color:#3498db">api-generate-agent</b></td>
+          <td style="text-align:center">1</td>
+          <td style="text-align:center;color:#27ae60">1/1</td>
+          <td><div style="background:#eee;border-radius:4px;height:12px;width:100px;display:inline-block"><div style="background:#27ae60;width:100%;height:100%;border-radius:4px"></div></div> 100%</td>
+          <td style="color:#27ae60">2399ms</td>
+          <td style="color:#333">2399ms</td>
+          <td style="font-family:monospace">$0.0009</td>
+        </tr>
+        <tr>
+          <td><b style="color:#3498db">qa-agent</b></td>
+          <td style="text-align:center">1</td>
+          <td style="text-align:center;color:#27ae60">1/1</td>
+          <td><div style="background:#eee;border-radius:4px;height:12px;width:100px;display:inline-block"><div style="background:#27ae60;width:100%;height:100%;border-radius:4px"></div></div> 100%</td>
+          <td style="color:#27ae60">2404ms</td>
+          <td style="color:#333">2404ms</td>
+          <td style="font-family:monospace">$0.0020</td>
+        </tr>
+        <tr>
+          <td><b style="color:#3498db">jira-ticket-agent</b></td>
+          <td style="text-align:center">1</td>
+          <td style="text-align:center;color:#27ae60">1/1</td>
+          <td><div style="background:#eee;border-radius:4px;height:12px;width:100px;display:inline-block"><div style="background:#27ae60;width:100%;height:100%;border-radius:4px"></div></div> 100%</td>
+          <td style="color:#27ae60">2718ms</td>
+          <td style="color:#333">2718ms</td>
+          <td style="font-family:monospace">$0.0024</td>
+        </tr>
+</table>
+
+<h2>Métriques par fonction LLM</h2>
+<table>
+  <tr><th>Fonction</th><th>Appels</th><th>Moy (ms)</th><th>P95 (ms)</th></tr>
+  
+        <tr>
+          <td><span style="background:#3498db;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">chat</span></td>
+          <td style="text-align:center">23</td>
+          <td style="color:#27ae60">1560ms</td>
+          <td>4247ms</td>
+        </tr>
+</table>
+
+<h2>Timeline — 20 derniers appels</h2>
+<table>
+  <tr><th>Timestamp</th><th></th><th>Agent</th><th>Fonction</th><th>Durée</th><th>Confidence</th><th>Erreur</th></tr>
+  
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-13T19:33:35</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">jira-ticket-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#27ae60;font-family:monospace">2718ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-13T19:25:40</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">qa-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#27ae60;font-family:monospace">2404ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-13T19:23:55</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">api-generate-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#27ae60;font-family:monospace">2399ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-11T17:19:53</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">github-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#27ae60;font-family:monospace">2312ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-11T17:18:59</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">github-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#27ae60;font-family:monospace">1043ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-11T17:16:54</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">git-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#27ae60;font-family:monospace">1062ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-11T17:13:41</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">git-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#27ae60;font-family:monospace">1535ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-11T17:01:06</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">git-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#e67e22;font-family:monospace">4247ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-11T17:00:27</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">git-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#e67e22;font-family:monospace">4938ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-11T12:45:36</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">git-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#27ae60;font-family:monospace">797ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-10T21:04:19</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">triage-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#27ae60;font-family:monospace">804ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-10T21:04:19</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">triage-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#27ae60;font-family:monospace">966ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-10T21:04:18</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">triage-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#27ae60;font-family:monospace">1184ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-10T21:04:16</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">triage-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#27ae60;font-family:monospace">882ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-10T21:04:15</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">triage-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#27ae60;font-family:monospace">749ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-10T21:04:15</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">triage-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#27ae60;font-family:monospace">837ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-10T21:04:14</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">triage-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#27ae60;font-family:monospace">1104ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-10T21:04:13</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">triage-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#27ae60;font-family:monospace">883ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-10T21:04:12</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">triage-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#27ae60;font-family:monospace">860ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+        <tr style="font-size:12px">
+          <td style="color:#888">2026-06-10T21:04:11</td>
+          <td><span style="color:#27ae60">✓</span></td>
+          <td style="color:#3498db">triage-agent</td>
+          <td><span style="background:#eee;padding:1px 5px;border-radius:3px">chat</span></td>
+          <td style="color:#27ae60;font-family:monospace">1196ms</td>
+          <td>—</td>
+          <td style="color:#e74c3c;font-size:11px"></td>
+        </tr>
+</table>
+
+<p style="color:#999;font-size:12px;margin-top:30px">
+  Généré par Observability Agent | Source : logs/traces.jsonl (23 entrées)
+</p>
+</body>
+</html>
