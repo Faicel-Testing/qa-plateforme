@@ -9,7 +9,7 @@ import io.appium.java_client.android.AndroidDriver;
 
 public class BaseTest {
 
-    private static final String APP_PACKAGE = "com.todoqacart";
+    private static final String APP_PACKAGE = "com.saucelabs.mydemoapp.android";
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() {

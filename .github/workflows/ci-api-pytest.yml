@@ -108,6 +108,30 @@ jobs:
             python agents/kpi-agent.py env || echo "[CI] kpi-agent env failed, continuing"
           fi
 
+      - name: AI Pipeline (triage + RCA + tickets Jira + Go/No-Go)
+        if: always()
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
+          JIRA_PROJECT: ${{ secrets.JIRA_PROJECT }}
+        run: |
+          cd ${{ env.FRAMEWORK_DIR }}
+          if [ -d allure-results ] && [ "$(ls -A allure-results 2>/dev/null)" ]; then
+            echo "[IA] Triage des echecs (Confidence Scoring)..."
+            python agents/triage-agent.py triage        || echo "[IA] triage-agent failed, continuing"
+            echo "[IA] Root Cause Analysis (Chain of Thought)..."
+            python agents/rca-agent.py analyse          || echo "[IA] rca-agent failed, continuing"
+            echo "[IA] Creation tickets Jira (Structured Output)..."
+            python agents/jira-ticket-agent.py          || echo "[IA] jira-ticket-agent failed, continuing"
+            echo "[IA] Prediction Go/No-Go (Self-Consistency x3)..."
+            python agents/release-advisor-agent.py      || echo "[IA] release-advisor failed, continuing"
+            echo "[IA] Pipeline IA termine."
+          else
+            echo "[IA] Aucun resultat Allure -- pipeline IA ignore"
+          fi
+
       - name: Generate Allure report
         if: always()
         run: |

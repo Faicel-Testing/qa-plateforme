@@ -8,7 +8,7 @@ Feature: US-005 -- Mise a jour complete (PUT /booking/{id})
     And j'ai un token d'authentification valide
     And une reservation existe avec son ID
 
-  @critical @positif @tc-032  # HBAPI-42
+  @smoke @critical @positif @tc-032  # HBAPI-42
   Scenario: TC-032 -- Mise a jour complete avec token valide (PUT /booking/{id})
     When j'envoie PUT /booking/{id} avec tous les champs et mon token (Cookie)
     Then le status code est 200

@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "ui_playwright_bdd/node_modules/@playwright/mcp/cli.js",
+        "--browser",
+        "chromium",
+        "--headless",
+        "--viewport-size",
+        "1280,720",
+        "--isolated"
+      ]
+    }
+  }
+}

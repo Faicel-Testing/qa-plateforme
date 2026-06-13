@@ -1,0 +1,20 @@
+# Secrets — jamais committer
+.env
+
+# Build Maven
+target/
+
+# IDE
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# Allure local
+.allure/
+
+# Python agents
+__pycache__/
+*.pyc
+agents/__pycache__/

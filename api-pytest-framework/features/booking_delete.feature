@@ -7,7 +7,7 @@ Feature: US-007 -- Supprimer une reservation (DELETE /booking/{id})
     Given l'API est disponible
     And j'ai un token d'authentification valide
 
-  @critical @positif @tc-045  # HBAPI-55
+  @smoke @critical @positif @tc-045  # HBAPI-55
   Scenario: TC-045 -- DELETE avec token valide (DELETE /booking/{id})
     Given j'ai cree une reservation et recupere son ID
     When j'envoie DELETE /booking/{id} avec mon token (Cookie)

@@ -54,7 +54,8 @@ def verdict_color(v: str) -> str:
         "INVALID": VERDICT_KO,
     }.get(v, VERDICT_KO)
 
-def confidence_bar(score: float) -> str:
+def confidence_bar(score) -> str:
+    score  = float(score)
     filled = int(score * 20)
     color  = G if score >= 0.8 else Y if score >= 0.6 else R
     return f"{color}{'█' * filled}{'░' * (20 - filled)}{E} {int(score * 100)}%"
@@ -84,7 +85,7 @@ def verify_gherkin() -> dict:
         has_given    = any(re.match(r"\s+(Given|Étant)", l) for l in lines)
         has_when     = any(re.match(r"\s+(When|Quand)", l) for l in lines)
         has_then     = any(re.match(r"\s+(Then|Alors)", l) for l in lines)
-        tc_tags      = re.findall(r"@TC-\d+", text)
+        tc_tags      = re.findall(r"@TC-\d+", text, re.IGNORECASE)
         smoke_tags   = re.findall(r"@smoke", text)
         critical_tags = re.findall(r"@critical", text)
         scenarios    = [l for l in lines if l.strip().startswith("Scenario:")]
