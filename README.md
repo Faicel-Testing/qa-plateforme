@@ -1,150 +1,87 @@
-# QA-Plateforme 
-# Unified Quality Engineering Platform – Ready for Enterprise Delivery
-# QA Automation Architect – UI | API | Performance | CI/CD
+# QA Platform — Unified Quality Engineering
 
-# Pourquoi cette plateforme existe
-Dans la majorité des projets, la qualité est :
-- Fragmentée (UI d’un côté, API ailleurs, perf jamais testée),
-- Tardive (tests à la fin),
-- Peu décisionnelle (rapports sans impact réel).
-  
----> QA-Plateforme apporte une réponse claire :
-une plateforme unique, automatisée, qui aide à décider si un produit peut être livré sans risque.
+> **Architecture QA industrialisable** · UI · API · Mobile · CI/CD · Agents IA  
+> Faicel Ghanem — QA Automation Architect · Freelance
 
-# Valeur apportée au client
- - Réduction des incidents en production,
- - Accélération des mises en production,
- - Décisions Go / No-Go basées sur des tests objectifs,
- - Standardisation QA multi-équipes,
- - Intégration native dans le CI/CD existant.
-   
----> Résultat : moins de risques, plus de vitesse, plus de confiance.
+---
 
-# Approche Quality Engineering
-Cette plateforme n’est pas un projet de tests, mais une architecture QA industrialisable :
-  - Test Pyramid respectée
-  - Quality Gates explicites
-  - Automatisation orientée risque
-  - Observabilité via rapports exploitables
-  - Adaptable à tout domaine métier
+## Pourquoi cette plateforme
 
-# Architecture globale
-1. CI/CD Pipeline (Github / Gitlab)
-2. A) UI Automation (Selenium / BDD / Parcours users)
-   B) API Tests (Pytest / Contracts)
-   C) Performance (K6 / Load, Stress)
-3. Quality Gates (Go / No-Go)
+Dans la majorité des projets, la qualité est fragmentée (UI d'un côté, API ailleurs), tardive (tests à la fin) et peu décisionnelle (rapports sans impact réel).
 
----> Une seule plateforme, plusieurs niveaux de validation, une décision finale claire.
+**QA Platform** apporte une réponse claire : une plateforme unique, automatisée, qui aide à décider si un produit peut être livré sans risque.
 
-# Périmètre fonctionnel
-# UI Automation
-- Sécurisation des parcours critiques
-- BDD (lisible métier)
-- Tags : @smoke, @regression
-# API Automation
-- Validation des flux backend
-- Contrats API
-- Tests rapides et stables
-# Performance
-- Détection des régressions de charge
-- Seuils métier (temps de réponse, throughput)
-- Anticipation des incidents en production
+---
 
-# Quality Gates
-  # Gate 1 – Smoke (bloquant)
-- Parcours critiques
-- Échec = No-Go immédiat
-   # Gate 2 – Regression
-- Couverture fonctionnelle étendue
-- Validation avant release
-   # Gate 3 – Performance
-- Temps de réponse
-- Seuils définis avec le client
-- Alerte proactive
-  
----> Aucune mise en production sans validation automatique.
+## Valeur apportée au client
 
-# Exécution simplifiée
-- Smoke UI
-- Regression UI
-- API tests
-- Performance tests
-- Full quality gate
+- Réduction des incidents en production
+- Accélération des mises en production
+- Décisions **Go / No-Go** basées sur des tests objectifs
+- Standardisation QA multi-équipes
+- Intégration native dans le CI/CD existant
 
-# Intégration CI/CD
-La plateforme est conçue pour :
-- Pull Request → Smoke Tests
-- Merge → Regression
-- Nightly → Full Suite
-- Manuel → Par tag ou périmètre ciblé
+---
 
----> La QA devient un acteur de la décision produit.
+## Architecture globale
 
-# Adaptée à plusieurs secteurs
-# E-commerce
-- Parcours achat
-- Paiement
-- Panier / commandes
-- Pics de charge (soldes, promos)
+```
+CI/CD Pipeline (GitHub Actions)
+        │
+        ├── UI Automation   →  Playwright BDD (TypeScript)  ·  Selenium BDD (Java)
+        ├── API Tests        →  pytest-bdd (Python)
+        └── Mobile Tests     →  Appium + TestNG (Java)
+                │
+                ▼
+        Quality Gates — Go / No-Go
+        Smoke · Critical · Regression
+```
 
-# Transport
-- Réservations
-- Billetterie
-- Disponibilité temps réel
-- Robustesse des API
+---
 
-# Énergie
-- Portails clients
-- Relevés / facturation
-- Fiabilité des flux backend
+## Frameworks
 
-# Secteur public
-- Portails citoyens
-- Accessibilité
-- Robustesse et stabilité
+| Framework | Stack | Tests | Agents IA | Rapport |
+|---|---|---|---|---|
+| [ui_playwright_bdd](ui_playwright_bdd/) | Playwright · CucumberJS · TypeScript | 89 BDD | 10 agents | [Allure live](https://faicel-testing.github.io/qa-plateforme/ui_playwright_bdd/) |
+| [api-pytest-framework](api-pytest-framework/) | pytest-bdd · Requests · Python | 51 BDD | 31 agents | [Allure live](https://faicel-testing.github.io/qa-plateforme/api-pytest-framework/) |
+| [ui_selenium_bdd](ui_selenium_bdd/) | Selenium · Cucumber · Java | BDD | — | — |
+| [mobile](mobile/) | Appium · TestNG · Java | Mobile E2E | agents Python | — |
 
-# Tech / SaaS
-- Releases fréquentes
-- Scalabilité
-- Sécurité des parcours clés
+---
 
----> Même architecture, périmètres adaptés.
+## Quality Gates
 
-# Auteur / Positionnement
-# Faicel Ghanem
-# QA Automation Architect – Freelance
+| Gate | Déclencheur | Critère |
+|---|---|---|
+| **Smoke** | Pull Request | Parcours critiques — échec = No-Go immédiat |
+| **Regression** | Merge vers main | Couverture fonctionnelle étendue |
+| **Nightly** | Planifié 02h00 | Suite complète + analyse IA |
 
-Spécialités :
-- Architecture QA
-- UI / API / Performance Automation
-- CI/CD & Quality Gates
-- Environnements complexes et multi-équipes
+---
 
-# À propos de ce repository
-Ce dépôt est une vitrine d’architecture QA.
-Les implémentations client réelles sont maintenues dans des repositories privés.
+## CI/CD
 
-        
-  
+```
+Pull Request  →  Smoke Tests (bloquant)
+Merge         →  Regression Suite
+Nightly       →  Full Suite + Quality Gate
+Manuel        →  Par tag ou périmètre ciblé
+```
 
+---
 
+## Secteurs couverts
 
+**E-commerce** · **Transport** · **Énergie** · **Secteur public** · **Tech / SaaS**  
+Même architecture, périmètres adaptés au domaine métier.
 
+---
 
+## Auteur
 
+**Faicel Ghanem** — QA Automation Architect · Freelance  
+Spécialités : Architecture QA · UI / API / Mobile Automation · CI/CD · Quality Gates · Agents IA
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+> Ce dépôt est une vitrine d'architecture QA.  
+> Les implémentations client réelles sont maintenues dans des repositories privés.

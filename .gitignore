@@ -1,7 +1,26 @@
 **/target/
 **/allure-results/
+**/allure-results-run*/
 **/.allure/
 .venv/
+**/venv/
 **/.pytest_cache/
+**/__pycache__/
 node_modules/
 *.apk
+
+# Runtime / generated data — never commit
+**/logs/
+**/memory/
+**/test-results/
+tmp_*.js
+tmp_*.ts
+
+# Internal tooling config
+.mcp.json
+
+# Root-level config that belongs inside each framework
+/pytest.ini
+
+# Pipeline dev scripts
+**/pipeline.py

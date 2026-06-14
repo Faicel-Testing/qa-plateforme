@@ -1,8 +1,0 @@
-{"ts":"2026-06-14T16:01:29.225Z","agent":"quality-agent","fn":"rcaChatCot","model":"llama-3.3-70b-versatile","duration_ms":3845,"prompt_len":80,"response_len":0,"success":true,"retries":0}
-{"ts":"2026-06-14T16:01:32.822Z","agent":"quality-agent","fn":"rcaChatCot","model":"llama-3.3-70b-versatile","duration_ms":3586,"prompt_len":80,"response_len":0,"success":true,"retries":0}
-{"ts":"2026-06-14T16:01:36.389Z","agent":"quality-agent","fn":"rcaChatCot","model":"llama-3.3-70b-versatile","duration_ms":3563,"prompt_len":80,"response_len":0,"success":true,"retries":0}
-{"ts":"2026-06-14T16:01:39.896Z","agent":"quality-agent","fn":"rcaChatCot","model":"llama-3.3-70b-versatile","duration_ms":3504,"prompt_len":80,"response_len":0,"success":true,"retries":0}
-{"ts":"2026-06-14T16:01:43.099Z","agent":"quality-agent","fn":"rcaChatCot","model":"llama-3.3-70b-versatile","duration_ms":3198,"prompt_len":80,"response_len":0,"success":true,"retries":0}
-{"ts":"2026-06-14T16:01:46.544Z","agent":"quality-agent","fn":"rcaChatCot","model":"llama-3.3-70b-versatile","duration_ms":3444,"prompt_len":80,"response_len":0,"success":true,"retries":0}
-{"ts":"2026-06-14T16:01:57.696Z","agent":"quality-agent","fn":"rcaChatCot","model":"llama-3.3-70b-versatile","duration_ms":11149,"prompt_len":80,"response_len":0,"success":true,"retries":0}
-{"ts":"2026-06-14T17:31:30.880Z","agent":"ci-agent","fn":"gitCommit","model":"llama-3.3-70b-versatile","duration_ms":961,"prompt_len":130607,"response_len":0,"success":true,"retries":0}
