@@ -149,4 +149,131 @@ async function chatStream(messages) {
   return ollama.chat({ model: OLMA_MODEL, messages, stream: true });
 }
 
-module.exports = { chat, chatStream, assertRunning, parseArgs, MODEL, PROVIDER };
+// ── chatCot — Chain of Thought (deux étapes) ──────────────────────────────────
+// Étape 1 : raisonnement libre, étape 2 : extraction structurée
+async function chatCot(messages, structuredPrompt = null) {
+  const cotMessages = [
+    ...messages,
+    { role: 'user', content: 'Raisonne étape par étape avant de conclure. Préfixe ta réponse par ÉTAPE 1, ÉTAPE 2, ... CONCLUSION.' }
+  ];
+  const step1 = await chat(cotMessages);
+  const reasoning = step1.message.content || '';
+
+  if (!structuredPrompt) return reasoning;
+
+  const step2Messages = [
+    ...messages,
+    { role: 'assistant', content: reasoning },
+    { role: 'user', content: structuredPrompt }
+  ];
+  const step2 = await chat(step2Messages);
+  return { reasoning, structured: step2.message.content || '' };
+}
+
+// ── chatStructured — Structured Output (JSON schema enforcement) ───────────────
+async function chatStructured(messages, schema, maxRetries = 3) {
+  const schemaStr = JSON.stringify(schema, null, 2);
+  const systemMsg = {
+    role: 'user',
+    content: `Réponds UNIQUEMENT en JSON valide respectant ce schéma:\n${schemaStr}\n\nPas de markdown, pas d'explication, juste le JSON brut.`
+  };
+  const augmented = [...messages, systemMsg];
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const resp = await chat(augmented);
+    const raw  = (resp.message.content || '').trim();
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (match) {
+      try { return JSON.parse(match[0]); } catch { /* retry */ }
+    }
+    // Also try array
+    const arrMatch = raw.match(/\[[\s\S]*\]/);
+    if (arrMatch) {
+      try { return JSON.parse(arrMatch[0]); } catch { /* retry */ }
+    }
+  }
+  return {};
+}
+
+// ── chatConfident — Confidence scoring ────────────────────────────────────────
+// Retourne { result, confidence } où confidence ∈ [0,1]
+async function chatConfident(messages, threshold = 0.70) {
+  const schema = {
+    result: 'string — ta réponse principale',
+    confidence: 'float entre 0.0 et 1.0 — ton niveau de certitude',
+    reasoning: 'string — justification courte'
+  };
+  const data = await chatStructured(messages, schema);
+  return {
+    result:     data.result     || '',
+    confidence: parseFloat(data.confidence) || 0.0,
+    reasoning:  data.reasoning  || '',
+    above_threshold: (parseFloat(data.confidence) || 0.0) >= threshold
+  };
+}
+
+// ── chatAdversarial — Adversarial verification ────────────────────────────────
+// Génère une réponse, puis la critique, puis tranche
+async function chatAdversarial(messages) {
+  // Phase 1 : proposition
+  const resp1 = await chat(messages);
+  const proposal = resp1.message.content || '';
+
+  // Phase 2 : critique adversariale
+  const criticMessages = [
+    ...messages,
+    { role: 'assistant', content: proposal },
+    { role: 'user', content: `Joue le rôle d'un auditeur critique. Liste les failles, erreurs ou imprécisions dans la réponse ci-dessus. Sois rigoureux et concis.` }
+  ];
+  const resp2 = await chat(criticMessages);
+  const critique = resp2.message.content || '';
+
+  // Phase 3 : verdict final
+  const verdictMessages = [
+    ...messages,
+    { role: 'assistant', content: proposal },
+    { role: 'user', content: `Critique identifiée:\n${critique}\n\nRevois ta réponse en tenant compte de cette critique. Donne ta réponse finale corrigée.` }
+  ];
+  const resp3 = await chat(verdictMessages);
+  return {
+    proposal,
+    critique,
+    final: resp3.message.content || ''
+  };
+}
+
+// ── chatSelfConsistent — Self-Consistency voting ──────────────────────────────
+// Pose la même question N fois avec des températures variées, vote majoritaire
+async function chatSelfConsistent(messages, schema, n = 3) {
+  const temps = [0.3, 0.7, 0.9].slice(0, n);
+  const responses = [];
+
+  for (let i = 0; i < n; i++) {
+    try {
+      const data = await chatStructured(messages, schema);
+      responses.push(data);
+    } catch {
+      // ignore failed vote
+    }
+  }
+
+  if (!responses.length) return { responses: [], winner: null };
+
+  // Majority vote sur le premier champ clé (verdict/result)
+  const keyField = Object.keys(responses[0] || {})[0] || 'result';
+  const counts = {};
+  for (const r of responses) {
+    const v = String(r[keyField] || '');
+    counts[v] = (counts[v] || 0) + 1;
+  }
+  const winnerVal = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
+  const winner    = responses.find(r => String(r[keyField] || '') === winnerVal);
+
+  return { responses, winner, vote_counts: counts, n_votes: responses.length };
+}
+
+module.exports = {
+  chat, chatStream, assertRunning, parseArgs,
+  chatCot, chatStructured, chatConfident, chatAdversarial, chatSelfConsistent,
+  MODEL, PROVIDER
+};

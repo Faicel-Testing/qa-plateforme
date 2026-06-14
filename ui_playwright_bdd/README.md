@@ -1,130 +1,611 @@
-# QA Platform — Playwright BDD + AI Agents
+# UI Playwright BDD — Framework de test IA
 
-> **Playwright + CucumberJS + Groq AI** — Un framework de test qui se pilote, s'analyse et se documente lui-même.
+> **Playwright · CucumberJS · TypeScript · Groq AI**  
+> Framework BDD auto-piloté : génère, exécute, analyse, répare et documente les tests sans intervention manuelle.
+
+---
+
+## Table des matières
+
+1. [Vue d'ensemble](#vue-densemble)
+2. [Architecture](#architecture)
+3. [10 Agents IA](#10-agents-ia)
+4. [4 Modules partagés](#4-modules-partagés)
+5. [Patterns LLM avancés](#patterns-llm-avancés)
+6. [Suite de tests](#suite-de-tests)
+7. [Analyse des coûts LLM](#analyse-des-coûts-llm)
+8. [Gardes de coût](#gardes-de-coût)
+9. [Circuit Breaker & Cache](#circuit-breaker--cache)
+10. [Configuration](#configuration)
+11. [Installation](#installation)
+12. [Commandes tests](#commandes-tests)
+13. [Commandes agents](#commandes-agents)
+14. [Structure du projet](#structure-du-projet)
+15. [Stack technique](#stack-technique)
 
 ---
 
 ## Vue d'ensemble
 
 ```
-Spec métier  →  User Stories  →  Feature files  →  Tests  →  Rapport  →  Tickets Jira
-     ↑                                                  ↓
-     └────────────── 11 agents IA pilotent tout ────────┘
+Spec métier (Jira)
+       │
+       ▼
+  ┌─────────────────────────────────────────────────────────────┐
+  │                    PIPELINE AGENT                           │
+  │              Orchestrateur maître — 3 modes                 │
+  │         full · quick · report                               │
+  └──┬───────┬───────┬───────┬───────┬───────┬───────┬─────────┘
+     │       │       │       │       │       │       │
+     ▼       ▼       ▼       ▼       ▼       ▼       ▼
+  Codegen Runner Quality   CI  Planning Report Advisor Bug
+     │       │       │       │       │       │       │   │
+     └───────┴───────┴───────┴───────┴───────┴───────┴───┘
+                             │
+               ┌─────────────▼──────────────┐
+               │       MODULES PARTAGÉS      │
+               │  llm · tracer · cb · mem    │
+               │       prompt-store          │
+               └─────────────┬──────────────┘
+                             │
+                    Observability Agent
+                  (métriques · coûts · CB)
 ```
 
-Un seul fichier markdown suffit pour générer des scénarios Gherkin, les implémenter, les exécuter, analyser les échecs, créer les tickets Jira et produire un rapport. **Sans intervention manuelle.**
+Un seul `npm run agent:pipeline:full` orchestre l'intégralité du cycle QA.
 
 ---
 
-## Les 11 agents IA
+## Architecture
 
-### Cœur du système
+### Séparation des responsabilités
 
-| Agent | Commande | Ce qu'il fait |
-|-------|----------|---------------|
-| `llm.js` | *(module partagé)* | Détecte automatiquement **Groq** (cloud gratuit) ou **Ollama** (local). Tous les agents passent par lui. |
-| `jira-fetcher.js` | *(module partagé)* | Client Jira REST réutilisable — stories, epics, tickets, commentaires. |
-
-### Pipeline QA
-
-| Agent | Commande | Ce qu'il fait |
-|-------|----------|---------------|
-| `spec-agent.js` | `npm run agent:spec` | Lit un fichier de spec, extrait les user stories via LLM, génère les `.feature` + `.ts` et crée un **Epic Jira** avec toutes les stories liées. |
-| `generate-agent.js` | `npm run agent:generate` | Analyse les features existantes, détecte les lacunes de couverture et génère automatiquement les nouveaux scénarios manquants. |
-| `execute-agent.js` | `npm run agent:execute` | Orchestre l'exécution des tests. Si des échecs → lance le bug-analyzer → re-run automatique après correction. |
-| `bug-analyzer.js` | `npm run agent:bug` | Lit les résultats Allure, identifie les causes racines via tool use, applique des correctifs de code directement dans les fichiers `.ts`. |
-| `qa-agent.js` | `npm run agent:qa` | Analyse en streaming la qualité globale de la suite de tests, enrichit la base de connaissances RAG. |
-| `report-agent.js` | `npm run agent:report` | Génère un rapport professionnel depuis les résultats Allure + l'analyse de bugs. |
-
-### Intégration Jira
-
-| Agent | Commande | Ce qu'il fait |
-|-------|----------|---------------|
-| `jira-agent.js` | `npm run agent:jira` | Récupère les stories Jira, les mappe aux `.feature` existants via LLM, génère la matrice de traçabilité. |
-| `jira-ticket-agent.js` | `npm run agent:ticket` | Lit les échecs Allure, génère des tickets **Bug Jira structurés** via LLM, évite les doublons automatiquement. |
-
-### Browser Automation
-
-| Agent | Commande | Ce qu'il fait |
-|-------|----------|---------------|
-| `mcp-agent.js` | `npm run agent:mcp` | Connecte un LLM à un navigateur Chromium réel via **Playwright MCP** (23 outils browser). Exploration intelligente de l'application. |
+| Couche | Rôle | Fichiers |
+|--------|------|----------|
+| **Agents** | Logique métier QA, appels LLM | `scripts/agents/*-agent.js` |
+| **Modules partagés** | Infrastructure transversale | `scripts/agents/shared/` + `llm.js` |
+| **Tests BDD** | Scénarios Gherkin + Steps TypeScript | `src/features/` + `src/steps/` |
+| **POM** | Page Object Model | `src/pages/` |
+| **Observabilité** | Traces, métriques, cache | `logs/` + `memory/` + `prompts/` |
 
 ---
 
-## Pipeline complet en une commande
+## 10 Agents IA
+
+### codegen-agent — Génération de code
+
+Génère automatiquement les `.feature`, les step definitions TypeScript et les Page Objects depuis les User Stories Jira.
 
 ```bash
-npm run agent:pipeline
+npm run agent:codegen:spec        # US Jira → fichiers .feature
+npm run agent:codegen:steps       # .feature → steps TypeScript
+npm run agent:codegen:pages       # .feature → Page Object Model
+node scripts/agents/codegen-agent.js gherkin SCRUM-42   # US unique
 ```
 
-```
-[spec-agent]       Spec → User Stories → Features + Jira Epic
-      ↓
-[generate-agent]   Détecte les scénarios manquants
-      ↓
-[execute-agent]    Lance les tests
-      ↓  (si échecs)
-[bug-analyzer]     Analyse + correction automatique du code
-      ↓
-[execute-agent]    Re-run après correction
-      ↓
-[report-agent]     Rapport Allure professionnel
-      ↓
-[jira-ticket-agent] Tickets Bug créés dans Jira
-```
+**Technique LLM :** `chatCot` (raisonnement → extraction) + `chatStructured` (JSON garanti)  
+**Guard :** `CODEGEN_BATCH=N` limite le nombre d'US par run
 
 ---
 
-## Stack technique
+### runner-agent — Exécution des tests
 
-```
-Tests          Playwright + CucumberJS BDD (TypeScript)
-LLM            Groq Cloud (llama-3.3-70b-versatile) — gratuit 14 400 req/jour
-               Ollama (local, fallback) — 100% privé
-Reporting      Allure Reports avec historique
-Gestion projet Jira Cloud REST API v3
-Browser AI     @playwright/mcp — 23 outils browser natifs
-```
-
----
-
-## Démarrage rapide
-
-### 1. Prérequis
+Lance les tests CucumberJS, détecte les tests flaky par runs répétés, maintient une baseline de régression.
 
 ```bash
-node >= 18
-npm install
-npx playwright install chromium
+npm run agent:runner              # Tous les tests
+npm run agent:runner:smoke        # @smoke uniquement
+npm run agent:runner:critical     # @critical uniquement
+npm run agent:runner:flaky        # Détection flaky (3 runs par défaut)
+npm run agent:runner:regression   # Comparaison vs baseline
+node scripts/agents/runner-agent.js baseline   # Créer la baseline
 ```
 
-### 2. Configuration
+**Technique LLM :** `chat` pour le narratif de résumé (1 appel/run)  
+**Flaky threshold :** ≥ 1/3 échecs sur N runs = flaky
+
+---
+
+### quality-agent — Qualité & Analyse
+
+Triage des échecs avec score de confiance, Root Cause Analysis par groupe d'erreur, vérification de cohérence features/steps/allure.
+
+```bash
+npm run agent:quality:triage      # Triage IA avec score confiance
+npm run agent:quality:rca         # Root Cause Analysis groupée
+npm run agent:quality:verify      # Vérification cohérence globale
+npm run agent:quality:full        # Triage + RCA + Vérification
+```
+
+**Techniques LLM :** `chatConfident` → déclenchement `chatAdversarial` si confiance < seuil · `chatCot` pour RCA  
+**Guard :** `CONFIDENCE_THRESHOLD=0.70` — adversarial déclenché seulement si nécessaire (~50% tokens économisés)
+
+---
+
+### ci-agent — CI/CD & Git
+
+Pilote GitHub Actions et Git via les CLI `gh` et `git`. LLM uniquement pour générer les messages de commit, descriptions de PR et release notes.
+
+```bash
+npm run agent:ci:status           # État des workflows GitHub Actions
+npm run agent:ci:pr               # Créer une Pull Request
+npm run agent:ci:git              # Statut git du dépôt
+node scripts/agents/ci-agent.js ci run         # Déclencher un workflow
+node scripts/agents/ci-agent.js ci watch       # Surveiller l'exécution
+node scripts/agents/ci-agent.js release create # Créer une release
+node scripts/agents/ci-agent.js git commit     # Commit avec message IA
+```
+
+**Technique LLM :** `chat` pour commit/PR/release (1 appel chacun)
+
+---
+
+### planning-agent — Gestion projet
+
+Lit les User Stories et Test Cases Jira, gère les sprints via l'API Agile, analyse la couverture des `.feature`.
+
+```bash
+npm run agent:planning:stories    # Lister les US Jira
+npm run agent:planning:coverage   # Analyser la couverture .feature
+npm run agent:planning:gaps       # Identifier les types manquants
+npm run agent:planning:sprint     # Lister les sprints
+node scripts/agents/planning-agent.js sprint create "Sprint 4"
+node scripts/agents/planning-agent.js sprint start <id>
+node scripts/agents/planning-agent.js coverage suggest    # Suggestions LLM
+```
+
+**Types de couverture suivis :** `positif · negatif · auth · limite · securite · performance`  
+**Technique LLM :** `chat` pour `coverage suggest` uniquement
+
+---
+
+### reporting-agent — Dashboards & Notifications
+
+Génère un dashboard KPI HTML avec Chart.js, envoie des notifications Slack/Teams, synchronise les résultats vers Jira.
+
+```bash
+npm run agent:reporting:dashboard # Dashboard KPI HTML (docs/kpi-dashboard.html)
+npm run agent:reporting:notify    # Notification Slack Block Kit
+npm run agent:reporting:sync      # Poster les résultats dans les tickets Jira
+node scripts/agents/reporting-agent.js notify teams   # Notification Teams
+```
+
+**Quality Gate :** pass_rate ≥ 90% · fail_rate ≤ 5% · flaky_rate ≤ 20% · coverage ≥ 80%  
+**Coût LLM :** nul pour dashboard/sync — 1 appel pour les notifications narratives
+
+---
+
+### advisor-agent — Décision & Prédiction
+
+Vote GO/NO-GO par N LLMs indépendants (self-consistency), prédit les risques par test case, calcule un score qualité global.
+
+```bash
+npm run agent:advisor:advise      # Recommandation GO/NO-GO (vote N=3)
+npm run agent:advisor:predict     # Prédiction risque par TC
+npm run agent:advisor:gate        # Score qualité 0–100
+node scripts/agents/advisor-agent.js advise 5    # 5 votes
+node scripts/agents/advisor-agent.js history TC-01
+node scripts/agents/advisor-agent.js memory recurring
+```
+
+**Technique LLM :** `chatSelfConsistent` (N votes, majorité gagne) · `chatStructured` (JSON garanti)  
+**Verdict :** `GO | NO-GO` avec blockers, warnings, niveau de risque
+
+---
+
+### observability-agent — Métriques & Coûts
+
+100% déterministe — zéro appel LLM. Lit les traces JSONL et calcule métriques, anomalies, coûts et gère le circuit breaker.
+
+```bash
+npm run agent:observability:metrics  # Appels/agent, durée avg, P95, error rate
+npm run agent:observability:cost     # Estimation tokens + coût USD par agent
+npm run agent:observability:cb       # État circuit breaker
+node scripts/agents/observability-agent.js anomalies   # Appels lents, bursts d'erreurs
+node scripts/agents/observability-agent.js prompts list
+node scripts/agents/observability-agent.js prompts rollback <name>
+node scripts/agents/observability-agent.js report  # docs/observability-report.html
+```
+
+**Coût LLM : $0.00** — entièrement déterministe
+
+---
+
+### bug-agent — Analyse & Réparation
+
+Boucle agentique avec outils `read_file` / `apply_fix` / `report_analysis`. Lit les fichiers TypeScript, identifie la cause racine, applique des correctifs ciblés.
+
+```bash
+npm run agent:bug:analyze         # Boucle agentique (lecture + analyse + fix)
+npm run agent:bug:repair          # Réparation automatique (max 5 bugs/session)
+npm run agent:bug:report          # Analyse complète + docs/bug-report.html
+node scripts/agents/bug-agent.js analyze --max-iter=3   # Limiter les itérations
+node scripts/agents/bug-agent.js repair --dry-run       # Simulation
+```
+
+**Technique LLM :** `chatCot` + tool use  
+**Guard :** `AGENT_MAX_ITER=5` (hard cap 20) — borne la boucle agentique
+
+---
+
+### pipeline-agent — Orchestrateur maître
+
+Invoque les agents dans l'ordre optimal, génère un rapport HTML de pipeline, sauvegarde le résumé dans `logs/pipeline-summary.json`.
+
+```bash
+npm run agent:pipeline:full       # Tout : planning → codegen → run → quality → bug → report → advisor → ci
+npm run agent:pipeline:quick      # Essentiel : run → triage → dashboard → gate
+npm run agent:pipeline:report     # Sans exécution : quality + bug + dashboard + observability
+npm run agent:pipeline:status     # Vérifie la présence de tous les agents et artefacts
+node scripts/agents/pipeline-agent.js full --dry-run    # Simulation
+node scripts/agents/pipeline-agent.js quick --verbose   # Sortie complète
+node scripts/agents/pipeline-agent.js full --no-tests   # Saute le runner
+```
+
+---
+
+## 4 Modules partagés
+
+### llm.js — Client LLM universel
+
+Détecte automatiquement **Groq** (cloud, gratuit) ou **Ollama** (local, privé).  
+Expose 5 patterns avancés en plus du `chat` de base :
+
+| Fonction | Pattern | Usage |
+|----------|---------|-------|
+| `chat(messages)` | Standard | Appel simple |
+| `chatStream(messages)` | Streaming | Affichage temps réel |
+| `chatCot(messages)` | Chain of Thought | Raisonnement → extraction (2 appels) |
+| `chatStructured(messages, schema)` | JSON forcé | Sortie JSON garantie avec retry (max 3) |
+| `chatConfident(messages, threshold)` | Confiance | Score 0–1, trigger adversarial si < seuil |
+| `chatAdversarial(messages)` | Adversarial | 3 phases : proposition → critique → final |
+| `chatSelfConsistent(messages, schema, N)` | Votes | N LLMs indépendants, majorité gagne |
+
+### shared/tracer.js — Traces LLM
+
+Enregistre chaque appel LLM dans `logs/traces.jsonl` :
+
+```jsonl
+{"ts":"2026-06-14T10:23:11Z","fn":"bugAnalyze","model":"llama-3.3-70b-versatile","durationMs":1842,"promptLen":1240,"responseLen":380,"success":true,"confidence":0.87}
+```
+
+API : `record(opts)` · `class Span { begin(), end(success) }` · `loadTraces()` · `clearTraces()`
+
+### shared/circuit-breaker.js — Résilience
+
+Protège tous les appels LLM contre les pannes et la surcharge :
+
+```
+CLOSED ──(3 échecs)──► OPEN ──(30s cooldown)──► HALF_OPEN ──(2 succès)──► CLOSED
+                          │
+                          └──► Cache SHA256 servi (TTL 3600s, max 200 entrées)
+```
+
+Fichiers d'état : `logs/circuit_breaker_state.json` · `logs/llm_cache.json`
+
+### shared/memory-store.js — Mémoire épisodique
+
+Persiste l'historique des exécutions dans `memory/episodes.jsonl` :
+
+- `recordEpisode(agent, results, summary)` → id
+- `getTcHistory(tcId, lastN=10)` → historique par test case
+- `getRecurringFailures(minOccurrences=3)` → failures répétitives
+- `getContextFor(tcId)` → string formaté pour injection dans le prompt (trend: ↑↓→)
+
+### shared/prompt-store.js — Versioning des prompts
+
+Versionne les prompts en semver (`1.0.0` → patch/minor/major) dans `prompts/<name>.json` :
+
+- `create(name, content, meta)` · `saveVersion(name, content, note, bump)`
+- `get(name, version=null)` · `promote(name, version)` · `rollback(name)`
+- `recordUsage(name, confidence)` → confiance moyenne en production
+
+---
+
+## Patterns LLM avancés
+
+### Chain of Thought (chatCot)
+Deux appels en séquence : raisonnement libre → extraction structurée. Utilisé pour la RCA et l'analyse de bugs.
+
+### Structured JSON (chatStructured)
+Extrait le premier bloc `{...}` de la réponse, valide contre un schéma, retry jusqu'à 3 fois. Utilisé pour la génération de code et les prédictions.
+
+### Confident (chatConfident)
+Retourne `{ result, confidence, reasoning, above_threshold }`. Si `confidence < threshold`, l'appelant décide de déclencher `chatAdversarial` (économie ~50% tokens).
+
+### Adversarial (chatAdversarial)
+Trois phases avec rôles différents : 1) proposant génère une solution, 2) critique l'évalue, 3) arbitre produit la version finale. Utilisé pour la vérification et le triage critique.
+
+### Self-Consistent (chatSelfConsistent)
+N appels indépendants au même LLM, vote majoritaire sur le champ clé (`verdict`, `risk`...). Utilisé pour le GO/NO-GO du release advisor.
+
+---
+
+## Suite de tests
+
+8 domaines fonctionnels couverts (16 fichiers `.feature`) :
+
+| ID | Feature | Positif | Négatif |
+|----|---------|---------|---------|
+| Id01 | Inscription (Signup) | ✅ | ✅ |
+| Id02 | Connexion (Login) | ✅ | — |
+| Id03 | Gestion Todo | ✅ | ✅ |
+| Id04 | Suppression Todo | ✅ | ✅ |
+| Id05 | Connexion invalide | — | ✅ |
+| Id06 | Mise à jour mot de passe | ✅ | — |
+| Id07 | Mise à jour email | ✅ | — |
+| Id08 | Suppression de compte | ✅ | — |
+
+**Page Object Model :** `BasePage` · `SignupPage` · `LoginPage` · `TodoPage`  
+**Navigateurs :** Chromium · Firefox · multi-browser en parallèle
+
+---
+
+## Analyse des coûts LLM
+
+> Modèle : **llama-3.3-70b-versatile** via Groq  
+> Tarif : **$0.59 / M tokens input** · **$0.79 / M tokens output**
+
+### Par commande agent
+
+| Agent | Commande | Tokens estimés | Coût USD | Technique |
+|-------|----------|---------------|----------|-----------|
+| codegen | `spec` (1 US) | ~2 000 | $0.0017 | chatCot |
+| codegen | `steps` (5 features) | ~8 000 | $0.0059 | chatStructured |
+| codegen | `pages` (5 features) | ~10 000 | $0.0074 | chatStructured |
+| runner | `run` | ~800 | $0.0006 | chat |
+| runner | `flaky` (3 runs) | ~2 400 | $0.0018 | chat |
+| quality | `triage` (10 TCs) | ~6 000 | $0.0044 | chatConfident |
+| quality | `triage` + adversarial | ~12 000 | $0.0088 | chatAdversarial |
+| quality | `rca` (5 groupes) | ~10 000 | $0.0074 | chatCot |
+| quality | `verify` | ~8 000 | $0.0059 | chatAdversarial |
+| ci | `pr create` | ~1 500 | $0.0011 | chat |
+| ci | `git commit` | ~500 | $0.0004 | chat |
+| planning | `coverage suggest` | ~3 000 | $0.0022 | chat |
+| reporting | `notify slack` | ~1 200 | $0.0009 | chat |
+| reporting | `dashboard` / `sync` | 0 | **$0.00** | aucun |
+| advisor | `advise` (N=3) | ~12 000 | $0.0088 | chatSelfConsistent |
+| advisor | `predict` (10 TCs) | ~8 000 | $0.0059 | chatStructured |
+| advisor | `gate` | ~2 000 | $0.0017 | chatStructured |
+| observability | toutes | 0 | **$0.00** | aucun |
+| bug | `analyze` (1 bug, 5 iter) | ~15 000 | $0.0110 | chatCot + tool use |
+| bug | `repair` (1 bug) | ~10 000 | $0.0074 | tool use |
+
+### Par pipeline
+
+| Pipeline | Agents | Tokens totaux | Coût total |
+|----------|--------|--------------|------------|
+| `pipeline:quick` | runner + quality:triage + reporting:dashboard + advisor:gate | ~12 000 | **~$0.009** |
+| `pipeline:report` | quality:full + bug:report + reporting:dashboard + observability:report | ~20 000 | **~$0.015** |
+| `pipeline:full` | tous les agents | ~35 000 | **~$0.025** |
+
+> **Limite gratuite Groq :** 14 400 req/jour · 500 000 tokens/min → pipelines illimités en pratique.
+
+---
+
+## Gardes de coût
+
+Trois gardes intégrés dans le code — configurables via variables d'environnement :
+
+| Guard | Variable env | Défaut | Effet |
+|-------|-------------|--------|-------|
+| **Boucle agentique** | `AGENT_MAX_ITER=N` | 5 | Borne max des itérations bug-agent (hard cap: 20) |
+| **Adversarial conditionnel** | `CONFIDENCE_THRESHOLD=0.XX` | 0.70 | Déclenche chatAdversarial uniquement si confiance < seuil |
+| **Batch génération** | `CODEGEN_BATCH=N` | 0 (illimité) | Limite le nombre d'US traitées par run codegen |
+
+**Option `--dry-run`** disponible sur tous les agents : simule sans écrire ni appeler le LLM.
+
+---
+
+## Circuit Breaker & Cache
+
+Le module `shared/circuit-breaker.js` est branché sur tous les agents :
+
+| Paramètre | Valeur |
+|-----------|--------|
+| Seuil d'ouverture | 3 échecs consécutifs |
+| Seuil de fermeture | 2 succès en HALF_OPEN |
+| Cooldown | 30 secondes |
+| TTL cache | 3 600 secondes (1h) |
+| Max entrées cache | 200 |
+| Clé cache | SHA256 du tableau `messages` |
+
+```bash
+npm run agent:observability:cb        # Voir l'état
+node scripts/agents/observability-agent.js cb reset    # Réinitialiser
+node scripts/agents/observability-agent.js cb cache    # Vider le cache
+```
+
+---
+
+## Configuration
 
 ```bash
 cp .env.example .env
-# Renseigne les variables dans .env :
-#   GROQ_API_KEY     → clé gratuite sur console.groq.com
-#   JIRA_BASE_URL    → https://ton-site.atlassian.net
-#   JIRA_EMAIL       → ton email Atlassian
-#   JIRA_TOKEN       → token sur id.atlassian.com/manage-profile/security/api-tokens
-#   JIRA_PROJECT     → clé du projet (ex: SCRUM)
 ```
 
-### 3. Lancer les tests
+```env
+# LLM (obligatoire — choisir l'un ou l'autre)
+GROQ_API_KEY=gsk_...               # Gratuit sur console.groq.com
+OLLAMA_BASE_URL=http://localhost:11434   # Ollama local (fallback auto)
 
-```bash
-npm test                          # tous les tests
-npm run test:allure               # tests + rapport Allure
-npm run agent:execute             # pipeline IA complet
+# Jira (pour planning, codegen, reporting)
+JIRA_BASE_URL=https://monsite.atlassian.net
+JIRA_EMAIL=user@company.com
+JIRA_TOKEN=ATATT...                # id.atlassian.com → Security → API tokens
+JIRA_PROJECT=SCRUM
+
+# GitHub (pour ci-agent)
+GITHUB_TOKEN=ghp_...
+GITHUB_OWNER=mon-org
+GITHUB_REPO=mon-repo
+
+# Application sous test
+BASE_URL=http://localhost:3000
+TEST_BROWSER=chromium              # chromium | firefox
+TEST_HEADLESS=true
+
+# Gardes de coût
+AGENT_MAX_ITER=5
+CONFIDENCE_THRESHOLD=0.70
+CODEGEN_BATCH=0                    # 0 = toutes les US
 ```
 
-### 4. Créer des tests depuis une spec
+---
+
+## Installation
 
 ```bash
-# 1. Dépose ta spec dans specs/ma-feature.md
-# 2. Lance l'agent
-npm run agent:spec -- --file=specs/ma-feature.md
-# → Feature files générés + Stories Jira créées automatiquement
+# Prérequis : Node.js >= 18
+npm install
+npx playwright install chromium firefox
+
+# Vérifier la configuration LLM
+node scripts/agents/llm.js         # Doit afficher le modèle détecté
+
+# Vérifier tous les agents
+npm run agent:pipeline:status
+```
+
+---
+
+## Commandes tests
+
+### Tests BDD
+
+```bash
+npm test                           # Tous les tests (format progress)
+npm run test:retry                 # Avec retry automatique (--retry 1)
+npm run test:allure                # Tests + rapport Allure
+npm run test:allure:retry          # Tests + retry + rapport Allure
+```
+
+### Multi-navigateur
+
+```bash
+npm run test:allure:chrome         # Chromium headless
+npm run test:allure:firefox        # Firefox headless
+npm run test:headed:chrome         # Chromium avec fenêtre
+npm run test:headed:firefox        # Firefox avec fenêtre
+npm run test:multibrowser          # Chrome + Firefox en parallèle
+npm run test:parallel              # Chrome + Firefox en parallel workers
+```
+
+### Par environnement
+
+```bash
+npm run test:local                 # ENV=local
+npm run test:staging               # ENV=staging
+npm run test:prod                  # ENV=prod
+npm run test:staging:firefox       # ENV=staging + Firefox
+```
+
+### Rapports Allure
+
+```bash
+npm run allure:generate            # Générer le rapport
+npm run allure:open                # Ouvrir dans le navigateur
+npm run allure:report              # generate + open
+npm run allure:merge               # Fusionner multi-browser results
+npm run dashboard:browser          # Dashboard HTML interactif
+npm run dashboard:flaky            # Dashboard tests flaky
+```
+
+### Nettoyage
+
+```bash
+npm run clean                      # Tout nettoyer
+npm run clean:results              # Résultats Allure uniquement
+npm run clean:report               # Rapport Allure uniquement
+```
+
+---
+
+## Commandes agents
+
+### Génération de code
+
+```bash
+npm run agent:codegen:spec         # US Jira → .feature
+npm run agent:codegen:steps        # .feature → steps TypeScript
+npm run agent:codegen:pages        # .feature → Page Object Model
+```
+
+### Exécution & détection
+
+```bash
+npm run agent:runner               # Tous les tests
+npm run agent:runner:smoke         # Tag @smoke
+npm run agent:runner:critical      # Tag @critical
+npm run agent:runner:flaky         # Détection tests instables
+npm run agent:runner:regression    # Régression vs baseline
+```
+
+### Qualité & Analyse
+
+```bash
+npm run agent:quality:triage       # Triage IA des échecs
+npm run agent:quality:rca          # Root Cause Analysis
+npm run agent:quality:verify       # Cohérence features/steps/allure
+npm run agent:quality:full         # Triage + RCA + Vérification
+```
+
+### Bugs & Réparation
+
+```bash
+npm run agent:bug:analyze          # Boucle agentique (lit, analyse, corrige)
+npm run agent:bug:repair           # Réparation automatique des fichiers .ts
+npm run agent:bug:report           # Rapport HTML des bugs
+```
+
+### CI/CD & Git
+
+```bash
+npm run agent:ci:status            # Workflows GitHub Actions
+npm run agent:ci:pr                # Créer une Pull Request
+npm run agent:ci:git               # Statut git
+```
+
+### Planning & Jira
+
+```bash
+npm run agent:planning:stories     # User Stories du projet
+npm run agent:planning:coverage    # Couverture des .feature
+npm run agent:planning:gaps        # Types de test manquants
+npm run agent:planning:sprint      # Liste des sprints
+```
+
+### Reporting & Notifications
+
+```bash
+npm run agent:reporting:dashboard  # Dashboard KPI HTML
+npm run agent:reporting:notify     # Notification Slack
+npm run agent:reporting:sync       # Résultats → commentaires Jira
+```
+
+### Décision & Prédiction
+
+```bash
+npm run agent:advisor:advise       # Vote GO/NO-GO (N=3 LLMs)
+npm run agent:advisor:predict      # Prédiction risque par TC
+npm run agent:advisor:gate         # Score qualité 0–100
+```
+
+### Observabilité
+
+```bash
+npm run agent:observability:metrics   # Métriques par agent
+npm run agent:observability:cost      # Estimation coût LLM
+npm run agent:observability:cb        # État circuit breaker
+```
+
+### Pipeline complet
+
+```bash
+npm run agent:pipeline:full        # Planning → Codegen → Run → Quality → Bug → Report → Advisor → CI
+npm run agent:pipeline:quick       # Run → Triage → Dashboard → Gate
+npm run agent:pipeline:report      # Analyse + Dashboards (sans exécution)
+npm run agent:pipeline:status      # État de santé de tous les agents
 ```
 
 ---
@@ -133,61 +614,102 @@ npm run agent:spec -- --file=specs/ma-feature.md
 
 ```
 ui_playwright_bdd/
-├── scripts/agents/          # 11 agents IA
-│   ├── llm.js               # Helper LLM partagé (Groq/Ollama)
-│   ├── jira-fetcher.js      # Client Jira partagé
-│   ├── spec-agent.js        # Spec → User Stories → Features
-│   ├── generate-agent.js    # Génération de scénarios manquants
-│   ├── execute-agent.js     # Orchestration d'exécution
-│   ├── bug-analyzer.js      # Analyse + correction de bugs
-│   ├── qa-agent.js          # Analyse qualité
-│   ├── report-agent.js      # Génération de rapports
-│   ├── jira-agent.js        # Traçabilité Jira ↔ Features
-│   ├── jira-ticket-agent.js # Création automatique de tickets
-│   └── mcp-agent.js         # Browser automation via MCP
+│
+├── scripts/
+│   └── agents/                      Couche IA
+│       ├── llm.js                   Client LLM (Groq/Ollama) + 7 patterns
+│       ├── jira-fetcher.js          Client Jira REST v3
+│       ├── shared/
+│       │   ├── tracer.js            Traces JSONL de tous les appels LLM
+│       │   ├── circuit-breaker.js   Résilience + cache SHA256
+│       │   ├── memory-store.js      Mémoire épisodique JSONL
+│       │   └── prompt-store.js      Versioning sémantique des prompts
+│       ├── codegen-agent.js         Génération specs / steps / POM
+│       ├── runner-agent.js          Exécution + détection flaky
+│       ├── quality-agent.js         Triage + RCA + Vérification
+│       ├── ci-agent.js              GitHub Actions + Git
+│       ├── planning-agent.js        Stories + Sprints + Couverture
+│       ├── reporting-agent.js       Dashboard + Notifications + Jira sync
+│       ├── advisor-agent.js         GO/NO-GO + Prédiction risques
+│       ├── observability-agent.js   Métriques + Coûts + CB + Prompts
+│       ├── bug-agent.js             Analyse + Réparation automatique
+│       └── pipeline-agent.js        Orchestrateur maître
+│
 ├── src/
-│   ├── features/            # Scénarios Gherkin (Id01–Id08)
-│   ├── steps/               # Step definitions TypeScript
-│   ├── pages/               # Page Object Model
-│   ├── hooks/               # Before/After hooks Allure
-│   └── support/             # Fixtures et données de test
-├── specs/                   # Fichiers de spécification métier
-├── RAG/                     # Base de connaissances QA
-├── docs/                    # Rapports générés (traçabilité, bugs, specs)
-└── .env.example             # Template de configuration
+│   ├── features/                    Scénarios Gherkin (Id01–Id08)
+│   │   ├── Id01_SignupTest.feature
+│   │   ├── Id01_SignupNegativeTest.feature
+│   │   ├── Id02_LoginTest.feature
+│   │   ├── Id03_TodoTest.feature
+│   │   ├── Id03_TodoNegativeTest.feature
+│   │   ├── Id04_DeleteTodoTest.feature
+│   │   ├── Id04_DeleteTodoNegativeTest.feature
+│   │   ├── Id05_LoginNegativeTest.feature
+│   │   ├── Id06_PasswordUpdate.feature
+│   │   ├── Id07_EmailUpdate.feature
+│   │   └── Id08_AccountDeletion.feature
+│   ├── steps/                       Step definitions TypeScript (1 fichier / feature)
+│   ├── pages/                       Page Object Model
+│   │   ├── BasePage.ts
+│   │   ├── Id01_SignupPage.ts
+│   │   ├── Id02_LoginPage.ts
+│   │   └── Id03_TodoPage.ts
+│   ├── core/
+│   │   ├── world.ts                 CucumberJS World (Playwright context)
+│   │   └── driver.ts               Gestionnaire navigateur
+│   ├── hooks/
+│   │   └── hooks.ts                Before/After Allure + screenshots
+│   ├── config/
+│   │   ├── env.ts                  Variables d'environnement
+│   │   └── playwright.config.ts
+│   ├── fixtures/
+│   │   └── user.json               Données de test
+│   ├── support/
+│   │   ├── selectors.ts            Sélecteurs CSS centralisés
+│   │   ├── testData.ts             Données de test TypeScript
+│   │   └── fixtureStore.ts
+│   └── utils/
+│       ├── allure-executor.ts
+│       ├── execution-metrics.ts
+│       ├── retry-manager.ts
+│       └── smart-retry.ts
+│
+├── logs/
+│   ├── traces.jsonl                 Traces LLM (durée, tokens, confiance)
+│   ├── circuit_breaker_state.json  État CB (CLOSED/OPEN/HALF_OPEN)
+│   └── llm_cache.json              Cache SHA256 des réponses LLM
+│
+├── memory/
+│   └── episodes.jsonl              Historique épisodique par agent/TC
+│
+├── prompts/                         Prompts versionnés (semver)
+├── docs/                            Rapports HTML générés
+├── allure-results/                  Résultats bruts Allure
+├── allure-report/                   Rapport Allure généré
+├── specs/                           Spécifications métier source
+├── RAG/                             Base de connaissances QA
+├── cucumber.js                      Configuration CucumberJS
+├── tsconfig.json                    Configuration TypeScript
+└── .env.example                     Template de configuration
 ```
 
 ---
 
-## Commandes agents
+## Stack technique
 
-```bash
-npm run agent:spec            # Spec → User Stories + Jira Epic
-npm run agent:spec:dry        # Simulation sans créer de fichiers
-npm run agent:generate        # Génère les scénarios manquants
-npm run agent:execute         # Exécute les tests avec pipeline IA
-npm run agent:bug             # Analyse et corrige les échecs
-npm run agent:qa              # Analyse qualité de la suite
-npm run agent:report          # Rapport de test professionnel
-npm run agent:jira            # Matrice traçabilité Jira ↔ Features
-npm run agent:ticket          # Crée les tickets Bug dans Jira
-npm run agent:ticket:dry      # Simulation tickets (sans créer)
-npm run agent:mcp             # Exploration browser via IA
-npm run agent:pipeline        # Pipeline complet de bout en bout
-```
+| Composant | Technologie | Version |
+|-----------|-------------|---------|
+| Tests BDD | CucumberJS | ^11.3 |
+| Browser | Playwright | ^1.59 |
+| Langage tests | TypeScript | ^6.0 |
+| LLM cloud | Groq (llama-3.3-70b-versatile) | gratuit 14 400 req/j |
+| LLM local | Ollama | fallback auto |
+| SDK LLM | groq-sdk + @anthropic-ai/sdk | dernière |
+| Reporting | Allure + Chart.js | ^2.38 |
+| Gestion projet | Jira REST API v3 + Agile API | Cloud |
+| CI/CD | GitHub Actions CLI (gh) | — |
+| Runtime | Node.js | >= 18 |
 
 ---
 
-## Pourquoi ce framework
-
-| Problème classique | Ce framework |
-|--------------------|--------------|
-| Écrire les tests manuellement | `agent:spec` génère features + steps depuis une spec |
-| Déboguer les échecs à la main | `agent:bug` lit les logs et patche le code |
-| Créer les tickets à la main | `agent:ticket` les crée automatiquement depuis Allure |
-| Traçabilité stories / tests perdue | `agent:jira` la maintient à jour en continu |
-| Rapport d'exécution basique | `agent:report` produit un document professionnel |
-
----
-
-*Framework développé avec Playwright, CucumberJS, Groq AI et Playwright MCP.*
+*Framework QA développé avec Playwright, CucumberJS, Groq AI et des patterns LLM avancés.*
