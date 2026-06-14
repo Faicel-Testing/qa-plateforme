@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Triage Agent — Rapport de confiance</title>
+<style>
+  body{font-family:Arial,sans-serif;background:#f5f5f5;color:#333;margin:0;padding:20px}
+  h1{color:#2c3e50} h2{color:#34495e;margin-top:30px}
+  .stat{display:inline-block;background:#fff;border-radius:8px;padding:15px 25px;margin:8px;box-shadow:0 2px 6px rgba(0,0,0,.1);text-align:center}
+  .stat-val{font-size:28px;font-weight:bold}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1);margin-top:15px}
+  th{background:#2c3e50;color:#fff;padding:10px;text-align:left;font-size:13px}
+  td{padding:9px 10px;border-bottom:1px solid #ecf0f1;vertical-align:middle}
+  tr:hover{background:#f8f9fa}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;margin:15px 0}
+  .leg{padding:4px 12px;border-radius:4px;color:#fff;font-size:13px}
+</style>
+</head>
+<body>
+<h1>Triage Agent — Confidence Scoring</h1>
+
+<div>
+  <div class="stat"><div class="stat-val" style="color:#e74c3c">22</div>Échecs analysés</div>
+  <div class="stat"><div class="stat-val" style="color:#e67e22">90%</div>Confiance moyenne</div>
+  <div class="stat"><div class="stat-val" style="color:#e74c3c">6</div>Révisions humaines</div>
+  <div class="stat"><div class="stat-val" style="color:#e74c3c">15</div>Vrais bugs</div>
+  <div class="stat"><div class="stat-val" style="color:#e67e22">0</div>Flaky</div>
+</div>
+
+<div class="legend">
+  <span class="leg" style="background:#e74c3c">VRAI BUG — bug dans le code</span>
+  <span class="leg" style="background:#e67e22">FLAKY — instable / race condition</span>
+  <span class="leg" style="background:#3498db">ENV — infrastructure / réseau</span>
+  <span class="leg" style="background:#27ae60">FAUX POSITIF — test incorrect</span>
+</div>
+
+<h2>Détail par test (22 cas)</h2>
+<table>
+  <tr><th>TC</th><th>Nom du test</th><th>Catégorie</th><th>Confiance</th><th>Raisonnement</th><th>Action</th></tr>
+  
+        <tr>
+          <td style="font-family:monospace;font-size:12px">tc-031</td>
+          <td style="font-size:12px">test_tc031__xss_payload_dans_firstname_post_booking</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">VRAI BUG</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#e74c3c;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">L'échec du test est dû à une AssertionError qui indique que le payload XSS n'a p</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">tc-029</td>
+          <td style="font-size:12px">test_tc029__checkin_posterieur_a_checkout_post_booking</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">VRAI BUG</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#e74c3c;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">L'erreur est due à une AssertionError où le test attend un code HTTP 400 mais re</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:1px 6px;border-radius:3px;font-size:11px">⚠ RÉVISION</span></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">tc-029</td>
+          <td style="font-size:12px">test_tc029__checkin_posterieur_a_checkout_post_booking</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">VRAI BUG</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#e74c3c;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">L'erreur est due à une AssertionError où le test attend un code HTTP 400 mais re</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">tc-028</td>
+          <td style="font-size:12px">test_tc028__totalprice_negatif_post_booking</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">VRAI BUG</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#e74c3c;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">Le test échoue car il attend un code HTTP 400 ou 500, mais reçoit un 200, ce qui</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">tc-031</td>
+          <td style="font-size:12px">test_tc031__xss_payload_dans_firstname_post_booking</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">VRAI BUG</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#e74c3c;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">Le test a échoué en raison d'une AssertionError, ce qui indique que l'assertion </td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">—</td>
+          <td style="font-size:12px">test_patch_booking</td>
+          <td><span style="background:#3498db;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">ENV</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#3498db;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">L'erreur est liée à une vérification de certificat SSL échouée, ce qui suggère u</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">tc-031</td>
+          <td style="font-size:12px">test_tc031__xss_payload_dans_firstname_post_booking</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">VRAI BUG</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#e74c3c;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">L'échec du test est dû à une AssertionError qui indique que le payload XSS n'a p</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:1px 6px;border-radius:3px;font-size:11px">⚠ RÉVISION</span></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">—</td>
+          <td style="font-size:12px">test_create_token</td>
+          <td><span style="background:#3498db;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">ENV</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#3498db;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">L'erreur SSLCertificateVerificationError indique un problème de vérification du </td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">—</td>
+          <td style="font-size:12px">test_delete_booking</td>
+          <td><span style="background:#3498db;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">ENV</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#3498db;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">L'erreur SSLCertificateVerificationError indique un problème de vérification du </td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">tc-028</td>
+          <td style="font-size:12px">test_tc028__totalprice_negatif_post_booking</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">VRAI BUG</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#e74c3c;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">Le test a échoué en raison d'une AssertionError, ce qui indique que le code appl</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:1px 6px;border-radius:3px;font-size:11px">⚠ RÉVISION</span></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">—</td>
+          <td style="font-size:12px">test_get_all_bookings</td>
+          <td><span style="background:#3498db;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">ENV</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#3498db;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">L'erreur SSLCertificateVerificationError indique un problème de vérification du </td>
+          <td><span style="background:#e74c3c;color:#fff;padding:1px 6px;border-radius:3px;font-size:11px">⚠ RÉVISION</span></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">—</td>
+          <td style="font-size:12px">test_update_booking</td>
+          <td><span style="background:#3498db;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">ENV</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#3498db;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">L'erreur SSLCertificateVerificationError indique un problème de vérification du </td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">tc-029</td>
+          <td style="font-size:12px">test_tc029__checkin_posterieur_a_checkout_post_booking</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">VRAI BUG</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#e74c3c;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">L'erreur est due à une AssertionError où le test attend un code HTTP 400 mais re</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:1px 6px;border-radius:3px;font-size:11px">⚠ RÉVISION</span></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">—</td>
+          <td style="font-size:12px">test_get_booking_by_id</td>
+          <td><span style="background:#3498db;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">ENV</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#3498db;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">L'erreur SSLCertificateVerificationError indique un problème de vérification du </td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">tc-028</td>
+          <td style="font-size:12px">test_tc028__totalprice_negatif_post_booking</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">VRAI BUG</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#e74c3c;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">Le test échoue car il attend un code HTTP 400 ou 500, mais reçoit un 200, ce qui</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">tc-028</td>
+          <td style="font-size:12px">test_tc028__totalprice_negatif_post_booking</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">VRAI BUG</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#e74c3c;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">Le test échoue car il attend un statut HTTP 400 ou 500, mais reçoit un 200, ce q</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">—</td>
+          <td style="font-size:12px">test_create_booking</td>
+          <td><span style="background:#3498db;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">ENV</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#3498db;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">L'erreur SSLCertificateVerificationError indique un problème de vérification du </td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">tc-029</td>
+          <td style="font-size:12px">test_tc029__checkin_posterieur_a_checkout_post_booking</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">VRAI BUG</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#e74c3c;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">L'erreur est due à une AssertionError où le test attend un code HTTP 400 mais re</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">tc-031</td>
+          <td style="font-size:12px">test_tc031__xss_payload_dans_firstname_post_booking</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">VRAI BUG</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#e74c3c;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">L'échec du test est dû à une AssertionError qui indique que le payload XSS n'a p</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:1px 6px;border-radius:3px;font-size:11px">⚠ RÉVISION</span></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">tc-028</td>
+          <td style="font-size:12px">test_tc028__totalprice_negatif_post_booking</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">VRAI BUG</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#e74c3c;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">Le test échoue car il attend un statut HTTP 400 ou 500, mais reçoit un 200, ce q</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">tc-031</td>
+          <td style="font-size:12px">test_tc031__xss_payload_dans_firstname_post_booking</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">VRAI BUG</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#e74c3c;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">L'échec du test est dû à une AssertionError qui indique que le payload XSS n'a p</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">tc-029</td>
+          <td style="font-size:12px">test_tc029__checkin_posterieur_a_checkout_post_booking</td>
+          <td><span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">VRAI BUG</span></td>
+          <td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#e74c3c;width:90%;height:100%;border-radius:4px"></div></div> 90%</td>
+          <td style="font-size:11px;color:#666">L'erreur est due à une AssertionError où le test attend un code HTTP 400 mais re</td>
+          <td></td>
+        </tr>
+</table>
+
+<p style="color:#999;font-size:12px;margin-top:30px">
+  Généré par Triage Agent — Confidence Scoring (seuil révision : 70%)
+</p>
+</body>
+</html>

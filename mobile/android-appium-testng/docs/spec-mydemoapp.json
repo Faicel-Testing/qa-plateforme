@@ -1,0 +1,165 @@
+{
+  "app_name": "SauceLabs My Demo App",
+  "version": "2.2.0",
+  "platform": "Android",
+  "overview": "L'application mobile SauceLabs My Demo App est une application de démonstration qui permet aux utilisateurs de parcourir un catalogue de produits, d'ajouter des produits à leur panier et de passer commande. L'application nécessite une connexion pour accéder au panier et au processus de commande.",
+  "features": [
+    {
+      "id": "F-001",
+      "name": "Login",
+      "description": "L'utilisateur peut se connecter à l'application en utilisant un nom d'utilisateur et un mot de passe valides.",
+      "screens": [
+        "Login Screen"
+      ],
+      "acceptance_criteria": [
+        "L'utilisateur peut saisir un nom d'utilisateur et un mot de passe valides.",
+        "L'utilisateur est redirigé vers le catalogue de produits après une connexion réussie.",
+        "Un message d'erreur est affiché si les informations de connexion sont incorrectes.",
+        "Un message d'erreur est affiché si le compte est verrouillé."
+      ],
+      "priority": "High"
+    },
+    {
+      "id": "F-002",
+      "name": "Catalog",
+      "description": "L'utilisateur peut parcourir le catalogue de produits et afficher les détails d'un produit.",
+      "screens": [
+        "Products Catalog Screen",
+        "Product Detail Screen"
+      ],
+      "acceptance_criteria": [
+        "La liste des produits est affichée avec les informations de base (nom, prix, image).",
+        "L'utilisateur peut cliquer sur un produit pour afficher les détails.",
+        "Les détails du produit sont affichés avec les informations complètes (nom, description, prix, image).",
+        "L'utilisateur peut ajouter un produit à son panier."
+      ],
+      "priority": "High"
+    },
+    {
+      "id": "F-003",
+      "name": "Product Detail",
+      "description": "L'utilisateur peut afficher les détails d'un produit.",
+      "screens": [
+        "Product Detail Screen"
+      ],
+      "acceptance_criteria": [
+        "Les détails du produit sont affichés avec les informations complètes (nom, description, prix, image).",
+        "L'utilisateur peut ajouter un produit à son panier.",
+        "L'utilisateur peut modifier la quantité du produit dans son panier."
+      ],
+      "priority": "Medium"
+    },
+    {
+      "id": "F-004",
+      "name": "Cart",
+      "description": "L'utilisateur peut afficher les produits dans son panier et passer commande.",
+      "screens": [
+        "Cart Screen"
+      ],
+      "acceptance_criteria": [
+        "La liste des produits dans le panier est affichée avec les informations de base (nom, prix, quantité).",
+        "L'utilisateur peut supprimer un produit de son panier.",
+        "L'utilisateur peut passer commande.",
+        "Un message d'erreur est affiché si le panier est vide."
+      ],
+      "priority": "High"
+    },
+    {
+      "id": "F-005",
+      "name": "Checkout Address",
+      "description": "L'utilisateur peut saisir son adresse de livraison.",
+      "screens": [
+        "Checkout - Address Screen"
+      ],
+      "acceptance_criteria": [
+        "L'utilisateur peut saisir son adresse de livraison.",
+        "Les champs d'adresse sont validés pour garantir qu'ils sont complets.",
+        "L'utilisateur peut passer à l'étape de paiement."
+      ],
+      "priority": "Medium"
+    },
+    {
+      "id": "F-006",
+      "name": "Checkout Payment",
+      "description": "L'utilisateur peut saisir ses informations de paiement.",
+      "screens": [
+        "Checkout - Payment Screen"
+      ],
+      "acceptance_criteria": [
+        "L'utilisateur peut saisir ses informations de paiement.",
+        "Les champs de paiement sont validés pour garantir qu'ils sont complets.",
+        "L'utilisateur peut passer à l'étape de révision de la commande."
+      ],
+      "priority": "Medium"
+    },
+    {
+      "id": "F-007",
+      "name": "Checkout Review",
+      "description": "L'utilisateur peut réviser sa commande avant de la passer.",
+      "screens": [
+        "Checkout - Review Screen"
+      ],
+      "acceptance_criteria": [
+        "La commande est résumée avec les informations de base (produits, adresse, paiement).",
+        "L'utilisateur peut passer la commande.",
+        "Un message de confirmation est affiché après la commande."
+      ],
+      "priority": "Medium"
+    },
+    {
+      "id": "F-008",
+      "name": "Checkout Complete",
+      "description": "L'utilisateur reçoit un message de confirmation après avoir passé commande.",
+      "screens": [
+        "Checkout - Complete Screen"
+      ],
+      "acceptance_criteria": [
+        "Un message de confirmation est affiché après la commande.",
+        "Le numéro de commande est affiché.",
+        "L'utilisateur peut continuer à magasiner."
+      ],
+      "priority": "Low"
+    },
+    {
+      "id": "F-009",
+      "name": "Navigation",
+      "description": "L'utilisateur peut naviguer dans l'application en utilisant le menu de navigation.",
+      "screens": [
+        "Navigation Menu"
+      ],
+      "acceptance_criteria": [
+        "Le menu de navigation est accessible à partir de chaque écran.",
+        "L'utilisateur peut naviguer vers les différentes sections de l'application.",
+        "Le menu de navigation se ferme correctement après utilisation."
+      ],
+      "priority": "Low"
+    }
+  ],
+  "test_accounts": [
+    {
+      "role": "Utilisateur",
+      "email": "bob@example.com",
+      "password": "10203040",
+      "notes": "Compte de test avec des informations de connexion valides."
+    },
+    {
+      "role": "Utilisateur",
+      "email": "alice@example.com",
+      "password": "10203040",
+      "notes": "Compte de test avec des informations de connexion valides mais avec un problème de performance."
+    },
+    {
+      "role": "Utilisateur",
+      "email": "fiona@example.com",
+      "password": "10203040",
+      "notes": "Compte de test avec des informations de connexion valides mais avec un compte verrouillé."
+    }
+  ],
+  "constraints": [
+    "L'application est développée pour la plateforme Android.",
+    "L'application utilise une base de données pour stocker les informations de produits et d'utilisateurs.",
+    "L'application utilise un système de paiement simulé pour les tests.",
+    "L'application nécessite une connexion pour accéder au panier et au processus de commande.",
+    "Les stocks ne diminuent pas lors de la commande (app de démo)."
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "ts": "2026-06-14T13:44:42.355Z",
+  "runs": 3,
+  "flaky": [
+    {
+      "name": "Id03_TodoNegative - adding todo exceeding character limit should fail",
+      "flakiness": 0.375,
+      "fails": 9,
+      "runs": 24
+    },
+    {
+      "name": "Id05_LoginNegative - login with empty email should fail",
+      "flakiness": 0.375,
+      "fails": 9,
+      "runs": 24
+    },
+    {
+      "name": "Id01_SignupNegative - signup with missing password should fail",
+      "flakiness": 0.375,
+      "fails": 9,
+      "runs": 24
+    },
+    {
+      "name": "Id05_LoginNegative - login with empty password should fail",
+      "flakiness": 0.375,
+      "fails": 9,
+      "runs": 24
+    },
+    {
+      "name": "Id05_LoginNegative - login with both fields empty should fail",
+      "flakiness": 0.375,
+      "fails": 9,
+      "runs": 24
+    },
+    {
+      "name": "Id01_SignupNegative - signup with missing email should fail",
+      "flakiness": 0.375,
+      "fails": 9,
+      "runs": 24
+    },
+    {
+      "name": "Id03_TodoNegative - adding todo with only whitespace should fail",
+      "flakiness": 0.375,
+      "fails": 9,
+      "runs": 24
+    },
+    {
+      "name": "Id05_LoginNegative - login with wrong password should fail",
+      "flakiness": 0.375,
+      "fails": 9,
+      "runs": 24
+    },
+    {
+      "name": "Id01_SignupNegative - signup with invalid email format should fail",
+      "flakiness": 0.125,
+      "fails": 3,
+      "runs": 24
+    }
+  ],
+  "critical": [
+    {
+      "name": "Id03_TodoNegative - adding todo exceeding character limit should fail",
+      "flakiness": 0.375,
+      "fails": 9,
+      "runs": 24
+    },
+    {
+      "name": "Id05_LoginNegative - login with empty email should fail",
+      "flakiness": 0.375,
+      "fails": 9,
+      "runs": 24
+    },
+    {
+      "name": "Id01_SignupNegative - signup with missing password should fail",
+      "flakiness": 0.375,
+      "fails": 9,
+      "runs": 24
+    },
+    {
+      "name": "Id05_LoginNegative - login with empty password should fail",
+      "flakiness": 0.375,
+      "fails": 9,
+      "runs": 24
+    },
+    {
+      "name": "Id05_LoginNegative - login with both fields empty should fail",
+      "flakiness": 0.375,
+      "fails": 9,
+      "runs": 24
+    },
+    {
+      "name": "Id01_SignupNegative - signup with missing email should fail",
+      "flakiness": 0.375,
+      "fails": 9,
+      "runs": 24
+    },
+    {
+      "name": "Id03_TodoNegative - adding todo with only whitespace should fail",
+      "flakiness": 0.375,
+      "fails": 9,
+      "runs": 24
+    },
+    {
+      "name": "Id05_LoginNegative - login with wrong password should fail",
+      "flakiness": 0.375,
+      "fails": 9,
+      "runs": 24
+    }
+  ]
+}

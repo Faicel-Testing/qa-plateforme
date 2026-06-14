@@ -1,0 +1,702 @@
+[
+  {
+    "id": "US-001",
+    "title": "Connexion avec identifiants valides",
+    "as_a": "Utilisateur enregistré",
+    "i_want": "Me connecter avec mes identifiants valides",
+    "so_that": "J'ai accès à mon compte et à mes informations personnelles",
+    "priority": "High",
+    "story_points": 5,
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "login"
+    ],
+    "gherkin": "Given I am on the login page\nWhen I enter valid username 'bob@example.com' and password '10203040'\nThen I should be logged in and see my account dashboard",
+    "acceptance_criteria": [
+      "L'utilisateur est redirigé vers la page d'accueil après connexion",
+      "Les informations de compte de l'utilisateur sont affichées",
+      "L'utilisateur peut accéder à ses commandes passées",
+      "Le bouton de déconnexion est visible et fonctionnel",
+      "Les erreurs de connexion ne sont pas affichées"
+    ],
+    "feature_id": "F-001",
+    "feature_name": "Login",
+    "jira_key": "MDA-32"
+  },
+  {
+    "id": "US-002",
+    "title": "Connexion avec mot de passe incorrect",
+    "as_a": "Utilisateur enregistré",
+    "i_want": "Essayer de me connecter avec un mot de passe incorrect",
+    "so_that": "Je suis informé que mon mot de passe est incorrect",
+    "priority": "High",
+    "story_points": 3,
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "login"
+    ],
+    "gherkin": "Given I am on the login page\nWhen I enter valid username 'bob@example.com' and invalid password 'wrongpassword'\nThen I should see an error message indicating that my password is incorrect",
+    "acceptance_criteria": [
+      "Un message d'erreur est affiché lorsque le mot de passe est incorrect",
+      "L'utilisateur ne peut pas accéder à son compte avec un mot de passe incorrect",
+      "Le bouton de connexion est désactivé après plusieurs tentatives de connexion échouées",
+      "L'utilisateur peut réessayer de se connecter avec un nouveau mot de passe",
+      "Les informations de compte de l'utilisateur ne sont pas modifiées"
+    ],
+    "feature_id": "F-001",
+    "feature_name": "Login",
+    "jira_key": "MDA-33"
+  },
+  {
+    "id": "US-003",
+    "title": "Connexion avec compte verrouillé",
+    "as_a": "Utilisateur enregistré",
+    "i_want": "Essayer de me connecter avec un compte verrouillé",
+    "so_that": "Je suis informé que mon compte est verrouillé",
+    "priority": "High",
+    "story_points": 5,
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "login"
+    ],
+    "gherkin": "Given I am on the login page\nWhen I enter valid username 'bob@example.com' and password '10203040' with a locked account\nThen I should see an error message indicating that my account is locked",
+    "acceptance_criteria": [
+      "Un message d'erreur est affiché lorsque le compte est verrouillé",
+      "L'utilisateur ne peut pas accéder à son compte avec un compte verrouillé",
+      "Le bouton de connexion est désactivé après plusieurs tentatives de connexion échouées",
+      "L'utilisateur peut contacter le support pour déverrouiller son compte",
+      "Les informations de compte de l'utilisateur ne sont pas modifiées"
+    ],
+    "feature_id": "F-001",
+    "feature_name": "Login",
+    "jira_key": "MDA-34"
+  },
+  {
+    "id": "US-004",
+    "title": "Connexion avec champs vides",
+    "as_a": "Utilisateur enregistré",
+    "i_want": "Essayer de me connecter avec des champs vides",
+    "so_that": "Je suis informé que les champs sont obligatoires",
+    "priority": "Medium",
+    "story_points": 2,
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "login"
+    ],
+    "gherkin": "Given I am on the login page\nWhen I enter empty username and password\nThen I should see an error message indicating that the fields are required",
+    "acceptance_criteria": [
+      "Un message d'erreur est affiché lorsque les champs sont vides",
+      "L'utilisateur ne peut pas accéder à son compte avec des champs vides",
+      "Les champs de connexion sont obligatoires",
+      "L'utilisateur peut remplir les champs pour se connecter",
+      "Les informations de compte de l'utilisateur ne sont pas modifiées"
+    ],
+    "feature_id": "F-001",
+    "feature_name": "Login",
+    "jira_key": "MDA-35"
+  },
+  {
+    "id": "US-005",
+    "title": "Déconnexion depuis le menu",
+    "as_a": "Utilisateur connecté",
+    "i_want": "Me déconnecter depuis le menu",
+    "so_that": "Je suis déconnecté de mon compte",
+    "priority": "Medium",
+    "story_points": 3,
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "login"
+    ],
+    "gherkin": "Given I am logged in\nWhen I click on the menu and select 'Logout'\nThen I should be logged out and see the login page",
+    "acceptance_criteria": [
+      "L'utilisateur est déconnecté après avoir cliqué sur 'Logout'",
+      "L'utilisateur est redirigé vers la page de connexion après déconnexion",
+      "Les informations de compte de l'utilisateur ne sont pas accessibles après déconnexion",
+      "L'utilisateur peut se reconnecter avec ses identifiants valides",
+      "Les erreurs de déconnexion ne sont pas affichées"
+    ],
+    "feature_id": "F-001",
+    "feature_name": "Login",
+    "jira_key": "MDA-36"
+  },
+  {
+    "id": "US-002-1",
+    "title": "Display product list after login",
+    "as_a": "logged-in user",
+    "i_want": "to see the list of available products",
+    "so_that": "I can browse and purchase products",
+    "priority": "Medium",
+    "story_points": 5,
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "catalog"
+    ],
+    "gherkin": "Given I am logged in as bob@example.com / 10203040\nWhen I navigate to the products catalog\nThen I should see a list of products",
+    "acceptance_criteria": [
+      "The product list is displayed after successful login",
+      "The product list contains at least 10 products",
+      "Each product has a name, price, and image"
+    ],
+    "feature_id": "F-002",
+    "feature_name": "Products Catalog",
+    "jira_key": "MDA-37"
+  },
+  {
+    "id": "US-002-2",
+    "title": "Sort products by name A-Z",
+    "as_a": "user browsing the catalog",
+    "i_want": "to sort products by name in ascending order",
+    "so_that": "I can easily find a specific product",
+    "priority": "Medium",
+    "story_points": 3,
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "catalog"
+    ],
+    "gherkin": "Given I am on the products catalog page\nWhen I select the 'Name A-Z' sorting option\nThen the products should be sorted in ascending order by name",
+    "acceptance_criteria": [
+      "The products are sorted in ascending order by name",
+      "The sorting option is visible and accessible",
+      "The sorting option is persistent across page reloads"
+    ],
+    "feature_id": "F-002",
+    "feature_name": "Products Catalog",
+    "jira_key": "MDA-38"
+  },
+  {
+    "id": "US-002-3",
+    "title": "Sort products by price croissant",
+    "as_a": "user browsing the catalog",
+    "i_want": "to sort products by price in ascending order",
+    "so_that": "I can find the cheapest products",
+    "priority": "Medium",
+    "story_points": 3,
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "catalog"
+    ],
+    "gherkin": "Given I am on the products catalog page\nWhen I select the 'Price' sorting option\nThen the products should be sorted in ascending order by price",
+    "acceptance_criteria": [
+      "The products are sorted in ascending order by price",
+      "The sorting option is visible and accessible",
+      "The sorting option is persistent across page reloads"
+    ],
+    "feature_id": "F-002",
+    "feature_name": "Products Catalog",
+    "jira_key": "MDA-39"
+  },
+  {
+    "id": "US-002-4",
+    "title": "Navigate to product details",
+    "as_a": "user browsing the catalog",
+    "i_want": "to navigate to the details page of a product",
+    "so_that": "I can view more information about the product",
+    "priority": "Low",
+    "story_points": 2,
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "catalog"
+    ],
+    "gherkin": "Given I am on the products catalog page\nWhen I click on a product\nThen I should be taken to the product details page",
+    "acceptance_criteria": [
+      "The product details page is displayed",
+      "The product details page contains the product name, price, and image",
+      "The product details page has a 'Back' button to return to the catalog"
+    ],
+    "feature_id": "F-002",
+    "feature_name": "Products Catalog",
+    "jira_key": "MDA-40"
+  },
+  {
+    "id": "US-001",
+    "title": "Display Product Details",
+    "as_a": "mobile user",
+    "i_want": "to view product details such as name, price, description, and image",
+    "so_that": "I can make an informed purchasing decision",
+    "priority": "Medium",
+    "story_points": "3",
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "product_detail"
+    ],
+    "gherkin": "Given I am on the product list page\nWhen I click on a product\nThen I should see the product name, price, description, and image",
+    "acceptance_criteria": [
+      "The product name is displayed correctly",
+      "The product price is displayed correctly",
+      "The product description is displayed correctly",
+      "The product image is displayed correctly"
+    ],
+    "feature_id": "F-003",
+    "feature_name": "Product Detail",
+    "jira_key": "MDA-41"
+  },
+  {
+    "id": "US-002",
+    "title": "Add Product to Cart from Detail",
+    "as_a": "mobile user",
+    "i_want": "to add a product to my cart from the product detail page",
+    "so_that": "I can purchase the product later",
+    "priority": "Medium",
+    "story_points": "5",
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "product_detail",
+      "cart"
+    ],
+    "gherkin": "Given I am on the product detail page\nWhen I click the add to cart button\nThen I should see the product added to my cart",
+    "acceptance_criteria": [
+      "The product is added to the cart successfully",
+      "The cart count is updated correctly",
+      "The product details are displayed correctly in the cart",
+      "The user is redirected to the cart page after adding the product"
+    ],
+    "feature_id": "F-003",
+    "feature_name": "Product Detail",
+    "jira_key": "MDA-42"
+  },
+  {
+    "id": "US-003",
+    "title": "Modify Product Quantity Before Adding to Cart",
+    "as_a": "mobile user",
+    "i_want": "to modify the quantity of a product before adding it to my cart",
+    "so_that": "I can purchase the correct quantity of the product",
+    "priority": "Medium",
+    "story_points": "5",
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "product_detail",
+      "cart"
+    ],
+    "gherkin": "Given I am on the product detail page\nWhen I modify the quantity of the product\nAnd I click the add to cart button\nThen I should see the product added to my cart with the modified quantity",
+    "acceptance_criteria": [
+      "The product quantity can be modified correctly",
+      "The modified quantity is reflected in the cart",
+      "The user is redirected to the cart page after adding the product with modified quantity",
+      "The total cost is updated correctly based on the modified quantity"
+    ],
+    "feature_id": "F-003",
+    "feature_name": "Product Detail",
+    "jira_key": "MDA-43"
+  },
+  {
+    "id": "US-001",
+    "title": "Add product to cart from catalogue",
+    "as_a": "mobile user",
+    "i_want": "to add a product to my shopping cart from the catalogue",
+    "so_that": "I can purchase the product later",
+    "priority": "Medium",
+    "story_points": "5",
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "shopping-cart"
+    ],
+    "gherkin": "Given I am on the catalogue page\nWhen I select a product and click add to cart\nThen the product is added to my shopping cart",
+    "acceptance_criteria": [
+      "The product is displayed in the shopping cart",
+      "The product quantity in the cart is updated correctly",
+      "The cart badge is updated with the correct number of items"
+    ],
+    "feature_id": "F-004",
+    "feature_name": "Shopping Cart",
+    "jira_key": "MDA-44"
+  },
+  {
+    "id": "US-002",
+    "title": "Remove product from cart",
+    "as_a": "mobile user",
+    "i_want": "to remove a product from my shopping cart",
+    "so_that": "I can update my shopping cart contents",
+    "priority": "Medium",
+    "story_points": "3",
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "shopping-cart"
+    ],
+    "gherkin": "Given I have a product in my shopping cart\nWhen I click remove product\nThen the product is removed from my shopping cart",
+    "acceptance_criteria": [
+      "The product is no longer displayed in the shopping cart",
+      "The product quantity in the cart is updated correctly",
+      "The cart badge is updated with the correct number of items"
+    ],
+    "feature_id": "F-004",
+    "feature_name": "Shopping Cart",
+    "jira_key": "MDA-45"
+  },
+  {
+    "id": "US-003",
+    "title": "Display empty cart with Go Shopping button",
+    "as_a": "mobile user",
+    "i_want": "to see an empty cart with a Go Shopping button",
+    "so_that": "I can start shopping when my cart is empty",
+    "priority": "Low",
+    "story_points": "2",
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "shopping-cart"
+    ],
+    "gherkin": "Given my shopping cart is empty\nWhen I navigate to the cart page\nThen I see a Go Shopping button",
+    "acceptance_criteria": [
+      "The cart page displays a message indicating the cart is empty",
+      "The Go Shopping button is visible and clickable",
+      "Clicking the Go Shopping button navigates to the catalogue page"
+    ],
+    "feature_id": "F-004",
+    "feature_name": "Shopping Cart",
+    "jira_key": "MDA-46"
+  },
+  {
+    "id": "US-004",
+    "title": "Verify cart badge after adding product",
+    "as_a": "mobile user",
+    "i_want": "to see the correct number of items in my cart badge",
+    "so_that": "I can easily track the number of items in my cart",
+    "priority": "Medium",
+    "story_points": "2",
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "shopping-cart"
+    ],
+    "gherkin": "Given I have added a product to my shopping cart\nWhen I navigate to the home page\nThen the cart badge displays the correct number of items",
+    "acceptance_criteria": [
+      "The cart badge displays the correct number of items",
+      "The cart badge is updated in real-time after adding or removing products",
+      "The cart badge is visible on all pages"
+    ],
+    "feature_id": "F-004",
+    "feature_name": "Shopping Cart",
+    "jira_key": "MDA-47"
+  },
+  {
+    "id": "US-001",
+    "title": "Valid Address Form Submission",
+    "as_a": "mobile shopping user",
+    "i_want": "to fill in the address form correctly",
+    "so_that": "I can proceed to the payment step",
+    "priority": "High",
+    "story_points": "5",
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "checkout"
+    ],
+    "gherkin": "Given I am on the checkout page\nWhen I fill in the address form with valid data\nThen I should be navigated to the payment step",
+    "acceptance_criteria": [
+      "The address form is displayed with all required fields",
+      "The user can fill in the address form with valid data",
+      "The user is navigated to the payment step after submitting the address form",
+      "The address form submission is successful with a valid address",
+      "The application displays a success message after address form submission"
+    ],
+    "feature_id": "F-005",
+    "feature_name": "Checkout Address",
+    "jira_key": "MDA-48"
+  },
+  {
+    "id": "US-002",
+    "title": "Address Form Validation",
+    "as_a": "mobile shopping user",
+    "i_want": "to be prevented from submitting the address form with empty required fields",
+    "so_that": "I can ensure that my address is valid and complete",
+    "priority": "High",
+    "story_points": "3",
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "checkout"
+    ],
+    "gherkin": "Given I am on the checkout page\nWhen I submit the address form with empty required fields\nThen I should see an error message indicating the required fields",
+    "acceptance_criteria": [
+      "The application displays an error message when submitting the address form with empty required fields",
+      "The error message indicates which fields are required",
+      "The user cannot submit the address form with empty required fields",
+      "The application prevents the user from proceeding to the payment step with invalid address data"
+    ],
+    "feature_id": "F-005",
+    "feature_name": "Checkout Address",
+    "jira_key": "MDA-49"
+  },
+  {
+    "id": "US-003",
+    "title": "Navigation to Payment Step",
+    "as_a": "mobile shopping user",
+    "i_want": "to navigate to the payment step after submitting the address form",
+    "so_that": "I can complete my purchase",
+    "priority": "High",
+    "story_points": "5",
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "checkout"
+    ],
+    "gherkin": "Given I am on the checkout page\nWhen I submit the address form with valid data\nThen I should be navigated to the payment step",
+    "acceptance_criteria": [
+      "The user is navigated to the payment step after submitting the address form",
+      "The payment step is displayed with all required fields",
+      "The user can select a payment method",
+      "The application displays a summary of the order",
+      "The user can complete the purchase by submitting the payment information"
+    ],
+    "feature_id": "F-005",
+    "feature_name": "Checkout Address",
+    "jira_key": "MDA-50"
+  },
+  {
+    "id": "US-001",
+    "title": "Valid Payment Information",
+    "as_a": "user",
+    "i_want": "to fill in valid payment information",
+    "so_that": "I can complete my purchase successfully",
+    "priority": "High",
+    "story_points": 5,
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "checkout"
+    ],
+    "gherkin": "Given I am on the checkout page\nWhen I fill in valid payment information\nThen I should see a confirmation of my purchase",
+    "acceptance_criteria": [
+      "The payment information form is displayed correctly",
+      "The user can fill in valid payment information",
+      "The purchase is confirmed and a confirmation message is displayed",
+      "The payment information is validated correctly",
+      "The user is redirected to the order review page"
+    ],
+    "feature_id": "F-006",
+    "feature_name": "Checkout Payment",
+    "jira_key": "MDA-51"
+  },
+  {
+    "id": "US-002",
+    "title": "Invalid Card Number",
+    "as_a": "user",
+    "i_want": "to see an error message when I enter an invalid card number",
+    "so_that": "I can correct my payment information",
+    "priority": "High",
+    "story_points": 3,
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "checkout"
+    ],
+    "gherkin": "Given I am on the checkout page\nWhen I fill in an invalid card number\nThen I should see an error message indicating that the card number is invalid",
+    "acceptance_criteria": [
+      "The error message is displayed correctly",
+      "The user is not allowed to proceed with the purchase",
+      "The payment information form is still displayed",
+      "The user can correct the payment information",
+      "The error message is cleared when the user corrects the payment information"
+    ],
+    "feature_id": "F-006",
+    "feature_name": "Checkout Payment",
+    "jira_key": "MDA-52"
+  },
+  {
+    "id": "US-003",
+    "title": "Navigate to Order Review",
+    "as_a": "user",
+    "i_want": "to navigate to the order review page after filling in my payment information",
+    "so_that": "I can review my order before completing my purchase",
+    "priority": "Medium",
+    "story_points": 2,
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "checkout"
+    ],
+    "gherkin": "Given I am on the checkout page\nWhen I fill in my payment information and click on the 'Review Order' button\nThen I should be redirected to the order review page",
+    "acceptance_criteria": [
+      "The user is redirected to the order review page",
+      "The order review page displays the correct order information",
+      "The user can review their order",
+      "The user can proceed with the purchase or cancel the order",
+      "The order review page is displayed correctly"
+    ],
+    "feature_id": "F-006",
+    "feature_name": "Checkout Payment",
+    "jira_key": "MDA-53"
+  },
+  {
+    "id": "US-007-001",
+    "title": "Review Order Before Validation",
+    "as_a": "mobile shopping user",
+    "i_want": "to review my order details before completing the checkout",
+    "so_that": "I can ensure everything is correct and make any necessary changes",
+    "priority": "High",
+    "story_points": 5,
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "checkout"
+    ],
+    "gherkin": "Given I am on the checkout page\nWhen I click on the review order button\nThen I should see my order details including items, quantities, and total cost",
+    "acceptance_criteria": [
+      "The order review page displays all items in the cart",
+      "The order review page displays the correct quantities for each item",
+      "The order review page displays the correct total cost"
+    ],
+    "feature_id": "F-007",
+    "feature_name": "Checkout Review & Complete",
+    "jira_key": "MDA-54"
+  },
+  {
+    "id": "US-007-002",
+    "title": "Complete Order Successfully",
+    "as_a": "mobile shopping user",
+    "i_want": "to complete my order with a valid payment method",
+    "so_that": "I can receive my purchased items",
+    "priority": "High",
+    "story_points": 8,
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "checkout"
+    ],
+    "gherkin": "Given I am on the checkout page\nWhen I enter valid payment information and click the complete order button\nThen I should see a confirmation message and receive an order confirmation email",
+    "acceptance_criteria": [
+      "The application accepts valid payment information",
+      "The application displays a confirmation message after completing the order",
+      "The user receives an order confirmation email with order details"
+    ],
+    "feature_id": "F-007",
+    "feature_name": "Checkout Review & Complete",
+    "jira_key": "MDA-55"
+  },
+  {
+    "id": "US-007-003",
+    "title": "Display Confirmation Message",
+    "as_a": "mobile shopping user",
+    "i_want": "to see a confirmation message after completing my order",
+    "so_that": "I can be sure my order was successful",
+    "priority": "High",
+    "story_points": 3,
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "checkout"
+    ],
+    "gherkin": "Given I have completed my order\nWhen I am on the order confirmation page\nThen I should see a confirmation message with my order number and details",
+    "acceptance_criteria": [
+      "The application displays a confirmation message after completing the order",
+      "The confirmation message includes the order number",
+      "The confirmation message includes a summary of the order details"
+    ],
+    "feature_id": "F-007",
+    "feature_name": "Checkout Review & Complete",
+    "jira_key": "MDA-56"
+  },
+  {
+    "id": "US-008-001",
+    "title": "Ouverture du menu burger",
+    "as_a": "Utilisateur de l'application",
+    "i_want": "Ouvrir le menu burger pour accéder aux options de navigation",
+    "so_that": "Je puisse naviguer facilement dans l'application",
+    "priority": "Low",
+    "story_points": 2,
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "navigation-menu"
+    ],
+    "gherkin": "Given I am on the home screen\nWhen I click on the burger menu icon\nThen the navigation menu should be displayed",
+    "acceptance_criteria": [
+      "Le menu burger est visible sur l'écran d'accueil",
+      "Le menu burger est cliquable",
+      "Le menu de navigation s'affiche correctement après clic sur le menu burger"
+    ],
+    "feature_id": "F-008",
+    "feature_name": "Navigation Menu",
+    "jira_key": "MDA-57"
+  },
+  {
+    "id": "US-008-002",
+    "title": "Navigation vers le catalogue depuis le menu",
+    "as_a": "Utilisateur de l'application",
+    "i_want": "Naviguer vers le catalogue depuis le menu de navigation",
+    "so_that": "Je puisse parcourir les produits disponibles",
+    "priority": "Medium",
+    "story_points": 3,
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "navigation-menu",
+      "catalogue"
+    ],
+    "gherkin": "Given I am on the home screen\nWhen I click on the burger menu icon\nAnd I click on the catalogue option\nThen the catalogue screen should be displayed",
+    "acceptance_criteria": [
+      "Le menu de navigation contient l'option 'Catalogue'",
+      "L'option 'Catalogue' est cliquable",
+      "L'écran du catalogue s'affiche correctement après clic sur l'option 'Catalogue'"
+    ],
+    "feature_id": "F-008",
+    "feature_name": "Navigation Menu",
+    "jira_key": "MDA-58"
+  },
+  {
+    "id": "US-008-003",
+    "title": "Navigation vers le panier depuis le menu",
+    "as_a": "Utilisateur de l'application",
+    "i_want": "Naviguer vers le panier depuis le menu de navigation",
+    "so_that": "Je puisse gérer mes achats en cours",
+    "priority": "Medium",
+    "story_points": 3,
+    "labels": [
+      "mobile",
+      "android",
+      "appium",
+      "navigation-menu",
+      "panier"
+    ],
+    "gherkin": "Given I am on the home screen\nWhen I click on the burger menu icon\nAnd I click on the cart option\nThen the cart screen should be displayed",
+    "acceptance_criteria": [
+      "Le menu de navigation contient l'option 'Panier'",
+      "L'option 'Panier' est cliquable",
+      "L'écran du panier s'affiche correctement après clic sur l'option 'Panier'"
+    ],
+    "feature_id": "F-008",
+    "feature_name": "Navigation Menu",
+    "jira_key": "MDA-59"
+  }
+]

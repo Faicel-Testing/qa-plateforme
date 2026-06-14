@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="refresh" content="0; url=pipeline-dashboard.html">
+<title>Pipeline QA — Dashboard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0 }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #0f1117;
+    color: #e2e8f0;
+    padding: 32px;
+    line-height: 1.6;
+  }
+  .header {
+    background: linear-gradient(135deg, #1a1d27, #1e2130);
+    border: 1px solid #2a2d3e;
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header h1 { font-size: 22px; font-weight: 800; color: #a78bfa }
+  .header .meta { font-size: 12px; color: #64748b; text-align: right }
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .metric {
+    background: #1a1d27;
+    border: 1px solid #2a2d3e;
+    border-radius: 12px;
+    padding: 18px;
+    text-align: center;
+  }
+  .metric .val {
+    font-size: 30px;
+    font-weight: 900;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .metric .lbl {
+    font-size: 10px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .section {
+    background: #1a1d27;
+    border: 1px solid #2a2d3e;
+    border-radius: 12px;
+    padding: 22px 26px;
+    margin-bottom: 20px;
+  }
+  .section h2 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #7dd3fc;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #2a2d3e;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  table { width: 100%; border-collapse: collapse }
+  td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.05); font-size: 13px }
+  .reports-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+  }
+  .report-card {
+    background: #1a1d27;
+    border: 1px solid #2a2d3e;
+    border-radius: 12px;
+    padding: 20px 16px;
+    text-align: center;
+    transition: border-color .2s, background .2s;
+    cursor: pointer;
+  }
+  .report-card:hover {
+    border-color: #a78bfa;
+    background: #1e2130;
+  }
+  .footer {
+    text-align: center;
+    color: #475569;
+    font-size: 11px;
+    margin-top: 28px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🧪 Pipeline QA — Dashboard</h1>
+    <div style="color:#94a3b8;font-size:13px;margin-top:6px">
+      Suite : <strong>all</strong> &nbsp;·&nbsp; Durée totale : <strong>256s</strong>
+    </div>
+  </div>
+  <div class="meta">
+    Généré le 2026-06-14 00:32<br>
+    <span style="color:#fcd34d">5/7 étapes OK</span>
+  </div>
+</div>
+
+<!-- Métriques tests -->
+<div class="metrics">
+  <div class="metric">
+    <span class="val" style="color:#43e97b">246</span>
+    <span class="lbl">Passed</span>
+  </div>
+  <div class="metric">
+    <span class="val" style="color:#ef4444">15</span>
+    <span class="lbl">Failed</span>
+  </div>
+  <div class="metric">
+    <span class="val" style="color:#fcd34d">7</span>
+    <span class="lbl">Broken</span>
+  </div>
+  <div class="metric">
+    <span class="val" style="color:#94a3b8">0</span>
+    <span class="lbl">Skipped</span>
+  </div>
+  <div class="metric">
+    <span class="val" style="color:#43e97b">91.8%</span>
+    <span class="lbl">Pass Rate</span>
+  </div>
+</div>
+
+<!-- Étapes du pipeline -->
+<div class="section">
+  <h2>Étapes du pipeline</h2>
+  <table>
+    <tr>
+      <th style="width:40px"></th>
+      <th style="text-align:left;color:#7dd3fc;font-size:11px;letter-spacing:1px">ÉTAPE</th>
+      <th style="text-align:right;color:#7dd3fc;font-size:11px;letter-spacing:1px">DURÉE</th>
+    </tr>
+    
+        <tr>
+          <td style="color:#43e97b;font-size:16px;text-align:center">✓</td>
+          <td style="color:#e2e8f0">Vérification Gherkin (verifier-agent)</td>
+          <td style="color:#94a3b8;text-align:right">5.4s</td>
+        </tr>
+        <tr>
+          <td style="color:#ef4444;font-size:16px;text-align:center">✗</td>
+          <td style="color:#e2e8f0">Tests BDD (suite=all)</td>
+          <td style="color:#94a3b8;text-align:right">172.4s</td>
+        </tr>
+        <tr>
+          <td style="color:#43e97b;font-size:16px;text-align:center">✓</td>
+          <td style="color:#e2e8f0">KPI Dashboard (kpi-agent)</td>
+          <td style="color:#94a3b8;text-align:right">0.9s</td>
+        </tr>
+        <tr>
+          <td style="color:#43e97b;font-size:16px;text-align:center">✓</td>
+          <td style="color:#e2e8f0">Triage des échecs (triage-agent)</td>
+          <td style="color:#94a3b8;text-align:right">39.8s</td>
+        </tr>
+        <tr>
+          <td style="color:#ef4444;font-size:16px;text-align:center">✗</td>
+          <td style="color:#e2e8f0">Root Cause Analysis (rca-agent)</td>
+          <td style="color:#94a3b8;text-align:right">25.8s</td>
+        </tr>
+        <tr>
+          <td style="color:#43e97b;font-size:16px;text-align:center">✓</td>
+          <td style="color:#e2e8f0">Création tickets Jira (jira-ticket-agent)</td>
+          <td style="color:#94a3b8;text-align:right">8.6s</td>
+        </tr>
+        <tr>
+          <td style="color:#43e97b;font-size:16px;text-align:center">✓</td>
+          <td style="color:#e2e8f0">Go/No-Go release (release-advisor-agent)</td>
+          <td style="color:#94a3b8;text-align:right">2.5s</td>
+        </tr>
+  </table>
+</div>
+
+<!-- Rapports individuels -->
+<div class="section">
+  <h2>Rapports détaillés</h2>
+  <div class="reports-grid">
+    
+        <a href="kpi-dashboard.html" style="text-decoration:none;opacity:1" target="_blank">
+          <div class="report-card">
+            <div style="font-size:28px;margin-bottom:8px">📊</div>
+            <div style="font-weight:700;color:#e2e8f0;font-size:14px">KPI Dashboard</div>
+            <div style="font-size:11px;color:#64748b;margin-top:4px">kpi-dashboard.html</div>
+          </div>
+        </a>
+        <a href="triage-report.html" style="text-decoration:none;opacity:1" target="_blank">
+          <div class="report-card">
+            <div style="font-size:28px;margin-bottom:8px">🔍</div>
+            <div style="font-weight:700;color:#e2e8f0;font-size:14px">Triage des échecs</div>
+            <div style="font-size:11px;color:#64748b;margin-top:4px">triage-report.html</div>
+          </div>
+        </a>
+        <a href="#" style="text-decoration:none;opacity:0.35" >
+          <div class="report-card">
+            <div style="font-size:28px;margin-bottom:8px">🧠</div>
+            <div style="font-weight:700;color:#e2e8f0;font-size:14px">Root Cause Analysis<span style='font-size:10px;color:#64748b;margin-left:6px'>non généré</span></div>
+            <div style="font-size:11px;color:#64748b;margin-top:4px">rca-report.html</div>
+          </div>
+        </a>
+        <a href="#" style="text-decoration:none;opacity:0.35" >
+          <div class="report-card">
+            <div style="font-size:28px;margin-bottom:8px">🚀</div>
+            <div style="font-weight:700;color:#e2e8f0;font-size:14px">Go / No-Go Release<span style='font-size:10px;color:#64748b;margin-left:6px'>non généré</span></div>
+            <div style="font-size:11px;color:#64748b;margin-top:4px">release-report.html</div>
+          </div>
+        </a>
+        <a href="qa-report.html" style="text-decoration:none;opacity:1" target="_blank">
+          <div class="report-card">
+            <div style="font-size:28px;margin-bottom:8px">✅</div>
+            <div style="font-weight:700;color:#e2e8f0;font-size:14px">Qualité BDD</div>
+            <div style="font-size:11px;color:#64748b;margin-top:4px">qa-report.html</div>
+          </div>
+        </a>
+  </div>
+</div>
+
+<div class="footer">
+  pipeline.py · api-pytest-framework · 2026-06-14 00:32
+</div>
+
+</body>
+</html>
