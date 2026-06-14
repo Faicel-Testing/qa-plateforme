@@ -3,6 +3,8 @@
 > **Playwright · CucumberJS · TypeScript · Groq AI**  
 > Framework BDD auto-piloté : génère, exécute, analyse, répare et documente les tests sans intervention manuelle.
 
+📋 **[Stratégie de test complète →](docs/TEST_STRATEGY.md)**
+
 ---
 
 ## Table des matières

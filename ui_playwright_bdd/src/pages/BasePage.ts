@@ -49,12 +49,19 @@ export class BasePage {
 
   async assertErrorMessage(expectedText?: RegExp | string): Promise<void> {
     const muiError = this.page.locator('.MuiFormHelperText-root.Mui-error, .MuiAlert-message');
-    const hasMuiError = await muiError.first().isVisible({ timeout: 3000 }).catch(() => false);
+
+    // waitFor (pas isVisible) : attend vraiment que l'élément apparaisse
+    const hasMuiError = await muiError.first()
+      .waitFor({ state: 'visible', timeout: 5000 })
+      .then(() => true)
+      .catch(() => false);
     if (hasMuiError) return;
 
     const errorLocator = expectedText
       ? this.page.getByText(expectedText as any)
       : this.page.getByText(/invalid|required|missing|weak|mismatch|already registered|not found|unable|cannot delete|error|duplicate|limit|character|please insert/i);
-    await expect(errorLocator.first()).toBeVisible({ timeout: 10000 });
+
+    // Timeout étendu à 15s pour couvrir les cold starts Heroku
+    await expect(errorLocator.first()).toBeVisible({ timeout: 15000 });
   }
 }

@@ -85,11 +85,10 @@ export class SignupPage extends BasePage {
     confirmPassword?: string
   ): Promise<void> {
     await this.fillSignupForm(firstName, lastName, email, password, confirmPassword);
-
-    await Promise.all([
-      this.signupBtn.click(),
-      this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }).catch(() => {})
-    ]);
+    await this.signupBtn.click();
+    // waitForNavigation peut se résoudre prématurément sur SPA React (changement de route hash)
+    // avant que les messages de validation n'apparaissent → remplacé par networkidle
+    await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
   }
 
   async assertSignupError(expectedText?: RegExp | string): Promise<void> {
@@ -97,7 +96,7 @@ export class SignupPage extends BasePage {
       ? this.page.getByText(expectedText as any)
       : this.page.getByText(/invalid|required|missing|weak|mismatch|already registered|email/i);
 
-    await expect(errorLocator.first()).toBeVisible({ timeout: 10000 });
+    await expect(errorLocator.first()).toBeVisible({ timeout: 15000 });
   }
 
   async assertSignedUp(): Promise<void> {

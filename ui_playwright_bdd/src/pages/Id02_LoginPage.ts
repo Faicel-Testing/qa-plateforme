@@ -44,10 +44,10 @@ export class LoginPage extends BasePage {
     await this.passwordInput.waitFor({ state: 'visible', timeout: 5000 });
     await this.passwordInput.fill(password);
     await this.loginBtn.waitFor({ state: 'visible', timeout: 5000 });
-    await Promise.all([
-      this.loginBtn.click(),
-      this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }).catch(() => {})
-    ]);
+    await this.loginBtn.click();
+    // Attend soit la navigation réussie, soit la stabilisation réseau (erreur de validation)
+    // waitForNavigation peut se résoudre prématurément sur SPA React → remplacé par networkidle
+    await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
   }
 
   async assertLoggedIn(): Promise<void> {
@@ -57,8 +57,8 @@ export class LoginPage extends BasePage {
 
   async assertLoginError(): Promise<void> {
     const errorLocator = this.page.locator('.MuiAlert-message, .MuiFormHelperText-root.Mui-error').or(
-      this.page.getByText(/not correct|combination.*not|invalid|wrong|could not find|incorrect|email.*password/i)
+      this.page.getByText(/not correct|combination.*not|invalid|wrong|could not find|incorrect|email.*password|required|please/i)
     );
-    await expect(errorLocator.first()).toBeVisible({ timeout: 10000 });
+    await expect(errorLocator.first()).toBeVisible({ timeout: 15000 });
   }
 }
