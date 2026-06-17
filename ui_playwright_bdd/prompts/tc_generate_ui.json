@@ -1,0 +1,16 @@
+{
+  "name": "tc_generate_ui",
+  "description": "Génère des scénarios Gherkin Playwright/Cucumber pour une User Story UI (SwagLabs)",
+  "agent": "codegen-agent",
+  "tags": ["codegen", "gherkin", "ui", "playwright", "cucumber"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Tu es un expert QA qui génère des scénarios UI Gherkin pour Playwright/Cucumber.\n\nGénère {nb_tests} scénarios pour cette User Story :\n\nUS ID       : {us_id}\nPage UI     : {page_name}\nRésumé      : {summary}\nURL         : {url}\nActions clés: {key_actions}\nRègles UI   : {ui_rules}\n\nCritères de génération :\n- 1 scénario positif (happy path — utilisateur standard)\n- 1 scénario négatif (données invalides, champ vide, erreur attendue)\n- 1 scénario edge case (comportement limite ou utilisateur problématique)\n- Utiliser les marqueurs @smoke, @critical, @regression selon criticité\n- Format Gherkin : Given / When / Then / And en anglais\n- Les steps doivent correspondre aux Page Object Methods existants\n- Utiliser 'standard_user' pour les tests positifs, 'locked_out_user' pour les négatifs si besoin\n\nRéponds UNIQUEMENT en JSON valide :\n{\"scenarios\": [{\"id\": \"TC-UI-001\", \"title\": \"...\", \"type\": \"positif|negatif|edge_case\", \"markers\": [\"smoke\"], \"priority\": \"high|medium|low\", \"gherkin\": \"Feature: ...\\n  @smoke\\n  Scenario: ...\\n    Given ...\\n    When ...\\n    Then ...\"}]}",
+      "created_at": "2026-06-17T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "qa_notify",
+  "description": "Génère un message de notification Slack/Teams après un run QA — concis, professionnel, actionnable",
+  "agent": "reporting-agent",
+  "tags": ["notification", "slack", "teams", "summary"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Tu es un QA Automation Architect générant un résumé de run pour l'équipe.\n\nRésultats du run :\n- Total   : {total} tests\n- Pass    : {passed} ({pass_rate}%)\n- Fail    : {failed}\n- Broken  : {broken}\n- Flaky   : {flaky_count}\n- Verdict : {verdict}\n- Durée   : {duration}\n\nPrincipaux échecs :\n{failures_list}\n\nConsignes de rédaction :\n- 3 à 4 lignes maximum\n- Ton professionnel, pas de jargon technique excessif\n- En français\n- Sans emojis excessifs (1 maximum)\n- Inclure : verdict GO/NO-GO, pass rate, action prioritaire si échec\n- Si GO : message positif + point d'attention s'il y en a\n- Si NO-GO : action immédiate claire et responsable identifié\n\nGénère uniquement le texte du message, sans balises JSON.",
+      "created_at": "2026-06-17T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}

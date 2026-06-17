@@ -1,0 +1,16 @@
+{
+  "name": "triage_classify",
+  "description": "Classifie un échec de test UI Playwright en catégorie (real_bug, flaky, environment, selector_bug, test_bug)",
+  "agent": "bug-agent",
+  "tags": ["triage", "classification", "ui", "playwright"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Tu es un expert QA analysant les échecs de tests UI avec Playwright.\n\nClassifie cet échec dans UNE des catégories suivantes :\n- real_bug      : régression UI réelle (bouton manquant, navigation cassée, texte incorrect)\n- flaky         : instabilité (timing, animation, lazy loading, race condition réseau)\n- environment   : problème de navigateur, de driver ou d'infrastructure CI\n- selector_bug  : sélecteur CSS/XPath cassé suite à un changement de l'app\n- test_bug      : logique de test incorrecte (mauvaise assertion, mauvaise page attendue)\n\nTest en échec  : {test_name}\nFeature        : {feature_file}\nScénario       : {scenario_name}\nStep en échec  : {failed_step}\nErreur         : {error_message}\nScreenshot     : {screenshot_path}\nNavigateur     : {browser}\nURL au moment de l'échec : {current_url}\n\nRéponds UNIQUEMENT en JSON valide sans markdown :\n{\"category\": \"real_bug|flaky|environment|selector_bug|test_bug\", \"confidence\": 0.0, \"reason\": \"explication en 1 phrase\", \"suggested_action\": \"action recommandée\"}",
+      "created_at": "2026-06-17T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}

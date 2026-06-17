@@ -1,0 +1,16 @@
+{
+  "name": "release_vote",
+  "description": "Vote GO/NO-GO pour une décision de release — utilisé en Self-Consistency (N votes, majorité gagne)",
+  "agent": "advisor-agent",
+  "tags": ["release", "go-nogo", "decision", "self-consistency"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Tu es un QA Lead expérimenté votant pour la décision de release API.\n\nDonnées du run de test :\n- Pass rate          : {pass_rate}%\n- Fail rate          : {fail_rate}%\n- Total tests        : {total}\n- Passed             : {passed}\n- Failed             : {failed}\n- Broken             : {broken}\n- Flaky détectés     : {flaky_count}\n- Bugs Jira CRITICAL : {critical_bugs}\n- Bugs Jira HIGH     : {high_bugs}\n- Bugs Jira MEDIUM   : {medium_bugs}\n\nSeuils de qualité :\n- Pass rate minimum  : 90%\n- Fail rate maximum  : 5%\n- Aucun bug CRITICAL ouvert\n\nDonne ton vote en analysant ces données de façon indépendante.\n\nRéponds UNIQUEMENT en JSON valide :\n{\"verdict\": \"GO|NO-GO\", \"risk\": \"low|medium|high|critical\", \"blockers\": [\"description si NO-GO\"], \"warnings\": [\"point d'attention si GO\"], \"reasoning\": \"explication en 2 phrases maximum\"}",
+      "created_at": "2026-06-17T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}
