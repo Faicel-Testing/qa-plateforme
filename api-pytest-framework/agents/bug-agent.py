@@ -21,6 +21,17 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, os.path.dirname(__file__))
 
 import llm
+from prompt_store import PromptStore
+
+_ps = PromptStore()
+
+
+def _fmt(template: str, **kw) -> str:
+    result = template
+    for key, val in kw.items():
+        result = result.replace("{" + key + "}", str(val))
+    return result
+
 
 FRAMEWORK    = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 RESULTS_DIR  = os.path.join(FRAMEWORK, "allure-results")
@@ -133,21 +144,30 @@ def _source_index() -> dict:
 # ── Triage — Confidence Scoring ────────────────────────────────────────────
 
 def classify_failure(failure: dict) -> dict:
-    messages = [{"role": "user", "content": (
-        f"Analyse cet echec de test API et classe-le dans UNE seule categorie :\n\n"
-        f"Test    : {failure['name']}\n"
-        f"TC      : {failure['tc'] or '?'} | US : {failure['us'] or '?'}\n"
-        f"Statut  : {failure['status']}\n"
-        f"Message : {failure['message'] or 'aucun message'}\n"
-        f"Trace   : {failure['trace'][:200] or 'aucune trace'}\n\n"
-        f"Categories :\n"
-        f"  real_bug       -> Bug dans le code applicatif\n"
-        f"  flaky          -> Test instable (timeout, race condition)\n"
-        f"  env_issue      -> Probleme infrastructure\n"
-        f"  false_positive -> Le test lui-meme est incorrect\n\n"
-        f"Reponds avec la categorie, un score de confiance 0.0-1.0, et le raisonnement."
+    _tpl = _ps.get("triage_classify") or (
+        "Analyse cet echec de test API et classe-le dans UNE seule categorie :\n\n"
+        "Test    : {test_name}\n"
+        "TC      : {tc} | US : {us}\n"
+        "Statut  : {status}\n"
+        "Message : {error_message}\n"
+        "Trace   : {stack_trace}\n\n"
+        "Categories :\n"
+        "  real_bug       -> Bug dans le code applicatif\n"
+        "  flaky          -> Test instable (timeout, race condition)\n"
+        "  env_issue      -> Probleme infrastructure\n"
+        "  false_positive -> Le test lui-meme est incorrect\n\n"
+        "Reponds avec la categorie, un score de confiance 0.0-1.0, et le raisonnement."
+    )
+    messages = [{"role": "user", "content": _fmt(_tpl,
+        test_name=failure['name'],
+        tc=failure['tc'] or '?',
+        us=failure['us'] or '?',
+        status=failure['status'],
+        error_message=failure['message'] or 'aucun message',
+        stack_trace=(failure['trace'] or 'aucune trace')[:200],
     )}]
     raw = llm.chat_confident(messages)
+    _ps.record_usage("triage_classify", confidence=float(raw.get("confidence", 0.5)))
     response_text = str(raw.get("response", "")).lower()
     category = "unknown"
     for cat in ("real_bug", "flaky", "env_issue", "false_positive"):
@@ -204,17 +224,28 @@ def cmd_triage() -> list:
 def run_rca(failure: dict, all_tcs: list) -> dict:
     other_tcs = [t for t in all_tcs if t != failure.get("tc")]
 
-    cot_messages = [{"role": "user", "content": (
-        f"Effectue une RCA de cet echec de test API :\n\n"
-        f"Test    : {failure['name']}\n"
-        f"TC      : {failure['tc'] or '?'} | US : {failure['us'] or '?'}\n"
-        f"Suite   : {failure['suite']}\n"
-        f"Statut  : {failure['status']}\n"
-        f"Erreur  : {failure['message'] or 'aucun message'}\n"
-        f"Trace   :\n{failure['trace'] or 'aucune trace'}\n\n"
-        f"Autres TCs en echec : {other_tcs}\n"
+    _rca_tpl = _ps.get("rca_analyze") or (
+        "Effectue une RCA de cet echec de test API :\n\n"
+        "Test    : {test_name}\n"
+        "TC      : {tc} | US : {us}\n"
+        "Suite   : {suite}\n"
+        "Statut  : {status}\n"
+        "Erreur  : {error_message}\n"
+        "Trace   :\n{stack_trace}\n\n"
+        "Autres TCs en echec : {other_tcs}\n"
+    )
+    cot_messages = [{"role": "user", "content": _fmt(_rca_tpl,
+        test_name=failure['name'],
+        tc=failure['tc'] or '?',
+        us=failure['us'] or '?',
+        suite=failure.get('suite', '?'),
+        status=failure['status'],
+        error_message=failure['message'] or 'aucun message',
+        stack_trace=failure['trace'] or 'aucune trace',
+        other_tcs=str(other_tcs),
     )}]
     cot_reasoning = llm.chat_cot(cot_messages)
+    _ps.record_usage("rca_analyze")
 
     struct_messages = [{"role": "user", "content": (
         f"Sur la base de cette RCA :\n\n{cot_reasoning}\n\n"
@@ -278,15 +309,23 @@ def generate_patch(failure: dict, source_index: dict) -> dict:
     source_ctx = "\n\n".join(
         [f"# {path}\n{content[:800]}" for path, content in source_index.items()][:6]
     )
-    cot_messages = [{"role": "user", "content": (
-        f"Analyse cet echec de test et propose un correctif :\n\n"
-        f"Test    : {failure['name']}\n"
-        f"TC      : {failure['tc'] or '?'}\n"
-        f"Message : {failure['message'] or 'aucun message'}\n"
-        f"Trace   :\n{failure['trace'] or 'aucune trace'}\n\n"
-        f"Fichiers sources disponibles :\n{source_ctx}"
+    _patch_tpl = _ps.get("repair_patch") or (
+        "Analyse cet echec de test et propose un correctif :\n\n"
+        "Test    : {test_name}\n"
+        "TC      : {tc}\n"
+        "Message : {error_message}\n"
+        "Trace   :\n{stack_trace}\n\n"
+        "Fichiers sources disponibles :\n{source_context}"
+    )
+    cot_messages = [{"role": "user", "content": _fmt(_patch_tpl,
+        test_name=failure['name'],
+        tc=failure['tc'] or '?',
+        error_message=failure['message'] or 'aucun message',
+        stack_trace=failure['trace'] or 'aucune trace',
+        source_context=source_ctx,
     )}]
     cot_reasoning = llm.chat_cot(cot_messages)
+    _ps.record_usage("repair_patch")
 
     struct_messages = [{"role": "user", "content": (
         f"Sur la base de cette analyse :\n{cot_reasoning}\n\n"

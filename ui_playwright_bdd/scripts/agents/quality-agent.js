@@ -21,7 +21,16 @@ const fs     = require('fs');
 const path   = require('path');
 const llm    = require('./llm');
 const tracer = require('./shared/tracer');
-const memory = require('./shared/memory-store');
+const memory      = require('./shared/memory-store');
+const promptStore = require('./shared/prompt-store');
+
+function fmt(template, vars) {
+  let result = template;
+  for (const [k, v] of Object.entries(vars)) {
+    result = result.split('{' + k + '}').join(String(v ?? '?'));
+  }
+  return result;
+}
 
 const FRAMEWORK   = path.join(__dirname, '..', '..');
 const RESULTS_DIR = path.join(FRAMEWORK, 'allure-results');
@@ -68,23 +77,26 @@ async function cmdTriage() {
     const context = memory.getContextFor(f.name);
     const span    = new tracer.Span('triageChatConfident', f.name, llm.MODEL).begin();
 
-    const prompt = `Tu es un expert QA. Classifie cet échec de test Playwright.
-
-Test : ${f.name}
-Statut : ${f.status}
-Message : ${f.message}
-Trace : ${f.trace}
-Historique : ${context}
-
-Catégories possibles:
-- real_bug      : Le code de l'application est buggé
-- flaky         : Test instable (timing, réseau, état)
-- env_issue     : Problème d'environnement (config, données)
-- false_positive: Le test est mal écrit`;
+    const _tpl = promptStore.get('triage_classify') ||
+      'Tu es un expert QA. Classifie cet échec de test Playwright.\n\n' +
+      'Test : {test_name}\nStatut : {status}\nMessage : {error_message}\n' +
+      'Trace : {stack_trace}\nHistorique : {context}\n\n' +
+      'Catégories possibles:\n' +
+      '- real_bug      : Le code de l\'application est buggé\n' +
+      '- flaky         : Test instable (timing, réseau, état)\n' +
+      '- env_issue     : Problème d\'environnement (config, données)\n' +
+      '- false_positive: Le test est mal écrit';
+    const prompt = fmt(_tpl, {
+      test_name: f.name, status: f.status, error_message: f.message,
+      stack_trace: f.trace, context,
+      feature_file: 'N/A', scenario_name: 'N/A', failed_step: 'N/A',
+      screenshot_path: 'N/A', browser: 'chromium', current_url: 'N/A',
+    });
 
     try {
       const result = await llm.chatConfident([{ role: 'user', content: prompt }], CONFIDENCE_THRESHOLD);
       span.confidence = result.confidence; span.end(true);
+      promptStore.recordUsage('triage_classify', result.confidence);
 
       const icon = { real_bug: R+'🐛'+E, flaky: Y+'⚡'+E, env_issue: C+'🔧'+E, false_positive: '\x1b[2m'+'❓'+E }[result.result] || '?';
       const confIcon = result.confidence >= CONFIDENCE_THRESHOLD ? G : Y;
@@ -144,12 +156,16 @@ async function cmdRca() {
     const span = new tracer.Span('rcaChatCot', key, llm.MODEL).begin();
 
     const failList = group.map(f => `- ${f.name}: ${f.message}`).join('\n');
-    const prompt   = `Tu es un expert QA Playwright. Analyse la cause racine de ces échecs.
-
-Groupe d'échecs (${group.length} tests):
-${failList}
-
-Raisonne étape par étape (ÉTAPE 1, ÉTAPE 2, CONCLUSION) avant de conclure.`;
+    const _rcaTpl = promptStore.get('rca_analyze') ||
+      'Tu es un expert QA Playwright. Analyse la cause racine de ces échecs.\n\n' +
+      'Groupe d\'échecs ({count} tests):\n{fail_list}\n\n' +
+      'Raisonne étape par étape (ÉTAPE 1, ÉTAPE 2, CONCLUSION) avant de conclure.';
+    const prompt = fmt(_rcaTpl, {
+      count: group.length, fail_list: failList,
+      test_name: key, tc: key, tc_id: key, us: 'N/A', us_id: 'N/A',
+      error_message: key, stack_trace: failList, suite: 'playwright',
+      method: 'N/A', endpoint: 'N/A',
+    });
 
     try {
       const { reasoning, structured } = await llm.chatCot(
@@ -162,6 +178,7 @@ Raisonne étape par étape (ÉTAPE 1, ÉTAPE 2, CONCLUSION) avant de conclure.`;
       if (m) { try { rca = JSON.parse(m[0]); } catch {} }
 
       span.end(true);
+      promptStore.recordUsage('rca_analyze');
       console.log(`  ${G}→ ${rca.cause_category || '?'}${E} | ${rca.fix_priority || '?'} | ${rca.fix_action?.slice(0,50)||''}`);
       console.log(`\x1b[2m  Raisonnement: ${reasoning.slice(0,100)}...\x1b[0m\n`);
 

@@ -1,0 +1,16 @@
+{
+  "name": "predict_gate",
+  "description": "Prédit si le quality gate va passer au prochain run en analysant les tendances du run actuel",
+  "agent": "advisor-agent",
+  "tags": ["predict", "gate", "forecast", "api"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Analyse les tendances de cette suite de tests API et prédis pour le PROCHAIN run :\n\n{context_str}\n\nSur la base de ces données, prédis :\n1. Est-ce que le quality gate va passer ? (seuils : Pass ≥ 90%, Fail ≤ 5%)\n2. Quels TCs vont probablement échouer ?\n3. Quels tests risquent de devenir flaky ?\n4. Quel est le niveau de risque global ?\n5. Quelles actions recommandes-tu avant le prochain run ?\n\nRéponds avec un JSON structuré contenant : gate_will_pass (boolean), confidence (0.0-1.0), likely_failures (liste), likely_flaky (liste), risk_level (low|medium|high|critical), reasoning (2 phrases), recommended_actions (liste).",
+      "created_at": "2026-06-18T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}

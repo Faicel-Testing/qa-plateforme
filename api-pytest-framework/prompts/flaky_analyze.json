@@ -1,0 +1,16 @@
+{
+  "name": "flaky_analyze",
+  "description": "Analyse les patterns de flakiness détectés sur N runs et propose des actions de stabilisation",
+  "agent": "quality-agent",
+  "tags": ["flaky", "stability", "analysis", "api"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Ces tests API sont flaky (passent parfois, échouent parfois sur {runs} runs) :\n{flaky_list}\n\nEn 3 points concis, explique :\n1. Les causes probables de cette instabilité (timing, état partagé, données, réseau...)\n2. Les patterns communs entre les tests affectés\n3. Les actions de stabilisation recommandées (priorité haute en premier)",
+      "created_at": "2026-06-18T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}

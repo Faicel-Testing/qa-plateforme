@@ -15,6 +15,17 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, os.path.dirname(__file__))
 
 import llm
+from prompt_store import PromptStore
+
+_ps = PromptStore()
+
+
+def _fmt(template: str, **kw) -> str:
+    result = template
+    for key, val in kw.items():
+        result = result.replace("{" + key + "}", str(val))
+    return result
+
 
 FRAMEWORK   = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 RESULTS_DIR = os.path.join(FRAMEWORK, "allure-results")
@@ -134,18 +145,20 @@ def cmd_release(n_votes: int = 3):
     ctx     = collect_context()
     ctx_str = format_context_for_llm(ctx)
 
-    messages = [{"role": "user", "content": (
-        f"Tu es QA Lead senior. Evalues si ce build peut etre deploye en production.\n\n"
-        f"{ctx_str}\n\n"
-        f"Criteres de blocage :\n"
-        f"- Pass rate < 90%\n"
-        f"- Taux d'echec > 5%\n"
-        f"- Test critique ou smoke en echec\n"
-        f"- Test flaky critique present\n\n"
-        f"Renvoie un verdict GO ou NO-GO avec le risque, les blockers et le raisonnement."
-    )}]
+    _tpl = _ps.get("release_vote") or (
+        "Tu es QA Lead senior. Evalues si ce build peut etre deploye en production.\n\n"
+        "{context_str}\n\n"
+        "Criteres de blocage :\n"
+        "- Pass rate < 90%\n"
+        "- Taux d'echec > 5%\n"
+        "- Test critique ou smoke en echec\n"
+        "- Test flaky critique present\n\n"
+        "Renvoie un verdict GO ou NO-GO avec le risque, les blockers et le raisonnement."
+    )
+    messages = [{"role": "user", "content": _fmt(_tpl, context_str=ctx_str)}]
 
     result = llm.chat_self_consistent(messages, VOTE_SCHEMA, verdict_key="verdict", n=n_votes)
+    _ps.record_usage("release_vote")
 
     verdict   = result["majority_verdict"]
     agreement = result["agreement_rate"]
@@ -196,19 +209,21 @@ def cmd_predict():
     ctx     = collect_context()
     ctx_str = format_context_for_llm(ctx)
 
-    messages = [{"role": "user", "content": (
-        f"Analyse les tendances de cette suite de tests API et predis :\n\n"
-        f"{ctx_str}\n\n"
-        f"Sur la base de ces donnees, predis pour le PROCHAIN run :\n"
-        f"1. Est-ce que le quality gate va passer ?\n"
-        f"2. Quels TCs vont probablement echouer ?\n"
-        f"3. Quels tests vont devenir flaky ?\n"
-        f"4. Quel est le niveau de risque global ?\n"
-        f"5. Quelles actions recommandes-tu avant le prochain run ?\n"
-    )}]
+    _tpl = _ps.get("predict_gate") or (
+        "Analyse les tendances de cette suite de tests API et predis :\n\n"
+        "{context_str}\n\n"
+        "Sur la base de ces donnees, predis pour le PROCHAIN run :\n"
+        "1. Est-ce que le quality gate va passer ?\n"
+        "2. Quels TCs vont probablement echouer ?\n"
+        "3. Quels tests vont devenir flaky ?\n"
+        "4. Quel est le niveau de risque global ?\n"
+        "5. Quelles actions recommandes-tu avant le prochain run ?\n"
+    )
+    messages = [{"role": "user", "content": _fmt(_tpl, context_str=ctx_str)}]
 
     try:
         result = llm.chat_structured(messages, PREDICT_SCHEMA)
+        _ps.record_usage("predict_gate", confidence=result.get("confidence", 0))
     except Exception as e:
         print(f"{R}  LLM indisponible : {e}{E}")
         return {}

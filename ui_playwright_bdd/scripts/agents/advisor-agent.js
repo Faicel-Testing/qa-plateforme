@@ -22,7 +22,16 @@ const fs     = require('fs');
 const path   = require('path');
 const llm    = require('./llm');
 const tracer = require('./shared/tracer');
-const memory = require('./shared/memory-store');
+const memory      = require('./shared/memory-store');
+const promptStore = require('./shared/prompt-store');
+
+function fmt(template, vars) {
+  let result = template;
+  for (const [k, v] of Object.entries(vars)) {
+    result = result.split('{' + k + '}').join(String(v ?? '?'));
+  }
+  return result;
+}
 
 const FRAMEWORK   = path.join(__dirname, '..', '..');
 const RESULTS_DIR = path.join(FRAMEWORK, 'allure-results');
@@ -70,21 +79,25 @@ async function cmdAdvise(nVotes = N_VOTES) {
   console.log(`  ${C}Contexte : ${ctx.pass_rate}% (${ctx.passed}/${ctx.total}) | ${ctx.failures.length} échec(s)${E}`);
   console.log(`  ${C}Self-consistency : ${nVotes} votes indépendants...${E}\n`);
 
-  const prompt = `Tu es un Release Manager expert. Décide si ce build Playwright est prêt pour la production.
-
-Métriques de test:
-- Pass rate : ${ctx.pass_rate}% (${ctx.passed}/${ctx.total} tests)
-- Échecs : ${ctx.failures.length}
-- Tests cassés : ${ctx.broken}
-- Tests ignorés : ${ctx.skipped}
-
-Détail des échecs:
-${ctx.failures.slice(0,5).map(f => `- ${f.name}: ${f.message}`).join('\n') || 'Aucun'}
-
-Historique agent qualité:
-${agentSummary}
-
-Critères Go: pass_rate ≥ 90%, pas de bloquant critique, échecs < 5%`;
+  const failDetail = ctx.failures.slice(0,5).map(f => `- ${f.name}: ${f.message}`).join('\n') || 'Aucun';
+  const _tpl = promptStore.get('release_vote') ||
+    'Tu es un Release Manager expert. Décide si ce build Playwright est prêt pour la production.\n\n' +
+    'Métriques de test:\n' +
+    '- Pass rate : {pass_rate}% ({passed}/{total} tests)\n' +
+    '- Échecs : {failures_count}\n' +
+    '- Tests cassés : {broken}\n' +
+    '- Tests ignorés : {skipped}\n\n' +
+    'Détail des échecs:\n{fail_detail}\n\n' +
+    'Historique agent qualité:\n{agent_summary}\n\n' +
+    'Critères Go: pass_rate ≥ 90%, pas de bloquant critique, échecs < 5%';
+  const prompt = fmt(_tpl, {
+    pass_rate: ctx.pass_rate, passed: ctx.passed, total: ctx.total,
+    failures_count: ctx.failures.length, broken: ctx.broken || 0, skipped: ctx.skipped || 0,
+    fail_detail: failDetail, agent_summary: agentSummary,
+    context_str: `Pass: ${ctx.pass_rate}% (${ctx.passed}/${ctx.total}) | Failures: ${ctx.failures.length}`,
+    fail_rate: ctx.total ? Math.round((ctx.failures.length / ctx.total) * 100) : 0,
+    flaky_count: 'N/A', critical_bugs: 'N/A', high_bugs: 'N/A', medium_bugs: 'N/A',
+  });
 
   const messages = [{ role: 'user', content: prompt }];
   const span     = new tracer.Span('adviseSelfConsistent', prompt, llm.MODEL).begin();
@@ -92,6 +105,7 @@ Critères Go: pass_rate ≥ 90%, pas de bloquant critique, échecs < 5%`;
   try {
     const { responses, winner, vote_counts, n_votes } = await llm.chatSelfConsistent(messages, VOTE_SCHEMA, nVotes);
     span.end(true);
+    promptStore.recordUsage('release_vote');
 
     console.log(`  ${B}Votes (${n_votes}/${nVotes}) :${E}`);
     responses.forEach((r, i) => {
@@ -140,15 +154,20 @@ async function cmdPredict() {
     const span    = new tracer.Span('predictStructured', tc, llm.MODEL).begin();
 
     try {
-      const prompt = `Prédit le risque d'échec futur pour ce test Playwright.
-
-Test : ${tc}
-Historique :
-${context}
-Statistiques : ${stats.count} occurrences, catégorie dominante: ${stats.dominant_category}`;
+      const _tpl = promptStore.get('predict_gate') ||
+        'Prédit le risque d\'échec futur pour ce test Playwright.\n\n' +
+        'Test : {test_name}\nHistorique :\n{context}\n' +
+        'Statistiques : {count} occurrences, catégorie dominante: {dominant_category}';
+      const prompt = fmt(_tpl, {
+        test_name: tc, context, count: stats.count,
+        dominant_category: stats.dominant_category,
+        pass_rate: 'N/A', passed: 'N/A', total: 'N/A',
+        failures_count: stats.count, broken: 0, history_summary: context,
+      });
 
       const pred = await llm.chatStructured([{ role: 'user', content: prompt }], PREDICT_SCHEMA);
       span.end(true);
+      promptStore.recordUsage('predict_gate', pred.failure_risk);
 
       const riskPct = Math.round((pred.failure_risk || 0) * 100);
       const riskIcon = riskPct >= 70 ? R+'⚠ HIGH'+E : riskPct >= 40 ? Y+'~ MED'+E : G+'✓ LOW'+E;

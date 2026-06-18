@@ -1,0 +1,16 @@
+{
+  "name": "repair_patch",
+  "description": "Analyse un échec de test Playwright et propose un patch de code correctif",
+  "agent": "bug-agent",
+  "tags": ["repair", "patch", "autofix", "playwright", "typescript"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Tu es un expert Playwright TypeScript. Répare ce test en échec.\n\nTest    : {test_name}\nErreur  : {error_message}\nTrace   : {stack_trace}\n\nIMPORTANT :\n1. Lis d'abord le fichier de steps correspondant (src/steps/)\n2. Identifie la ligne exacte problématique\n3. Applique le correctif minimal avec apply_fix\n4. Utilise report_analysis pour terminer\n\nSois conservateur : ne modifie que ce qui est strictement nécessaire pour corriger l'erreur.\nNe refactorise pas le code existant.",
+      "created_at": "2026-06-18T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}

@@ -16,7 +16,17 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, os.path.dirname(__file__))
 
 import llm
+from prompt_store import PromptStore
 from jira_fetcher_agent import JiraClient, JIRA_BASE_URL
+
+_ps = PromptStore()
+
+
+def _fmt(template: str, **kw) -> str:
+    result = template
+    for key, val in kw.items():
+        result = result.replace("{" + key + "}", str(val))
+    return result
 
 FRAMEWORK   = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 RESULTS_DIR = os.path.join(FRAMEWORK, "allure-results")
@@ -317,11 +327,13 @@ def cmd_flaky(runs: int = DEFAULT_RUNS):
     # Analyse LLM + sauvegarde
     if flaky:
         flaky_text = "\n".join([f"- {name} ({int(d['fail_rate']*100)}% fail)" for name, d in list(flaky.items())[:10]])
-        messages = [{"role": "user", "content": (
-            f"Ces tests API sont flaky (passent parfois, echouent parfois) :\n{flaky_text}\n\n"
-            f"En 3 points, explique les causes probables et propose des actions de stabilisation."
-        )}]
+        _tpl = _ps.get("flaky_analyze") or (
+            "Ces tests API sont flaky (passent parfois, echouent parfois) :\n{flaky_list}\n\n"
+            "En 3 points, explique les causes probables et propose des actions de stabilisation."
+        )
+        messages = [{"role": "user", "content": _fmt(_tpl, flaky_list=flaky_text, runs=str(runs))}]
         analysis = llm.chat(messages)
+        _ps.record_usage("flaky_analyze")
         print(f"\n{W}  Analyse :{E}")
         for line in analysis.strip().split("\n"):
             print(f"  {line}")

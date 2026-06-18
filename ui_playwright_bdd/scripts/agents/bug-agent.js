@@ -22,7 +22,16 @@ const fs   = require('fs');
 const path = require('path');
 const llm  = require('./llm');
 const tracer = require('./shared/tracer');
-const memory = require('./shared/memory-store');
+const memory      = require('./shared/memory-store');
+const promptStore = require('./shared/prompt-store');
+
+function fmt(template, vars) {
+  let result = template;
+  for (const [k, v] of Object.entries(vars)) {
+    result = result.split('{' + k + '}').join(String(v ?? '?'));
+  }
+  return result;
+}
 
 const FRAMEWORK    = path.join(__dirname, '..', '..');
 const RESULTS_DIR  = path.join(FRAMEWORK, 'allure-results');
@@ -226,19 +235,20 @@ async function cmdRepair() {
   for (const failure of failures.slice(0, 5)) { // Limiter à 5 bugs par session
     console.log(`  ${B}[REPAIR] ${failure.name.slice(0,55)}${E}`);
 
-    const prompt = `Tu es un expert Playwright TypeScript. Répare ce test en échec.
-
-Test : ${failure.name}
-Erreur : ${failure.message}
-Trace : ${failure.trace}
-
-IMPORTANT :
-1. Lis d'abord le fichier de steps correspondant (src/steps/)
-2. Identifie la ligne problématique
-3. Applique le correctif minimal avec apply_fix
-4. Utilise report_analysis pour terminer
-
-Sois conservateur : ne modifie que ce qui est nécessaire pour corriger l'erreur.`;
+    const _repairTpl = promptStore.get('repair_patch') ||
+      'Tu es un expert Playwright TypeScript. Répare ce test en échec.\n\n' +
+      'Test    : {test_name}\nErreur  : {error_message}\nTrace   : {stack_trace}\n\n' +
+      'IMPORTANT :\n' +
+      '1. Lis d\'abord le fichier de steps correspondant (src/steps/)\n' +
+      '2. Identifie la ligne problématique\n' +
+      '3. Applique le correctif minimal avec apply_fix\n' +
+      '4. Utilise report_analysis pour terminer\n\n' +
+      'Sois conservateur : ne modifie que ce qui est nécessaire pour corriger l\'erreur.';
+    const prompt = fmt(_repairTpl, {
+      test_name: failure.name, tc: 'N/A',
+      error_message: failure.message, stack_trace: failure.trace,
+      source_context: 'Utilisez les outils read_file pour lire les fichiers sources.',
+    });
 
     const messages = [{ role: 'user', content: prompt }];
     const span     = new tracer.Span('bugRepair', prompt, llm.MODEL).begin();
@@ -264,6 +274,7 @@ Sois conservateur : ne modifie que ce qui est nécessaire pour corriger l'erreur
     }
 
     span.end(fixed);
+    promptStore.recordUsage('repair_patch');
     if (fixed) { repaired++; console.log(`  ${G}✓ Réparé${E}\n`); }
     else { failed++; console.log(`  ${Y}⚠  Non réparé${E}\n`); }
   }

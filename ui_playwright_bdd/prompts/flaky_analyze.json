@@ -1,0 +1,16 @@
+{
+  "name": "flaky_analyze",
+  "description": "Analyse les patterns de flakiness UI Playwright et propose des actions de stabilisation",
+  "agent": "quality-agent",
+  "tags": ["flaky", "stability", "analysis", "playwright", "ui"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Ces tests UI Playwright sont flaky (passent parfois, échouent parfois) :\n{flaky_list}\n\nEn 3 points concis, explique :\n1. Les causes probables (timing animations, lazy loading, sélecteurs fragiles, état partagé...)\n2. Les patterns communs entre les scénarios affectés\n3. Les actions de stabilisation recommandées (waitFor, locators robustes, isolation d'état...)",
+      "created_at": "2026-06-18T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}
