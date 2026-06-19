@@ -1,0 +1,11 @@
+{
+  "name": "qa_notify",
+  "version": "1.0.0",
+  "description": "Génération de notification QA Slack/Teams après un run Selenium",
+  "template": "Rédige une notification QA professionnelle pour ce run Selenium BDD sur automationexercise.com.\n\nRésultats :\n- Pass rate  : {pass_rate}%\n- Tests      : {passed}/{total} passés\n- Échecs     : {failed_count}\n- Gate       : {gate_status}\n\nExigences :\n- 2-3 phrases maximum\n- Ton direct et factuel\n- Inclure les chiffres clés\n- Si gate FAIL : indiquer que des actions correctives sont nécessaires\n- Pas d'emoji (format Slack texte)\n- Commencer par le statut (PASS / FAIL)",
+  "metrics": {
+    "calls": 0,
+    "avg_confidence": 0
+  },
+  "history": []
+}

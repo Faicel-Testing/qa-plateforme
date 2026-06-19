@@ -1,0 +1,11 @@
+{
+  "name": "release_vote",
+  "version": "1.0.0",
+  "description": "Vote de release — décision GO / NO-GO pour ui_selenium_bdd",
+  "template": "Tu es Quality Gate AI pour un framework Selenium BDD.\n\nMétriques du run :\n{context_str}\n\nSeuils de qualité :\n- Pass rate ≥ 90% → obligatoire\n- Fail rate ≤ 5%  → obligatoire\n- Confiance ≥ 0.70\n\nContexte : tests sur automationexercise.com (e-commerce public)\nTags critiques : @smoke, @critical, @order, @cart, @auth\n\nAnalyse les métriques et vote :\n- Si les @smoke et @critical passent tous : tendance GO même si pass_rate est limite\n- Si des @critical échouent : NO-GO systématique\n- Considère le risque de régression e-commerce\n\nRéponds avec ce JSON UNIQUEMENT :\n{\n  \"vote\": \"GO\" ou \"NO_GO\" ou \"CONDITIONAL\",\n  \"confidence\": <0.0 à 1.0>,\n  \"reason\": \"<justification en 2 phrases max>\",\n  \"blockers\": [\"<bloquant 1>\", \"<bloquant 2>\"],\n  \"recommendations\": [\"<recommandation 1>\"]\n}",
+  "metrics": {
+    "calls": 0,
+    "avg_confidence": 0
+  },
+  "history": []
+}

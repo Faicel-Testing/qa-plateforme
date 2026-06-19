@@ -1,0 +1,11 @@
+{
+  "name": "repair_patch",
+  "version": "1.0.0",
+  "description": "Génération de patch correctif Java pour Selenium BDD",
+  "template": "Tu es expert en Selenium 4 + Java. Génère un patch correctif minimal.\n\nTest échoué  : {test_name}\nTC           : {tc}\nErreur       : {error_message}\nStack trace  :\n{stack_trace}\n\nCode source concerné :\n{source_context}\n\nContraintes :\n- Java 17, Selenium 4.12.1, Cucumber 7, TestNG 7.9\n- Page Objects dans com.qacart.todo.pages\n- Steps dans com.qacart.todo.steps\n- Préfère By.cssSelector() à XPath\n- Utilise WebDriverWait avec ExpectedConditions\n- Patch minimal — ne modifie que ce qui est nécessaire\n\nRéponds avec ce JSON :\n{\n  \"target_file\": \"<chemin relatif du fichier Java à modifier>\",\n  \"old_code\": \"<code Java exact à remplacer (ou null)>\",\n  \"new_code\": \"<code Java corrigé>\",\n  \"explanation\": \"<explication du changement en 1 phrase>\",\n  \"confidence\": <0.0 à 1.0>\n}",
+  "metrics": {
+    "calls": 0,
+    "avg_confidence": 0
+  },
+  "history": []
+}

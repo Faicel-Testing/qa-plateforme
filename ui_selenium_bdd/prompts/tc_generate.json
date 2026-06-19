@@ -1,0 +1,11 @@
+{
+  "name": "tc_generate",
+  "version": "1.0.0",
+  "description": "Génération de fichiers Gherkin .feature pour automationexercise.com",
+  "template": "Génère un fichier Gherkin (.feature) complet pour ce cas de test Selenium BDD :\n\nTC ID       : {tc_id}\nTitre       : {tc_title}\nTags        : {tags}\nApplication : automationexercise.com (e-commerce)\nSteps prévus :\n{steps}\n\nExigences :\n- Feature tag avec les tags fournis\n- Background si plusieurs scénarios partagent des prérequis\n- Steps Given/When/Then clairs et réutilisables\n- Noms de steps cohérents avec les Page Objects existants\n- Données de test embarquées dans le scénario (pas de fixtures externes)\n- Pas de duplication avec d'autres TCs\n\nRéponds UNIQUEMENT avec le contenu brut du fichier .feature (pas de bloc markdown, pas d'explication).",
+  "metrics": {
+    "calls": 0,
+    "avg_confidence": 0
+  },
+  "history": []
+}

@@ -1,0 +1,11 @@
+{
+  "name": "flaky_analyze",
+  "version": "1.0.0",
+  "description": "Analyse les tests flaky dans le contexte Selenium / automationexercise.com",
+  "template": "Tu es expert en stabilité de tests Selenium. Analyse ces tests flaky.\n\nTests instables détectés ({runs} runs) :\n{flaky_list}\n\nCauses fréquentes dans Selenium BDD :\n1. Timing — animations, chargements AJAX, redirections\n2. Sélecteurs — CSS/XPath fragiles ou dynamiques\n3. État du navigateur — cookies, sessions, popups\n4. Site tiers — automationexercise.com peut être lent ou instable\n5. Race conditions — parallélisme TestNG\n\nPour chaque test flaky, fournis :\n- Cause probable\n- Remédiation concrète (ex: augmenter WebDriverWait, ajouter scrollIntoView)\n- Priorité (haute/moyenne/basse)\n\nRéponds avec ce JSON :\n{\n  \"summary\": \"<bilan en 1 phrase>\",\n  \"root_causes\": [\"<cause 1>\", \"<cause 2>\"],\n  \"fixes\": [\n    {\"test\": \"<nom>\", \"cause\": \"<timing|selector|state|site|race>\", \"fix\": \"<action>\", \"priority\": \"<haute|moyenne|basse>\"}\n  ],\n  \"quarantine_candidates\": [\"<test à mettre en quarantaine>\"]\n}",
+  "metrics": {
+    "calls": 0,
+    "avg_confidence": 0
+  },
+  "history": []
+}

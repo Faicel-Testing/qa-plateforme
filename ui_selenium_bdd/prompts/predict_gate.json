@@ -1,0 +1,11 @@
+{
+  "name": "predict_gate",
+  "version": "1.0.0",
+  "description": "Prédiction du résultat quality gate pour le prochain run Selenium",
+  "template": "Tu es un modèle de prédiction QA. Préds le résultat du prochain run Selenium BDD.\n\nHistorique et contexte :\n{context_str}\n\nSeuils quality gate : pass_rate ≥ 90%, fail_rate ≤ 5%\nApplication : automationexercise.com (site e-commerce public, peut être instable)\n\nAnalyse les tendances (flakiness, stabilité, évolution du pass rate) et préds :\n1. La probabilité que le prochain run passe le gate\n2. Les zones de risque (domaines de test fragiles)\n3. La recommandation d'action avant le prochain run\n\nRéponds avec ce JSON :\n{\n  \"predicted_pass_rate\": <0 à 100>,\n  \"failure_risk\": <0.0 à 1.0>,\n  \"gate_prediction\": \"PASS\" ou \"FAIL\" ou \"UNCERTAIN\",\n  \"risk_areas\": [\"<zone de risque 1>\", \"<zone de risque 2>\"],\n  \"recommended_action\": \"<action à prendre avant le prochain run>\",\n  \"confidence\": <0.0 à 1.0>\n}",
+  "metrics": {
+    "calls": 0,
+    "avg_confidence": 0
+  },
+  "history": []
+}
