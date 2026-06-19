@@ -3,7 +3,8 @@
 > **Playwright · CucumberJS · TypeScript · Groq AI**  
 > Framework BDD auto-piloté : génère, exécute, analyse, répare et documente les tests sans intervention manuelle.
 
-📋 **[Stratégie de test complète →](docs/TEST_STRATEGY.md)**
+📋 **[Stratégie de test complète →](docs/TEST_STRATEGY.md)**  
+🤖 **[Guide agents IA →](agents.md)** — conventions CLAUDE.md, commandes, sécurité
 
 ---
 
@@ -260,8 +261,10 @@ Expose 5 patterns avancés en plus du `chat` de base :
 | `chatCot(messages)` | Chain of Thought | Raisonnement → extraction (2 appels) |
 | `chatStructured(messages, schema)` | JSON forcé | Sortie JSON garantie avec retry (max 3) |
 | `chatConfident(messages, threshold)` | Confiance | Score 0–1, trigger adversarial si < seuil |
-| `chatAdversarial(messages)` | Adversarial | 3 phases : proposition → critique → final |
+| `chatAdversarial(messages)` | Adversarial | 3 phases : proposant → critique → arbitre |
 | `chatSelfConsistent(messages, schema, N)` | Votes | N LLMs indépendants, majorité gagne |
+
+> **Guard adversarial :** `chatAdversarial` ne se déclenche que si `confidence < CONFIDENCE_THRESHOLD` (~50% tokens économisés sur les cas simples)
 
 ### shared/tracer.js — Traces LLM
 
@@ -300,7 +303,20 @@ Versionne les prompts en semver (`1.0.0` → patch/minor/major) dans `prompts/<n
 
 - `create(name, content, meta)` · `saveVersion(name, content, note, bump)`
 - `get(name, version=null)` · `promote(name, version)` · `rollback(name)`
-- `recordUsage(name, confidence)` → confiance moyenne en production
+- `recordUsage(name, confidence)` → confiance moyenne accumulée en production
+
+**8 templates câblés dans les agents** (modifiables sans toucher au code) :
+
+| Template | Agent | Pattern LLM | Variables clés |
+|----------|-------|-------------|----------------|
+| `triage_classify` | quality-agent | `chatConfident` | test_name, status, error_message, stack_trace, context |
+| `rca_analyze` | quality-agent | `chatCot` | count, fail_list |
+| `repair_patch` | bug-agent | `chatCot` + tool use | test_name, error_message, stack_trace |
+| `release_vote` | advisor-agent | `chatSelfConsistent` | pass_rate, passed, total, failures_count, fail_detail |
+| `predict_gate` | advisor-agent | `chatStructured` | test_name, context, count, dominant_category |
+| `tc_generate_ui` | codegen-agent | `chatStructured` | us_id, us_title, acceptance_criteria |
+| `qa_notify` | reporting-agent | `chat` | run_summary, pass_rate, failed_count |
+| `flaky_analyze` | quality-agent | `chat` | flaky_list |
 
 ---
 
@@ -684,7 +700,15 @@ ui_playwright_bdd/
 ├── memory/
 │   └── episodes.jsonl              Historique épisodique par agent/TC
 │
-├── prompts/                         Prompts versionnés (semver)
+├── prompts/                         8 prompt templates versionnés (semver)
+│   ├── triage_classify.json         Triage Playwright (4 catégories + confiance)
+│   ├── rca_analyze.json             Root Cause Analysis groupée
+│   ├── repair_patch.json            Patch correctif automatique TypeScript
+│   ├── release_vote.json            Décision GO/NO-GO release
+│   ├── predict_gate.json            Prédiction risque futur par test
+│   ├── tc_generate_ui.json          Génération scénarios BDD UI
+│   ├── qa_notify.json               Notifications QA narratives
+│   └── flaky_analyze.json           Analyse flakiness UI
 ├── docs/                            Rapports HTML générés
 ├── allure-results/                  Résultats bruts Allure
 ├── allure-report/                   Rapport Allure généré

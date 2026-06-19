@@ -17,7 +17,9 @@ Framework de test API pour l'application **Hotel Booking** (restful-booker.herok
 
 - **51 scénarios BDD** couvrant les 8 endpoints (POST /auth, CRUD /booking, GET /ping)
 - **10 agents IA** organisés par domaine, chacun avec des sous-commandes
-- **5 patterns LLM** : `chat`, `chat_cot` (Chain of Thought), `chat_structured`, `chat_confident`, `chat_self_consistent`
+- **6 patterns LLM** : `chat`, `chat_cot` (Chain of Thought), `chat_structured`, `chat_confident`, `chat_self_consistent`, `chat_adversarial`
+- **8 prompt templates versionnés** (semver) dans `prompts/` — modifiables sans toucher au code
+- **PromptStore câblé** dans les agents : `record_usage()` alimente les métriques (calls, avg_confidence) à chaque run
 - **Circuit Breaker** 3 états pour la résilience LLM (CLOSED / OPEN / HALF_OPEN)
 - **Agentic Loop** : AGENT_MAX_ITER=5, hard cap 20
 
@@ -38,16 +40,26 @@ api-pytest-framework/
 │   ├── ci-agent.py            # CI/CD : commit, push, pr, ci, release, changelog
 │   ├── planning-agent.py      # Planning : setup, stories, sprint, tc, tickets, sync
 │   ├── pipeline-agent.py      # Orchestrateur : full, quick, nightly, report, gate, status
-│   ├── llm.py                 # 5 patterns LLM (Groq / LLaMA 3.3 70B)
+│   ├── llm.py                 # 6 patterns LLM (Groq / LLaMA 3.3 70B)
 │   ├── circuit_breaker.py     # Résilience LLM (CLOSED/OPEN/HALF_OPEN)
 │   ├── memory_store.py        # Mémoire épisodique (JSONL)
-│   ├── prompt_store.py        # Versioning des prompts
+│   ├── prompt_store.py        # Versioning sémantique des prompts (semver)
 │   ├── tracer.py              # Traçabilité des appels LLM
 │   └── jira_fetcher_agent.py  # Client Jira (stories, bugs, sprints)
+├── prompts/                   # 8 prompt templates versionnés (semver)
+│   ├── triage_classify.json   # Classification échecs API (4 catégories)
+│   ├── rca_analyze.json       # Root Cause Analysis (CoT)
+│   ├── tc_generate.json       # Génération de scénarios BDD
+│   ├── release_vote.json      # Décision GO/NO-GO release
+│   ├── qa_notify.json         # Notifications QA narratives
+│   ├── repair_patch.json      # Patch correctif automatique
+│   ├── predict_gate.json      # Prédiction quality gate prochain run
+│   └── flaky_analyze.json     # Analyse causes flakiness
 ├── features/                  # 8 fichiers .feature Gherkin
 ├── steps/                     # Step definitions pytest-bdd
 ├── docs/                      # KPI dashboard HTML, specs JSON
 ├── allure-results/            # Résultats de test Allure
+├── agents.md                  # Convention CLAUDE.md — guide agents IA sur ce repo
 └── pytest.ini                 # Configuration pytest
 ```
 
@@ -131,10 +143,43 @@ AGENT_MAX_ITER=5           # Iterations agentic loop (défaut: 5, max: 20)
 | Pattern | Méthode | Usage |
 |---------|---------|-------|
 | Standard | `llm.chat()` | Génération texte simple |
-| Chain of Thought | `llm.chat_cot()` | Analyse complexe, triage |
-| Structured Output | `llm.chat_structured()` | Génération JSON, schémas |
-| Confidence Scoring | `llm.chat_confident()` | RCA, décisions critiques |
-| Self-Consistency | `llm.chat_self_consistent()` | Vote majoritaire release |
+| Chain of Thought | `llm.chat_cot()` | Analyse complexe, triage, RCA |
+| Structured Output | `llm.chat_structured()` | Génération JSON garantie (retry x3) |
+| Confidence Scoring | `llm.chat_confident()` | Décisions critiques avec score 0–1 |
+| Self-Consistency | `llm.chat_self_consistent()` | Vote majoritaire release N=3 |
+| Adversarial | `llm.chat_adversarial()` | 3 phases : proposant → critique → arbitre |
+
+---
+
+## Prompt Store
+
+Les prompts LLM sont externalisés dans `prompts/` et versionnés en semver. Chaque agent charge son template via `PromptStore.get("nom")` avec fallback inline si le fichier est absent.
+
+| Template | Agent | Pattern LLM | Variables clés |
+|----------|-------|-------------|----------------|
+| `triage_classify` | bug-agent | `chat_confident` | test_name, tc, status, error_message, stack_trace |
+| `rca_analyze` | bug-agent | `chat_cot` | test_name, tc, suite, error_message, stack_trace, other_tcs |
+| `repair_patch` | bug-agent | `chat_cot` | test_name, tc, error_message, stack_trace, source_context |
+| `release_vote` | advisor-agent | `chat_self_consistent` | context_str |
+| `predict_gate` | advisor-agent | `chat_structured` | context_str |
+| `tc_generate` | codegen-agent | `chat_structured` | us_id, us_title, us_description |
+| `qa_notify` | reporting-agent | `chat` | run_summary, pass_rate, failed_count |
+| `flaky_analyze` | quality-agent | `chat` | flaky_list, runs |
+
+**Modifier un prompt sans toucher au code :**
+
+```bash
+# Voir les métriques d'usage
+python agents/observability-agent.py prompts
+
+# Inspecter les versions
+python agents/observability-agent.py prompts list
+
+# Rollback vers la version précédente
+python agents/observability-agent.py prompts rollback triage_classify
+```
+
+Les métriques `calls` et `avg_confidence` s'alimentent automatiquement à chaque run via `_ps.record_usage()`.
 
 ---
 
