@@ -1,7 +1,1 @@
-[
-  {
-    "testName": "User should be able to login",
-    "reason": "Flaky API dependency",
-    "expirationDate": "2026-03-20"
-  }
-]
+[]
