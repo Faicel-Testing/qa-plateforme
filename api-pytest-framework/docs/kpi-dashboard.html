@@ -125,7 +125,7 @@
   <div class="header-meta">
     <div>pytest-bdd 7.3 + Requests 2.32</div>
     <div>LLM · Groq LLaMA 3.3 70B</div>
-    <div>Généré le 2026-06-13 21:29</div>
+    <div>Généré le 2026-06-14 00:31</div>
   </div>
 </div>
 
@@ -137,12 +137,12 @@
     <div>
       <div class="gate-label">Quality Gate</div>
       <div class="gate-verdict failed">❌ FAILED</div>
-      <div class="gate-score" style="margin-top:6px">2/5 critères satisfaits</div>
+      <div class="gate-score" style="margin-top:6px">4/5 critères satisfaits</div>
     </div>
     <div class="gate-criteria">
-      <div class="gate-row"><div class="gate-dot ko"></div><span class="gate-name">Pass Rate >= 90%</span><span class="gate-val">88.2%</span></div>
-<div class="gate-row"><div class="gate-dot ko"></div><span class="gate-name">Fail Rate <= 5%</span><span class="gate-val">5.5%</span></div>
-<div class="gate-row"><div class="gate-dot ko"></div><span class="gate-name">Anomaly Rate <= 10%</span><span class="gate-val">11.8%</span></div>
+      <div class="gate-row"><div class="gate-dot ok"></div><span class="gate-name">Pass Rate >= 90%</span><span class="gate-val">91.8%</span></div>
+<div class="gate-row"><div class="gate-dot ko"></div><span class="gate-name">Fail Rate <= 5%</span><span class="gate-val">5.6%</span></div>
+<div class="gate-row"><div class="gate-dot ok"></div><span class="gate-name">Anomaly Rate <= 10%</span><span class="gate-val">8.2%</span></div>
 <div class="gate-row"><div class="gate-dot ok"></div><span class="gate-name">Flaky Rate <= 20%</span><span class="gate-val">0.0%</span></div>
 <div class="gate-row"><div class="gate-dot ok"></div><span class="gate-name">Automation Coverage >= 80%</span><span class="gate-val">100.0%</span></div>
 
@@ -151,23 +151,23 @@
 
   <!-- KPI CARDS -->
   <div class="kpi-grid">
-    <div class="kpi-card" style="--kpi-color:#f59e0b">
+    <div class="kpi-card" style="--kpi-color:#10b981">
       <div class="kpi-icon">✅</div>
       <div class="kpi-label">Pass Rate</div>
-      <div class="kpi-value">88.2%</div>
-      <div class="kpi-sub">97 / 110 tests passés</div>
+      <div class="kpi-value">91.8%</div>
+      <div class="kpi-sub">246 / 268 tests passés</div>
     </div>
     <div class="kpi-card" style="--kpi-color:#f59e0b">
       <div class="kpi-icon">❌</div>
       <div class="kpi-label">Fail Rate</div>
-      <div class="kpi-value">5.5%</div>
-      <div class="kpi-sub">6 échecs · 7 broken</div>
+      <div class="kpi-value">5.6%</div>
+      <div class="kpi-sub">15 échecs · 7 broken</div>
     </div>
-    <div class="kpi-card" style="--kpi-color:#ef4444">
+    <div class="kpi-card" style="--kpi-color:#f59e0b">
       <div class="kpi-icon">⚠️</div>
       <div class="kpi-label">Taux d'anomalies</div>
-      <div class="kpi-value">11.8%</div>
-      <div class="kpi-sub">13 défauts + 0 flaky</div>
+      <div class="kpi-value">8.2%</div>
+      <div class="kpi-sub">22 défauts + 0 flaky</div>
     </div>
     <div class="kpi-card" style="--kpi-color:#10b981">
       <div class="kpi-icon">🔀</div>
@@ -179,24 +179,24 @@
       <div class="kpi-icon">🤖</div>
       <div class="kpi-label">Couverture Automation</div>
       <div class="kpi-value">100.0%</div>
-      <div class="kpi-sub">110 TCs exécutés / 51 définis</div>
+      <div class="kpi-sub">268 TCs exécutés / 51 définis</div>
     </div>
     <div class="kpi-card" style="--kpi-color:#6366f1">
       <div class="kpi-icon">⏱️</div>
       <div class="kpi-label">Temps d'exécution</div>
-      <div class="kpi-value" style="font-size:28px">3m 18s</div>
-      <div class="kpi-sub">Moy. par test : 1s</div>
+      <div class="kpi-value" style="font-size:28px">9m 22s</div>
+      <div class="kpi-sub">Moy. par test : 2s</div>
     </div>
     <div class="kpi-card" style="--kpi-color:#3b82f6">
       <div class="kpi-icon">🧪</div>
       <div class="kpi-label">Tests Automatisés</div>
-      <div class="kpi-value">110</div>
+      <div class="kpi-value">268</div>
       <div class="kpi-sub">Smoke: 5 · Critical: 9 · Régression: 51</div>
     </div>
     <div class="kpi-card" style="--kpi-color:#8b5cf6">
       <div class="kpi-icon">🏃</div>
       <div class="kpi-label">Runs Historiques</div>
-      <div class="kpi-value">4</div>
+      <div class="kpi-value">0</div>
       <div class="kpi-sub">Exécutions tracées dans Allure</div>
     </div>
   </div>
@@ -235,16 +235,34 @@
       <tbody>
         
         <tr>
+          <td>tc-031</td>
+          <td>test_tc031__xss_payload_dans_firstname_post_booking</td>
+          <td><span class="badge badge-fail">FAILED</span></td>
+          <td class="msg">AssertionError: XSS non filtre dans la reponse : {"bookingid":4682,"booking":{"f</td>
+        </tr>
+        <tr>
           <td>tc-029</td>
           <td>test_tc029__checkin_posterieur_a_checkout_post_booking</td>
           <td><span class="badge badge-fail">FAILED</span></td>
           <td class="msg">AssertionError: Attendu HTTP 400, recu 200 -- {"bookingid":3828,"booking":{"firs</td>
         </tr>
         <tr>
+          <td>tc-029</td>
+          <td>test_tc029__checkin_posterieur_a_checkout_post_booking</td>
+          <td><span class="badge badge-fail">FAILED</span></td>
+          <td class="msg">AssertionError: Attendu HTTP 400, recu 200 -- {"bookingid":683,"booking":{"first</td>
+        </tr>
+        <tr>
           <td>tc-028</td>
           <td>test_tc028__totalprice_negatif_post_booking</td>
           <td><span class="badge badge-fail">FAILED</span></td>
           <td class="msg">AssertionError: Attendu HTTP 400 ou 500, recu 200 -- {"bookingid":36,"booking":{</td>
+        </tr>
+        <tr>
+          <td>tc-031</td>
+          <td>test_tc031__xss_payload_dans_firstname_post_booking</td>
+          <td><span class="badge badge-fail">FAILED</span></td>
+          <td class="msg">AssertionError: XSS non filtre dans la reponse : {"bookingid":713,"booking":{"fi</td>
         </tr>
         <tr>
           <td>—</td>
@@ -276,24 +294,6 @@
           <td><span class="badge badge-fail">FAILED</span></td>
           <td class="msg">AssertionError: Attendu HTTP 400 ou 500, recu 200 -- {"bookingid":3813,"booking"</td>
         </tr>
-        <tr>
-          <td>—</td>
-          <td>test_get_all_bookings</td>
-          <td><span class="badge badge-fail">BROKEN</span></td>
-          <td class="msg">requests.exceptions.SSLError: HTTPSConnectionPool(host='restful-booker.herokuapp</td>
-        </tr>
-        <tr>
-          <td>—</td>
-          <td>test_update_booking</td>
-          <td><span class="badge badge-fail">BROKEN</span></td>
-          <td class="msg">requests.exceptions.SSLError: HTTPSConnectionPool(host='restful-booker.herokuapp</td>
-        </tr>
-        <tr>
-          <td>—</td>
-          <td>test_get_booking_by_id</td>
-          <td><span class="badge badge-fail">BROKEN</span></td>
-          <td class="msg">requests.exceptions.SSLError: HTTPSConnectionPool(host='restful-booker.herokuapp</td>
-        </tr>
       </tbody>
     </table>
   </div>
@@ -313,7 +313,7 @@
 
 <div class="footer">
   Généré par <strong>kpi-agent.py</strong> · Framework <strong>pytest-bdd 7.3 + Requests 2.32</strong> ·
-  LLM <strong>Groq LLaMA 3.3 70B</strong> · 2026-06-13 21:29
+  LLM <strong>Groq LLaMA 3.3 70B</strong> · 2026-06-14 00:31
 </div>
 
 <script>
@@ -328,7 +328,7 @@ new Chart(document.getElementById('donutChart'), {
   type: 'doughnut',
   data: {
     labels: ['Passés', 'Échoués', 'Broken', 'Skipped'],
-    datasets: [{ data: [97, 6, 7, 0],
+    datasets: [{ data: [246, 15, 7, 0],
       backgroundColor: [COLORS.green, COLORS.red, COLORS.yellow, COLORS.muted],
       borderWidth: 0, hoverOffset: 6 }]
   },
@@ -336,7 +336,7 @@ new Chart(document.getElementById('donutChart'), {
     cutout: '70%', plugins: {
       legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 14, font: { size: 12 } } },
       tooltip: { callbacks: {
-        label: ctx => ` ${ctx.label}: ${ctx.parsed} (${Math.round(ctx.parsed/110*100)}%)`
+        label: ctx => ` ${ctx.label}: ${ctx.parsed} (${Math.round(ctx.parsed/268*100)}%)`
       } }
     }
   }
@@ -346,10 +346,10 @@ new Chart(document.getElementById('donutChart'), {
 new Chart(document.getElementById('suiteChart'), {
   type: 'bar',
   data: {
-    labels: ["us-006", "us-007", "us-002", "us-008", "us-003", "us-004", "other", "us-001", "us-005"],
+    labels: ["us-004", "us-006", "us-007", "us-003", "us-005", "us-002", "us-008", "us-001", "other"],
     datasets: [
-      { label: 'Passés',   data: [14, 12, 14, 2, 14, 18, 1, 10, 12], backgroundColor: COLORS.green, borderRadius: 4 },
-      { label: 'Échoués',  data: [0, 0, 0, 0, 0, 6, 7, 0, 0], backgroundColor: COLORS.red,   borderRadius: 4 }
+      { label: 'Passés',   data: [45, 35, 30, 35, 30, 35, 5, 30, 1], backgroundColor: COLORS.green, borderRadius: 4 },
+      { label: 'Échoués',  data: [15, 0, 0, 0, 0, 0, 0, 0, 7], backgroundColor: COLORS.red,   borderRadius: 4 }
     ]
   },
   options: {
@@ -366,12 +366,12 @@ new Chart(document.getElementById('suiteChart'), {
 new Chart(document.getElementById('trendChart'), {
   type: 'line',
   data: {
-    labels: ["Run 1", "Run 2", "Run 3", "Run 4"],
+    labels: [],
     datasets: [
-      { label: 'Passés', data: [46, 48, 48, 49],
+      { label: 'Passés', data: [],
         borderColor: COLORS.green, backgroundColor: 'rgba(16,185,129,.15)',
         fill: true, tension: .4, pointRadius: 5, pointHoverRadius: 7 },
-      { label: 'Échoués', data: [5, 3, 3, 10],
+      { label: 'Échoués', data: [],
         borderColor: COLORS.red, backgroundColor: 'rgba(239,68,68,.1)',
         fill: true, tension: .4, pointRadius: 5, pointHoverRadius: 7 }
     ]

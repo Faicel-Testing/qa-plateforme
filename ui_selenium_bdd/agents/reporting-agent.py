@@ -11,6 +11,9 @@
 
 import sys, os, json, glob, subprocess, time
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+ALLURE = "allure.cmd" if sys.platform == "win32" else "allure"
+MVN    = "mvn.cmd"    if sys.platform == "win32" else "mvn"
 sys.path.insert(0, os.path.dirname(__file__))
 
 import llm
@@ -55,21 +58,21 @@ def load_stats() -> dict:
 def cmd_generate():
     print(f"\n{W}REPORTING — Génération rapport Allure{E}")
     rc = subprocess.run(
-        ["allure", "generate", ALLURE_DIR, "--output", REPORT_DIR, "--clean"],
+        [ALLURE, "generate", ALLURE_DIR, "--output", REPORT_DIR, "--clean"],
         cwd=FRAMEWORK
     )
     if rc.returncode == 0:
         print(f"  {G}Rapport généré : target/allure-report/{E}")
     else:
-        print(f"  {Y}Allure CLI non disponible. Utilise : mvn allure:report{E}")
-        subprocess.run(["mvn", "allure:report"], cwd=FRAMEWORK)
+        print(f"  {Y}Allure CLI non disponible. Fallback → mvn allure:report{E}")
+        subprocess.run([MVN, "allure:report"], cwd=FRAMEWORK)
     return rc.returncode
 
 
 def cmd_serve():
     print(f"\n{W}REPORTING — Ouverture rapport Allure{E}")
     subprocess.Popen(
-        ["allure", "open", REPORT_DIR],
+        [ALLURE, "open", REPORT_DIR],
         cwd=FRAMEWORK
     )
     print(f"  {G}Rapport ouvert dans le navigateur.{E}")
@@ -128,6 +131,7 @@ def cmd_notify(channel: str = "slack"):
         .replace("{passed}", str(stats["passed"]))
         .replace("{total}", str(stats["total"]))
         .replace("{failed_count}", str(stats["failed"] + stats["broken"]))
+        .replace("{gate_status}", "PASS" if gate_ok else "FAIL")
         .replace("{'PASS' if gate_ok else 'FAIL'}", "PASS" if gate_ok else "FAIL")
     }]
     try:

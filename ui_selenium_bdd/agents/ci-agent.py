@@ -2,6 +2,8 @@
 # CI Agent — Git · GitHub Actions · Release
 # ============================================================
 # Commandes :
+#   python agents/ci-agent.py sync              → stage + commit + push (tout en un)
+#   python agents/ci-agent.py stage             → stage les fichiers non-sensibles
 #   python agents/ci-agent.py commit            → commit Git avec message IA
 #   python agents/ci-agent.py push              → push vers GitHub (SSL bypass)
 #   python agents/ci-agent.py pr               → créer une Pull Request
@@ -18,11 +20,21 @@ sys.path.insert(0, os.path.dirname(__file__))
 import llm
 
 FRAMEWORK = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# Racine git (QA_Plateforme/) — les chemins de git status sont relatifs à elle
+GIT_ROOT  = subprocess.run(
+    ["git", "rev-parse", "--show-toplevel"],
+    cwd=FRAMEWORK, capture_output=True, text=True
+).stdout.strip()
 
 R = "\033[31m"; G = "\033[32m"; Y = "\033[33m"; C = "\033[36m"
 W = "\033[1m";  E = "\033[0m"
 
 NEVER_COMMIT = {".env", "local.properties", "staging.properties", "production.properties"}
+
+NEVER_STAGE_PATTERNS = [
+    ".env", "local.properties", "staging.properties", "production.properties",
+    ".log", ".dump", ".dumpstream",
+]
 
 
 def run_git(args: list, cwd: str = FRAMEWORK) -> subprocess.CompletedProcess:
@@ -44,6 +56,54 @@ def check_staged_for_secrets() -> list:
     r = run_git(["diff", "--cached", "--name-only"])
     staged = r.stdout.strip().split("\n")
     return [f for f in staged if any(f.endswith(s) or os.path.basename(f) in NEVER_COMMIT for s in NEVER_COMMIT)]
+
+
+def _is_sensitive(filepath: str) -> bool:
+    name = os.path.basename(filepath)
+    return any(name == p or filepath.endswith(p) for p in NEVER_STAGE_PATTERNS)
+
+
+def cmd_stage():
+    print(f"\n{W}CI AGENT — Stage des fichiers{E}")
+    # Toujours opérer depuis la racine git pour que les chemins soient corrects
+    r_status = run_git(["status", "--porcelain"], cwd=GIT_ROOT)
+    lines = [l for l in r_status.stdout.splitlines() if l.strip()]
+
+    staged_count = 0
+    skipped = []
+    for line in lines:
+        filepath = line[3:].strip().strip('"')
+        if _is_sensitive(filepath):
+            skipped.append(filepath)
+            run_git(["reset", "HEAD", "--", filepath], cwd=GIT_ROOT)
+            continue
+        run_git(["add", filepath], cwd=GIT_ROOT)
+        staged_count += 1
+
+    # Passe de sécurité : désindexer tout fichier sensible encore présent
+    r_cached = run_git(["diff", "--cached", "--name-only"], cwd=GIT_ROOT)
+    for f in r_cached.stdout.splitlines():
+        if _is_sensitive(f):
+            run_git(["reset", "HEAD", "--", f], cwd=GIT_ROOT)
+            if f not in skipped:
+                skipped.append(f)
+
+    print(f"  {G}✓ {staged_count} fichier(s) stagé(s){E}")
+    if skipped:
+        print(f"  {Y}Ignorés (sensibles) :{E}")
+        for s in skipped:
+            print(f"  {Y}  • {s}{E}")
+    return staged_count
+
+
+def cmd_sync(message: str = None, branch: str = "main"):
+    print(f"\n{W}CI AGENT — Sync complet : stage → commit → push{E}")
+    count = cmd_stage()
+    if count == 0:
+        print(f"  {Y}Rien à commiter.{E}")
+        return
+    cmd_commit(message)
+    cmd_push(branch)
 
 
 def cmd_commit(message: str = None):
@@ -188,14 +248,16 @@ def cmd_changelog():
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="CI Agent — Selenium BDD")
-    parser.add_argument("command", choices=["commit", "push", "pr", "ci", "release", "changelog"])
+    parser.add_argument("command", choices=["sync", "stage", "commit", "push", "pr", "ci", "release", "changelog"])
     parser.add_argument("sub", nargs="?", default="status")
     parser.add_argument("--message", "-m", default=None)
     parser.add_argument("--branch", default="main")
     parser.add_argument("--tag", default=None)
     args = parser.parse_args()
 
-    if args.command == "commit":    cmd_commit(args.message)
+    if args.command == "sync":      cmd_sync(args.message, args.branch)
+    elif args.command == "stage":   cmd_stage()
+    elif args.command == "commit":  cmd_commit(args.message)
     elif args.command == "push":    cmd_push(args.branch)
     elif args.command == "pr":      cmd_pr()
     elif args.command == "ci":

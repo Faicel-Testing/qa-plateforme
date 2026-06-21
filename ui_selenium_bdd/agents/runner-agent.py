@@ -35,9 +35,11 @@ QUALITY_GATE = {"pass_rate": 90.0, "fail_rate": 5.0}
 
 # ── Maven ──────────────────────────────────────────────────────────────────────
 
+MVN = "mvn.cmd" if sys.platform == "win32" else "mvn"
+
+
 def mvn(args: list, env_name: str = "local") -> int:
-    props = os.path.join(FRAMEWORK, "src", "test", "resources", "properties", f"{env_name}.properties")
-    cmd = ["mvn", "clean", "test", f"-Denv={env_name}"] + args
+    cmd = [MVN, "clean", "test", f"-Denv={env_name}"] + args
     print(f"\n{C}  mvn {' '.join(args)}{E}")
     result = subprocess.run(cmd, cwd=FRAMEWORK)
     return result.returncode

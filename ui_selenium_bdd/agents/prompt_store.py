@@ -61,9 +61,12 @@ class PromptStore:
         data = self._load(name)
         if not data:
             return None
+        # Compatibilité ancien format (champ "template" sans history)
+        if "current_version" not in data:
+            return data.get("template") or data.get("content")
         if version is None:
             version = data["current_version"]
-        for entry in data["history"]:
+        for entry in data.get("history", []):
             if entry["version"] == version:
                 return entry["content"]
         return None

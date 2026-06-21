@@ -118,6 +118,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
+                    <argLine>-Xmx256m -XX:+UseSerialGC -XX:ReservedCodeCacheSize=32m</argLine>
+                    <forkCount>0</forkCount>
                     <systemPropertyVariables>
                         <browser>CHROME</browser>
                         <headless>${headless}</headless>

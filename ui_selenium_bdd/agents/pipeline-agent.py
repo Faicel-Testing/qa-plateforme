@@ -184,7 +184,8 @@ def cmd_status():
     cb_file = os.path.join(FRAMEWORK, "logs", "circuit_breaker_state.json")
     if os.path.exists(cb_file):
         with open(cb_file, encoding="utf-8") as f:
-            cb_state = json.load(f).get("state", "CLOSED")
+            cb_data = json.load(f)
+            cb_state = cb_data.get("state", "CLOSED") if isinstance(cb_data, dict) else "CLOSED"
 
     cb_color = G if cb_state == "CLOSED" else (Y if cb_state == "HALF_OPEN" else R)
 

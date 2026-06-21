@@ -4,8 +4,9 @@
   "description": "Classification d'échec Selenium BDD — triage automatique",
   "template": "Tu es expert QA Selenium. Classifie cet échec de test.\n\nTest         : {test_name}\nStatut       : {status}\nErreur       : {error_message}\nStack trace  :\n{stack_trace}\n\nCatégories possibles :\n- real_bug        → régression ou bug applicatif sur automationexercise.com\n- selector_issue  → CSS/XPath cassé ou obsolète\n- timing_issue    → TimeoutException, ElementNotVisible, StaleElementReference\n- flaky           → intermittent, non déterministe\n- env_issue       → problème réseau, navigateur, configuration\n- false_positive  → assertion trop stricte ou données de test invalides\n\nRéponds UNIQUEMENT avec ce JSON (pas de texte autour) :\n{\n  \"category\": \"<une des 6 catégories>\",\n  \"confidence\": <0.0 à 1.0>,\n  \"reason\": \"<explication en 1 phrase>\",\n  \"priority\": \"<P1|P2|P3|P4>\"\n}",
   "metrics": {
-    "calls": 0,
-    "avg_confidence": 0
+    "calls": 44,
+    "avg_confidence": 0.807,
+    "last_used": "2026-06-20T17:42:13Z"
   },
   "history": []
 }
