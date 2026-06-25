@@ -101,7 +101,8 @@ jobs:
         run: |
           mvn -B clean test \
             -Dcucumber.filter.tags="${{ steps.pick.outputs.TAG }}" \
-            -Dheadless="${HEADLESS}"
+            -Dheadless="${HEADLESS}" \
+            -DtimeoutSec=30
 
       # Bloc de diagnostic : ne s’exécute que si le job est en échec
       # Objectif : accélérer l’investigation (structure repo, pom, chemins, etc.)
