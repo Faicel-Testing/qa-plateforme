@@ -85,6 +85,7 @@ public class TodoSteps {
     @And("I delete the todo item")
     public void iDeleteTodoItem() {
         String task = TestContext.get(TODO_KEY, String.class);
+        page().assertTodoPresent(task); // s'assurer que l'item est visible avant suppression
         boolean deleted = page().deleteTodo(task);
         Assert.assertTrue(deleted, "Could not find todo to delete: " + task);
     }

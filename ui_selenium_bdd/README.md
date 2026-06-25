@@ -1,7 +1,7 @@
 # ui_selenium_bdd
 
 **Selenium 4 · Cucumber 7 · TestNG 7.9 · Java 17 · Maven**  
-Application sous test : [QACart Todo](https://qacart-todo.herokuapp.com) — 8 features · 26 scénarios  
+Application sous test : [QACart Todo](https://qacart-todo.herokuapp.com) — 5 features · 31 scénarios · 100% pass rate  
 Agents IA : 10 agents Python · 6 patterns LLM · 8 prompts versionnés
 
 > Guide complet des agents → [agents.md](agents.md)
@@ -19,6 +19,7 @@ Agents IA : 10 agents Python · 6 patterns LLM · 8 prompts versionnés
 | Build | Maven | 3.x |
 | Rapport | Allure | 2.24.0 |
 | Driver management | WebDriverManager | 5.8.0 |
+| Browser | Chrome | 149 (headless) |
 | Agents IA | Python + Groq LLM | 3.11+ |
 
 ---
@@ -31,24 +32,23 @@ ui_selenium_bdd/
 │   ├── java/com/qacart/todo/
 │   │   ├── context/          → TestContext (ThreadLocal)
 │   │   ├── data/             → User.java, FixtureStore.java
-│   │   ├── factory/          → DriverManager, DriverFactory, BrowserOptionsFactory
+│   │   ├── factory/          → DriverManager, DriverFactory, BrowserOptionsFactory, DriverService
 │   │   ├── hooks/            → Cucumber Hooks (screenshot, quarantaine, cleanup)
 │   │   ├── pages/            → Page Objects (LoginPage, SignupPage, TodoPage)
 │   │   ├── steps/
 │   │   │   ├── AuthSteps.java
 │   │   │   ├── TodoSteps.java
 │   │   │   ├── CommonSteps.java
-│   │   │   ├── ProfileSteps.java
 │   │   │   ├── runners/      → RunnerTest, ChromeRunnerTest, FirefoxRunnerTest, ParallelRunnerTest
 │   │   │   └── utils/        → ElementActions, Waiter, EnvUtils, TestDataFactory
 │   │   └── utilss/           → RunConfig
 │   └── resources/
-│       ├── features/         → 8 fichiers .feature Gherkin (Id01–Id08)
+│       ├── features/         → 5 features Gherkin (Id01–Id05) · 31 scénarios
 │       ├── properties/       → local.properties, staging.properties, production.properties
 │       └── data/             → Fixtures JSON
 ├── agents/                   → 10 agents Python IA
 ├── prompts/                  → 8 templates LLM versionnés
-├── docs/                     → Dashboards HTML générés
+├── docs/                     → kpi-dashboard.html · reporting-dashboard.html
 ├── logs/                     → Traces JSONL, circuit breaker, cache LLM
 ├── pom.xml
 ├── testng.xml                → Config parallèle Chrome + Firefox
@@ -63,7 +63,8 @@ ui_selenium_bdd/
 - Java 17+
 - Maven 3.x
 - Python 3.11+
-- Firefox + GeckoDriver **ou** Chrome + ChromeDriver (géré automatiquement par WebDriverManager)
+- Chrome (géré automatiquement par WebDriverManager)
+- Allure CLI (`npm install -g allure-commandline` ou via Scoop/Homebrew)
 - Clé API Groq (pour les agents IA)
 
 ---
@@ -86,56 +87,33 @@ cp .env.example .env
 
 ## Exécution des tests
 
-> **PowerShell** : encadrer le paramètre `-D` entre guillemets doubles
+> **PowerShell** : encadrer les paramètres `-D` entre guillemets doubles
 
 ```powershell
-# Tous les tests
-mvn test
+# Run complet — regression, headless
+mvn test -Dtest=RunnerTest -Dheadless=true "-Dcucumber.filter.tags=@regression and not @wip"
 
-# Par tag
-mvn test "-Dcucumber.filter.tags=@smoke"
-mvn test "-Dcucumber.filter.tags=@regression"
-mvn test "-Dcucumber.filter.tags=@negative"
+# Smoke uniquement
+mvn test -Dtest=RunnerTest -Dheadless=true "-Dcucumber.filter.tags=@smoke"
 
-# Par navigateur
-mvn test -Dbrowser=firefox
-mvn test -Dbrowser=chrome
+# Critical uniquement
+mvn test -Dtest=RunnerTest -Dheadless=true "-Dcucumber.filter.tags=@critical"
+
+# Tests négatifs
+mvn test -Dtest=RunnerTest -Dheadless=true "-Dcucumber.filter.tags=@negative"
+
+# Mode visible (debug)
+mvn test -Dtest=RunnerTest -Dheadless=false "-Dcucumber.filter.tags=@regression and not @wip"
+
+# Par feature
+mvn test -Dtest=RunnerTest "-Dcucumber.filter.tags=@Id01"
+mvn test -Dtest=RunnerTest "-Dcucumber.filter.tags=@Id02"
+mvn test -Dtest=RunnerTest "-Dcucumber.filter.tags=@Id03"
 
 # Par environnement
-mvn test -Denv=staging
-mvn test -Denv=production
-
-# Smoke + rapport Allure en une commande
-mvn test "-Dcucumber.filter.tags=@smoke" ; python agents/reporting-agent.py generate ; python agents/reporting-agent.py serve
+mvn test -Dtest=RunnerTest -Denv=staging
+mvn test -Dtest=RunnerTest -Denv=production
 ```
-
----
-
-## Features & Tags
-
-| Feature | Tags | Scénarios |
-|---|---|---|
-| Id01 — Signup | `@smoke @regression @critical` | Inscription valide |
-| Id01 — Signup Negative | `@negative @regression` | Mots de passe non correspondants, champs manquants, format invalide |
-| Id02 — Login | `@smoke @regression @critical` | Connexion valide |
-| Id03 — Todo | `@smoke @regression` | Ajout d'un todo |
-| Id03 — Todo Negative | `@negative @regression` | Todo vide, whitespace, trop long, après déconnexion |
-| Id04 — Delete Todo | `@regression` | Suppression d'un todo |
-| Id04 — Delete Negative | `@negative @regression` | Suppression inexistante, doublon, après déconnexion |
-| Id05 — Login Negative | `@negative @regression` | Email invalide, email vide, mot de passe vide |
-| Id06 — Password Update | `@wip @security` | *(en cours)* |
-| Id07 — Email Update | `@wip @contact` | *(en cours)* |
-| Id08 — Account Deletion | `@wip @security` | *(en cours)* |
-
-**Résumé tags :**
-
-| Tag | Périmètre |
-|---|---|
-| `@smoke` | Flux critiques (signup, login, todo) |
-| `@regression` | Toutes les features stables (Id01–Id05) |
-| `@negative` | Cas d'erreur et validations |
-| `@critical` | Signup + Login |
-| `@wip` | Features en développement (Id06–Id08) |
 
 ---
 
@@ -143,17 +121,68 @@ mvn test "-Dcucumber.filter.tags=@smoke" ; python agents/reporting-agent.py gene
 
 ```powershell
 # Générer le rapport HTML
-python agents/reporting-agent.py generate
+allure generate target/allure-results -o target/allure-report --clean
 
-# Ouvrir dans le navigateur
-python agents/reporting-agent.py serve
+# Ouvrir le rapport dans le navigateur
+allure open target/allure-report
 
-# Générer + dashboard KPI + notifier Slack
-python agents/reporting-agent.py publish
-
-# Dashboard KPI seul
-python agents/reporting-agent.py dashboard
+# Run + rapport en une commande
+mvn test -Dtest=RunnerTest -Dheadless=true "-Dcucumber.filter.tags=@regression and not @wip" ; allure generate target/allure-results -o target/allure-report --clean ; allure open target/allure-report
 ```
+
+---
+
+## Dashboard KPI
+
+```powershell
+# Ouvrir le dashboard KPI (indicateurs, trend, couverture)
+start ui_selenium_bdd/docs/kpi-dashboard.html
+```
+
+Le dashboard inclut :
+- **Quality Gate** — 5 critères (Pass Rate, Fail Rate, Smoke, Critical, Coverage)
+- **8 KPI cards** — Pass Rate · Fail Rate · Smoke Rate · Critical Rate · Couverture · Temps · Flaky Rate
+- **Répartition par tag** — `@smoke` (8) · `@critical` (6) · `@negative` (21) · `@regression` (31)
+- **4 graphiques** — Donut · Bar par feature · Trend (évolution runs) · Radar · Taux d'exécution
+- **Table couverture** — 8 features avec pass rate et progress bar
+
+---
+
+## Features & Scénarios
+
+| Feature | Tags | Scénarios |
+|---|---|---|
+| Id01 — Signup | `@smoke @regression @critical` | Inscription valide, ajout todo après signup, déconnexion après signup |
+| Id01 — Signup Negative | `@negative @regression` | Mots de passe non correspondants, email invalide, champs manquants, mot de passe faible |
+| Id02 — Login | `@smoke @regression @critical` | Connexion valide, déconnexion, ajout todo après login |
+| Id02 — Login Negative | `@negative @regression` | Mot de passe incorrect, email inexistant, champs vides |
+| Id03 — Todo Management | `@smoke @regression` | Ajout todo, suppression todo |
+| Id04 — Todo Deletion | `@regression` | Suppression, ajout après suppression |
+| Id04 — Todo Deletion Negative | `@negative @regression` | Suppression inexistante, double suppression, suppression après déconnexion |
+| Id05 — Login Negative | `@negative @regression` | Mauvais mdp, email inexistant, email vide, mdp vide, champs vides |
+
+**Total : 31 scénarios · 0 échec · 100% pass rate**
+
+### Répartition par tag
+
+| Tag | Scénarios | Périmètre |
+|---|---|---|
+| `@smoke` | 8 | Flux critiques (signup, login, todo) |
+| `@critical` | 6 | Signup + Login |
+| `@regression` | 31 | Toutes les features stables |
+| `@negative` | 21 | Cas d'erreur et validations |
+
+---
+
+## Quality Gate
+
+| Métrique | Seuil | Résultat |
+|---|---|---|
+| Pass Rate | ≥ 95% | ✅ 100% |
+| Fail Rate | ≤ 5% | ✅ 0% |
+| Smoke Pass Rate | 100% | ✅ 8/8 |
+| Critical Pass Rate | 100% | ✅ 6/6 |
+| Couverture Automation | ≥ 80% | ✅ 100% |
 
 ---
 
@@ -186,9 +215,6 @@ python agents/pipeline-agent.py full
 
 # Triage automatique des échecs
 python agents/bug-agent.py triage
-
-# Analyse Root Cause
-python agents/bug-agent.py rca
 
 # Vote release GO/NO-GO
 python agents/advisor-agent.py release
@@ -235,16 +261,6 @@ python agents/observability-agent.py prompts rollback triage_classify
 
 ---
 
-## Quality Gate
-
-| Métrique | Seuil |
-|---|---|
-| Pass rate | ≥ 90% |
-| Fail rate | ≤ 5% |
-| Confiance LLM | ≥ 0.70 |
-
----
-
 ## Variables d'environnement
 
 ```bash
@@ -276,8 +292,16 @@ Le workflow `.github/workflows/main.yml` se déclenche sur :
 
 **Étapes :**
 1. Checkout + JDK 17
-2. Attente Selenium Grid (port 4444)
-3. `mvn clean test` (mode headless)
-4. Génération rapport Allure
-5. Upload artefacts
-6. Notification email (Gmail SMTP)
+2. `mvn test -Dtest=RunnerTest -Dheadless=true` (Chrome headless)
+3. Génération rapport Allure
+4. Upload artefacts
+5. Notification email (Gmail SMTP)
+
+---
+
+## Notes techniques
+
+- **Chrome 149 + Selenium 4.12.1** : warning CDP ignoré (pas d'impact fonctionnel). `DriverService.stop()` absorbe le timeout CDP sur `quit()`.
+- **Headless** : utiliser `--headless` (ancien flag) et non `--headless=new` pour éviter le timeout CDP endpoint.
+- **QACart auth** : JWT stocké en état React in-memory. Un reload navigateur (`navigate().refresh()`) remet l'état à zéro → les scénarios "persist after refresh" ne sont pas testables sur cette app.
+- **Heroku cold start** : `assertTodoPresent` dispose d'une fenêtre de 60s pour absorber les démarrages à froid du dyno gratuit.

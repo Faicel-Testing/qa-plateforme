@@ -14,8 +14,13 @@ public final class DriverService {
     public static void stop() {
         WebDriver driver = DriverManager.get();
         if (driver != null) {
-            driver.quit();
-            DriverManager.unload();
+            try {
+                driver.quit();
+            } catch (Exception ignored) {
+                // Chrome 149+ CDP timeout on quit — browser closes, exception is harmless
+            } finally {
+                DriverManager.unload();
+            }
         }
     }
 }

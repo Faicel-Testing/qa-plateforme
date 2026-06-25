@@ -18,6 +18,7 @@ import java.util.List;
 public class TodoPage extends BasePage {
 
     private static final By ADD_BTN     = By.cssSelector("button:has(svg[data-testid='add'])");
+    private static final By LOGOUT_BTN  = By.cssSelector("[data-testid='logout']");
     private static final By NEW_TODO    = By.cssSelector("input[data-testid='new-todo']");
     private static final By SUBMIT_TODO = By.cssSelector("button[data-testid='submit-newTask']");
     private static final By TODO_ITEMS  = By.cssSelector("[data-testid='todo-item']");
@@ -31,6 +32,11 @@ public class TodoPage extends BasePage {
     public void open(String baseUrl) {
         load(baseUrl + "/todo");
         Waiter.visible(ADD_BTN);
+    }
+
+    public void clickLogout() {
+        Waiter.visible(LOGOUT_BTN);
+        ElementActions.click(LOGOUT_BTN);
     }
 
     public String addTodo(String text) {
@@ -54,7 +60,7 @@ public class TodoPage extends BasePage {
 
     // Fix: attend la disparition de l'item après clic delete
     public boolean deleteTodo(String text) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(25));
         // Wait for list to be rendered before searching
         try { wait.until(d -> !driver.findElements(TODO_ITEMS).isEmpty() ||
                               !d.getCurrentUrl().contains("/todo/new")); }
@@ -93,7 +99,12 @@ public class TodoPage extends BasePage {
     }
 
     public void assertTodoPresent(String text) {
-        new WebDriverWait(driver, Duration.ofSeconds(10))
+        // If Chrome 149 headless clears localStorage on refresh, React redirects to /login.
+        // Wait up to 20s for ADD_BTN to confirm we're still on the todo page.
+        new WebDriverWait(driver, Duration.ofSeconds(20))
+            .until(ExpectedConditions.visibilityOfElementLocated(ADD_BTN));
+        // API fetch: 60s for todo to appear (covers Heroku cold-start latency)
+        new WebDriverWait(driver, Duration.ofSeconds(60))
             .until(d -> isTodoVisible(text));
     }
 

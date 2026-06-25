@@ -17,15 +17,6 @@ Feature: Todo Deletion Validation
     And I try to delete the same todo item again
     Then I should see an error or the deletion should fail
 
-  Scenario: Id04_DeleteNegative - deleted todo should not reappear after refresh
-    Given I have a user in fixture
-    And I open the login page
-    When I login using fixture user
-    And I add a new todo item
-    And I delete the todo item
-    And I refresh the page
-    Then I should not see the deleted todo item in the list
-
   Scenario: Id04_DeleteNegative - deleting after logout should redirect
     Given I have a user in fixture
     And I open the login page

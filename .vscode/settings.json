@@ -1,0 +1,10 @@
+{
+  "cucumber.features": [
+    "ui_selenium_bdd/src/test/resources/features/**/*.feature",
+    "ui_playwright_bdd/src/features/**/*.feature"
+  ],
+  "cucumber.glue": [
+    "ui_selenium_bdd/src/test/java/**/*.java",
+    "ui_playwright_bdd/src/steps/**/*.ts"
+  ]
+}

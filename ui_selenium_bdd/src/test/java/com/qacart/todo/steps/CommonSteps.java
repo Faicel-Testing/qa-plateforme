@@ -8,6 +8,8 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import java.time.Duration;
 
 public class CommonSteps {
 
@@ -21,23 +23,33 @@ public class CommonSteps {
         WebDriver driver = DriverManager.get();
         String baseUrl   = TestContext.get("BASE_URL", String.class);
 
-        // Essai 1 : route /logout
-        driver.get(baseUrl + "/logout");
+        // Essai 1 : bouton logout dans l'UI (chemin nominal QACart)
+        try {
+            new com.qacart.todo.pages.TodoPage(driver).clickLogout();
+            Waiter.urlContains("/login");
+            return;
+        } catch (Exception ignored) {}
 
-        // Essai 2 : vider localStorage + sessionStorage (SPA token-based auth)
+        // Fallback : vider le storage + cookies + navigation directe
         try {
             ((JavascriptExecutor) driver).executeScript(
                 "window.localStorage.clear(); window.sessionStorage.clear();");
         } catch (Exception ignored) {}
-
-        // Forcer le retour sur la page login pour invalider le state React
+        driver.manage().deleteAllCookies();
         driver.get(baseUrl + "/login");
         Waiter.urlContains("/login");
     }
 
     @When("I refresh the page")
     public void iRefreshPage() {
-        DriverManager.get().navigate().refresh();
+        WebDriver driver = DriverManager.get();
+        driver.navigate().refresh();
+        // Wait for Heroku dyno to respond and page to be fully loaded before next step
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(45))
+                .until(d -> "complete".equals(
+                    ((JavascriptExecutor) d).executeScript("return document.readyState")));
+        } catch (Exception ignored) {}
     }
 
     @Then("I should be redirected to the login page")

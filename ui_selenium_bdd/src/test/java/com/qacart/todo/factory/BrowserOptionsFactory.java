@@ -40,11 +40,13 @@ public final class BrowserOptionsFactory {
   public static ChromeOptions chromeOptions() {
     ChromeOptions co = new ChromeOptions();
 
-    if (RunConfig.headless()) co.addArguments("--headless=new");
+    if (RunConfig.headless()) co.addArguments("--headless");
     co.addArguments("--window-size=1280,720");
     co.addArguments("--disable-gpu");
     co.addArguments("--no-sandbox");
+    co.addArguments("--disable-dev-shm-usage");
     co.addArguments("--disable-notifications");
+    co.addArguments("--remote-allow-origins=*");
 
     // Browser console logs (Chrome/Chromium)
     LoggingPreferences logs = new LoggingPreferences();
