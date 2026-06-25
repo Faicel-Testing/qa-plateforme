@@ -33,13 +33,12 @@ jobs:
     services:
       # Service Selenium Grid “standalone-chrome” exposé sur 4444
       # Utilisé par les tests pour exécuter le navigateur en mode remote
+      # --shm-size=2g : évite les crash Chrome renderer (out of shared memory)
       selenium:
         image: selenium/standalone-chrome:latest
         ports:
           - 4444:4444
-        options: >-
-          # Augmente /dev/shm pour limiter les crash Chrome (renderer / out of shared memory)
-          --shm-size=2g
+        options: --shm-size=2g
 
     env:
       # URL du Selenium Remote WebDriver (service container accessible via localhost + port mappé)
@@ -47,7 +46,7 @@ jobs:
       # Headless activé par défaut pour CI (stabilité + perf)
       HEADLESS: "true"
       # Dossier du module UI (multi-module repo)
-      UI_DIR: ui
+      UI_DIR: ui_selenium_bdd
 
     steps:
       # Récupère le code (fetch-depth=0 utile si tu relies versioning/changelog/metadata git)
