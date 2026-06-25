@@ -1,5 +1,6 @@
 package com.qacart.todo.steps;
 
+import com.qacart.todo.api.QACartApiClient;
 import com.qacart.todo.context.TestContext;
 import com.qacart.todo.data.FixtureStore;
 import com.qacart.todo.data.User;
@@ -8,6 +9,7 @@ import com.qacart.todo.pages.LoginPage;
 import com.qacart.todo.pages.SignupPage;
 import com.qacart.todo.steps.utils.EnvUtils;
 import com.qacart.todo.steps.utils.data.TestDataFactory;
+import com.qacart.todo.steps.utils.reporting.AllureAttachments;
 import com.qacart.todo.utils.ui.Waiter;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
@@ -157,6 +159,27 @@ public class AuthSteps {
             "Expected password strength error");
     }
 
+    // ── API Setup (Senior Pattern) ─────────────────────────────────────────────
+
+    /**
+     * Crée un utilisateur via REST API (POST /api/v1/users/register).
+     * Zéro interaction UI — les préconditions ne passent jamais par l'interface.
+     * Le login UI reste nécessaire car QACart stocke le JWT en mémoire React (pas localStorage).
+     */
+    @Given("I have a user created via API")
+    public void iHaveUserCreatedViaApi() {
+        User user = TestDataFactory.randomUser();
+        QACartApiClient api = new QACartApiClient();
+        String token = api.register(user);
+        TestContext.set("USER", user);
+        TestContext.set("API_TOKEN", token);
+        FixtureStore.save(user);
+        AllureAttachments.addText("API Setup — User Created",
+                "email   : " + user.email +
+                "\nfirstName: " + user.firstName +
+                "\ntoken   : " + token.substring(0, Math.min(30, token.length())) + "...");
+    }
+
     // ── Login positive ─────────────────────────────────────────────────────────
 
     @Given("I have a user in fixture")
@@ -189,6 +212,11 @@ public class AuthSteps {
     @Then("I should be logged in")
     public void iShouldBeLoggedIn() {
         new LoginPage(DriverManager.get()).assertLoggedIn();
+    }
+
+    @Then("I should be redirected to login page")
+    public void iShouldBeRedirectedToLoginPage() {
+        Waiter.urlContains("/login");
     }
 
     // ── Login negative ─────────────────────────────────────────────────────────
