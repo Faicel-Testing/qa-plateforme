@@ -130,6 +130,8 @@ allure open target/allure-report
 mvn test -Dtest=RunnerTest -Dheadless=true "-Dcucumber.filter.tags=@regression and not @wip" ; allure generate target/allure-results -o target/allure-report --clean ; allure open target/allure-report
 ```
 
+![Allure Report](docs/screenshot-allure-report.png)
+
 ---
 
 ## Dashboard KPI
@@ -138,6 +140,8 @@ mvn test -Dtest=RunnerTest -Dheadless=true "-Dcucumber.filter.tags=@regression a
 # Ouvrir le dashboard KPI (indicateurs, trend, couverture)
 start ui_selenium_bdd/docs/kpi-dashboard.html
 ```
+
+![QA KPI Dashboard](docs/screenshot-kpi-dashboard.png)
 
 Le dashboard inclut :
 - **Quality Gate** — 5 critères (Pass Rate, Fail Rate, Smoke, Critical, Coverage)
