@@ -114,6 +114,11 @@ public class TodoPage extends BasePage {
                 By.xpath("//*[@data-testid='todo-item'][contains(.,'" + text + "')]")));
     }
 
+    public void assertEmptyList() {
+        new WebDriverWait(driver, Duration.ofSeconds(5))
+            .until(d -> d.findElements(TODO_ITEMS).isEmpty());
+    }
+
     public boolean isErrorVisible() {
         return ElementActions.displayed(FIELD_ERROR) || ElementActions.displayed(ALERT_ERROR);
     }

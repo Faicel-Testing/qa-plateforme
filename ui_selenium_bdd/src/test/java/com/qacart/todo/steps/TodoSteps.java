@@ -3,6 +3,7 @@ package com.qacart.todo.steps;
 import com.qacart.todo.context.TestContext;
 import com.qacart.todo.factory.DriverManager;
 import com.qacart.todo.pages.TodoPage;
+import com.qacart.todo.steps.utils.EnvUtils;
 import com.qacart.todo.utils.ui.Waiter;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Then;
@@ -18,6 +19,13 @@ public class TodoSteps {
     }
 
     private String baseUrl() {
+        if (!TestContext.contains("BASE_URL")) {
+            try {
+                TestContext.set("BASE_URL", EnvUtils.getInstance().getURL());
+            } catch (Exception e) {
+                throw new RuntimeException("Cannot read BASE_URL: " + e.getMessage(), e);
+            }
+        }
         return TestContext.get("BASE_URL", String.class);
     }
 
@@ -127,5 +135,10 @@ public class TodoSteps {
         String task = TestContext.get(TODO_KEY, String.class);
         // Todo should not be present (already deleted)
         page().assertTodoAbsent(task);
+    }
+
+    @Then("I should see an empty todo list")
+    public void iShouldSeeEmptyTodoList() {
+        page().assertEmptyList();
     }
 }

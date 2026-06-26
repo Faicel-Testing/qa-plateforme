@@ -6,10 +6,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.qacart.todo.data.User;
 import com.qacart.todo.steps.utils.EnvUtils;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
 
 /**
@@ -22,9 +26,26 @@ import java.time.Duration;
  */
 public class QACartApiClient {
 
-    private static final HttpClient HTTP = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(30))
-            .build();
+    private static final HttpClient HTTP = buildHttpClient();
+
+    private static HttpClient buildHttpClient() {
+        try {
+            // Trust-all pour proxy corporate qui intercepte SSL (même raison que git -c http.sslVerify=false)
+            TrustManager[] trustAll = new TrustManager[]{new X509TrustManager() {
+                public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
+                public void checkClientTrusted(X509Certificate[] c, String a) {}
+                public void checkServerTrusted(X509Certificate[] c, String a) {}
+            }};
+            SSLContext ctx = SSLContext.getInstance("TLS");
+            ctx.init(null, trustAll, new java.security.SecureRandom());
+            return HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofSeconds(30))
+                    .sslContext(ctx)
+                    .build();
+        } catch (Exception e) {
+            throw new RuntimeException("QACartApiClient — cannot build HTTP client: " + e.getMessage(), e);
+        }
+    }
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private String baseUrl() {
