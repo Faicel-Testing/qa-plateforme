@@ -1,7 +1,7 @@
 # ui_selenium_bdd
 
 **Selenium 4 · Cucumber 7 · TestNG 7.9 · Java 17 · Maven**  
-Application sous test : [QACart Todo](https://qacart-todo.herokuapp.com) — 5 features · 31 scénarios · 100% pass rate  
+Application sous test : [QACart Todo](https://qacart-todo.herokuapp.com) — 9 features · 34 scénarios · 100% pass rate  
 Agents IA : 10 agents Python · 6 patterns LLM · 8 prompts versionnés
 
 > Guide complet des agents → [agents.md](agents.md)
@@ -30,10 +30,12 @@ Agents IA : 10 agents Python · 6 patterns LLM · 8 prompts versionnés
 ui_selenium_bdd/
 ├── src/test/
 │   ├── java/com/qacart/todo/
+│   │   ├── api/              → QACartApiClient (POST register/login — API Setup pattern)
 │   │   ├── context/          → TestContext (ThreadLocal)
 │   │   ├── data/             → User.java, FixtureStore.java
 │   │   ├── factory/          → DriverManager, DriverFactory, BrowserOptionsFactory, DriverService
-│   │   ├── hooks/            → Cucumber Hooks (screenshot, quarantaine, cleanup)
+│   │   ├── hooks/            → Cucumber Hooks (screenshot on fail, quarantaine, cleanup)
+│   │   ├── listener/         → AllureSuiteListener, RetryAnalyzer, RetryTransformer
 │   │   ├── pages/            → Page Objects (LoginPage, SignupPage, TodoPage)
 │   │   ├── steps/
 │   │   │   ├── AuthSteps.java
@@ -41,14 +43,17 @@ ui_selenium_bdd/
 │   │   │   ├── CommonSteps.java
 │   │   │   ├── runners/      → RunnerTest, ChromeRunnerTest, FirefoxRunnerTest, ParallelRunnerTest
 │   │   │   └── utils/        → ElementActions, Waiter, EnvUtils, TestDataFactory
+│   │   │                       AllureAttachments, EnvironmentWriter, ExecutorWriter
 │   │   └── utilss/           → RunConfig
 │   └── resources/
-│       ├── features/         → 5 features Gherkin (Id01–Id05) · 31 scénarios
+│       ├── features/         → 9 features Gherkin (Id01–Id09) · 34 scénarios
+│       ├── META-INF/services → org.testng.ITestNGListener (auto-discovery)
 │       ├── properties/       → local.properties, staging.properties, production.properties
-│       └── data/             → Fixtures JSON
+│       ├── data/             → Fixtures JSON
+│       └── allure.properties → allure.results.directory
 ├── agents/                   → 10 agents Python IA
 ├── prompts/                  → 8 templates LLM versionnés
-├── docs/                     → kpi-dashboard.html · reporting-dashboard.html
+├── docs/                     → kpi-dashboard.html · screenshots
 ├── logs/                     → Traces JSONL, circuit breaker, cache LLM
 ├── pom.xml
 ├── testng.xml                → Config parallèle Chrome + Firefox
@@ -105,10 +110,14 @@ mvn test -Dtest=RunnerTest -Dheadless=true "-Dcucumber.filter.tags=@negative"
 # Mode visible (debug)
 mvn test -Dtest=RunnerTest -Dheadless=false "-Dcucumber.filter.tags=@regression and not @wip"
 
+# API Setup uniquement (pattern Senior)
+mvn test -Dtest=RunnerTest -Dheadless=true "-Dcucumber.filter.tags=@api-setup"
+
 # Par feature
 mvn test -Dtest=RunnerTest "-Dcucumber.filter.tags=@Id01"
 mvn test -Dtest=RunnerTest "-Dcucumber.filter.tags=@Id02"
 mvn test -Dtest=RunnerTest "-Dcucumber.filter.tags=@Id03"
+mvn test -Dtest=RunnerTest "-Dcucumber.filter.tags=@Id09"
 
 # Par environnement
 mvn test -Dtest=RunnerTest -Denv=staging
@@ -164,17 +173,19 @@ Le dashboard inclut :
 | Id04 — Todo Deletion | `@regression` | Suppression, ajout après suppression |
 | Id04 — Todo Deletion Negative | `@negative @regression` | Suppression inexistante, double suppression, suppression après déconnexion |
 | Id05 — Login Negative | `@negative @regression` | Mauvais mdp, email inexistant, email vide, mdp vide, champs vides |
+| **Id09 — API Setup** ✨ | `@api-setup @smoke @critical @negative @regression` | Ajout todo user API, suppression todo user API, liste vide unauthenticated |
 
-**Total : 31 scénarios · 0 échec · 100% pass rate**
+**Total : 34 scénarios · 0 échec · 100% pass rate**
 
 ### Répartition par tag
 
 | Tag | Scénarios | Périmètre |
 |---|---|---|
-| `@smoke` | 8 | Flux critiques (signup, login, todo) |
-| `@critical` | 6 | Signup + Login |
-| `@regression` | 31 | Toutes les features stables |
-| `@negative` | 21 | Cas d'erreur et validations |
+| `@smoke` | 10 | Flux critiques (signup, login, todo, api-setup) |
+| `@critical` | 8 | Signup + Login + API Setup |
+| `@regression` | 34 | Toutes les features stables |
+| `@negative` | 22 | Cas d'erreur et validations |
+| `@api-setup` | 3 | Pattern Senior — préconditions via REST API |
 
 ---
 
@@ -184,8 +195,8 @@ Le dashboard inclut :
 |---|---|---|
 | Pass Rate | ≥ 95% | ✅ 100% |
 | Fail Rate | ≤ 5% | ✅ 0% |
-| Smoke Pass Rate | 100% | ✅ 8/8 |
-| Critical Pass Rate | 100% | ✅ 6/6 |
+| Smoke Pass Rate | 100% | ✅ 10/10 |
+| Critical Pass Rate | 100% | ✅ 8/8 |
 | Couverture Automation | ≥ 80% | ✅ 100% |
 
 ---
@@ -303,9 +314,70 @@ Le workflow `.github/workflows/main.yml` se déclenche sur :
 
 ---
 
+## API Setup Pattern (Senior)
+
+> Les préconditions de test ne passent **jamais** par l'UI signup.
+
+```java
+// AuthSteps.java
+@Given("I have a user created via API")
+public void iHaveUserCreatedViaApi() {
+    User user = TestDataFactory.randomUser();
+    String token = new QACartApiClient().register(user); // POST /api/v1/users/register
+    TestContext.set("USER", user);
+    TestContext.set("API_TOKEN", token);
+    FixtureStore.save(user);
+    // Token visible dans l'attachment Allure → preuve de l'appel REST
+}
+```
+
+| | Sans API Setup | Avec API Setup |
+|---|---|---|
+| Création user | UI Signup (lent, fragile) | `POST /api/v1/users/register` (300ms) |
+| Dépendance | Tests Login dépendent de Signup | Isolation totale |
+| Si Signup cassé | Login + Todo échouent | Login + Todo passent quand même |
+
+`QACartApiClient` utilise `java.net.http.HttpClient` (Java 17 built-in) — **zéro dépendance ajoutée**.
+
+---
+
+## Retry — Tests flaky
+
+Mécanisme automatique : chaque scénario échoué est relancé jusqu'à **2 fois**.
+
+```
+RetryAnalyzer   (IRetryAnalyzer)      → compteur par scénario, max 2 retries
+RetryTransformer (IAnnotationTransformer) → injecte RetryAnalyzer sur tous les @Test
+↓
+META-INF/services/org.testng.ITestNGListener → auto-discovery, pas de @Listeners sur le runner
+```
+
+- Scénario qui passe au 2e essai → badge **Retried** dans Allure, résultat = PASSED
+- Scénario qui échoue 3x → FAILED avec screenshot à chaque essai
+
+---
+
+## Allure — KPI auto-générés
+
+```
+AllureSuiteListener (ISuiteListener via META-INF/services)
+  ├── onStart()   → categories.json + copie history/ pour trend
+  └── onFinish()  → environment.properties avec KPIs calculés depuis ISuiteResult
+
+EnvironmentWriter → Pass.Rate, Fail.Rate, Quality.Gate, Duration, Smoke/Critical
+```
+
+Widgets alimentés automatiquement sans configuration manuelle :
+- **Environment** — 18 KPIs (Pass Rate, Gate, coverage, durée...)
+- **Categories** — Infrastructure Issues · Product Defects · Test Framework Errors
+- **Trend** — historique multi-runs
+
+---
+
 ## Notes techniques
 
 - **Chrome 149 + Selenium 4.12.1** : warning CDP ignoré (pas d'impact fonctionnel). `DriverService.stop()` absorbe le timeout CDP sur `quit()`.
 - **Headless** : utiliser `--headless` (ancien flag) et non `--headless=new` pour éviter le timeout CDP endpoint.
 - **QACart auth** : JWT stocké en état React in-memory. Un reload navigateur (`navigate().refresh()`) remet l'état à zéro → les scénarios "persist after refresh" ne sont pas testables sur cette app.
-- **Heroku cold start** : `assertTodoPresent` dispose d'une fenêtre de 60s pour absorber les démarrages à froid du dyno gratuit.
+- **Heroku cold start** : `assertTodoPresent` dispose d'une fenêtre de 60s. En CI, passer `-DtimeoutSec=30` (défaut 10s trop court depuis GitHub).
+- **SSL proxy d'entreprise** : `QACartApiClient` utilise un `SSLContext` trust-all (même raison que `git -c http.sslVerify=false`).
