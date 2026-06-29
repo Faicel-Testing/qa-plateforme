@@ -341,20 +341,32 @@ N appels indépendants au même LLM, vote majoritaire sur le champ clé (`verdic
 
 ## Suite de tests
 
-8 domaines fonctionnels couverts (16 fichiers `.feature`) :
+9 domaines fonctionnels couverts · 12 fichiers `.feature` · **35 scénarios** · 100% pass rate
 
-| ID | Feature | Positif | Négatif |
-|----|---------|---------|---------|
-| Id01 | Inscription (Signup) | ✅ | ✅ |
-| Id02 | Connexion (Login) | ✅ | — |
-| Id03 | Gestion Todo | ✅ | ✅ |
-| Id04 | Suppression Todo | ✅ | ✅ |
-| Id05 | Connexion invalide | — | ✅ |
-| Id06 | Mise à jour mot de passe | ✅ | — |
-| Id07 | Mise à jour email | ✅ | — |
-| Id08 | Suppression de compte | ✅ | — |
+| ID | Feature | Tags | Positif | Négatif |
+|----|---------|------|---------|---------|
+| Id01 | Inscription (Signup) | `@smoke @critical @regression` | ✅ | ✅ |
+| Id02 | Connexion (Login) | `@smoke @critical @regression` | ✅ | ✅ |
+| Id03 | Gestion Todo | `@smoke @regression` | ✅ | ✅ |
+| Id04 | Suppression Todo | `@regression` | ✅ | ✅ |
+| Id05 | Connexion invalide | `@negative @regression` | — | ✅ |
+| Id06 | Mise à jour mot de passe | `@profile @security` | ✅ | ✅ |
+| Id07 | Mise à jour email | `@profile @contact` | ✅ | ✅ |
+| Id08 | Suppression de compte | `@profile @security` | ✅ | ✅ |
+| **Id09** ✨ | **API Setup — Pattern Senior** | `@api-setup @smoke @critical @negative @regression` | ✅ | ✅ |
 
-**Page Object Model :** `BasePage` · `SignupPage` · `LoginPage` · `TodoPage`  
+### Répartition par tag
+
+| Tag | Scénarios | Périmètre |
+|-----|-----------|-----------|
+| `@smoke` | 10 | Flux critiques — signup, login, todo, api-setup |
+| `@critical` | 8 | Signup + Login + API Setup |
+| `@regression` | 29 | Toutes les features stables (hors @profile) |
+| `@negative` | 23 | Cas d'erreur et validations |
+| `@api-setup` | 3 | Pattern Senior — préconditions via REST API |
+| `@profile` | 6 | Password update · Email update · Account deletion |
+
+**Page Object Model :** `BasePage` · `SignupPage` · `LoginPage` · `TodoPage` · `ProfilePage`  
 **Navigateurs :** Chromium · Firefox · multi-browser en parallèle
 
 ---
@@ -496,6 +508,13 @@ npm test                           # Tous les tests (format progress)
 npm run test:retry                 # Avec retry automatique (--retry 1)
 npm run test:allure                # Tests + rapport Allure
 npm run test:allure:retry          # Tests + retry + rapport Allure
+
+# Par tag
+npx cucumber-js --tags "@regression and not @wip"   # Suite principale CI
+npx cucumber-js --tags "@smoke"                     # Smoke rapide
+npx cucumber-js --tags "@api-setup"                 # Pattern Senior uniquement
+npx cucumber-js --tags "@profile"                   # Profil (Id06/07/08)
+npx cucumber-js --tags "@critical"                  # Critiques uniquement
 ```
 
 ### Multi-navigateur
@@ -654,7 +673,9 @@ ui_playwright_bdd/
 │       └── pipeline-agent.js        Orchestrateur maître
 │
 ├── src/
-│   ├── features/                    Scénarios Gherkin (Id01–Id08)
+│   ├── api/                         Client HTTP pour les préconditions (API Setup pattern)
+│   │   └── QACartApiClient.ts       POST register/login — Playwright request, ignoreHTTPSErrors
+│   ├── features/                    Scénarios Gherkin (Id01–Id09) · 12 fichiers · 35 scénarios
 │   │   ├── Id01_SignupTest.feature
 │   │   ├── Id01_SignupNegativeTest.feature
 │   │   ├── Id02_LoginTest.feature
@@ -665,13 +686,15 @@ ui_playwright_bdd/
 │   │   ├── Id05_LoginNegativeTest.feature
 │   │   ├── Id06_PasswordUpdate.feature
 │   │   ├── Id07_EmailUpdate.feature
-│   │   └── Id08_AccountDeletion.feature
+│   │   ├── Id08_AccountDeletion.feature
+│   │   └── Id09_ApiSetupTest.feature  ← Pattern Senior @api-setup @regression
 │   ├── steps/                       Step definitions TypeScript (1 fichier / feature)
 │   ├── pages/                       Page Object Model
 │   │   ├── BasePage.ts
 │   │   ├── Id01_SignupPage.ts
 │   │   ├── Id02_LoginPage.ts
-│   │   └── Id03_TodoPage.ts
+│   │   ├── Id03_TodoPage.ts
+│   │   └── ProfilePage.ts           ← Password · Email · Account deletion
 │   ├── core/
 │   │   ├── world.ts                 CucumberJS World (Playwright context)
 │   │   └── driver.ts               Gestionnaire navigateur
@@ -717,6 +740,56 @@ ui_playwright_bdd/
 ├── cucumber.js                      Configuration CucumberJS
 ├── tsconfig.json                    Configuration TypeScript
 └── .env.example                     Template de configuration
+```
+
+---
+
+## API Setup Pattern (Senior)
+
+> Les préconditions de test ne passent **jamais** par l'UI signup.
+
+```typescript
+// Id09_ApiSetupSteps.ts
+Given('I have a user created via API', async function (this: CustomWorld) {
+  const user = randomUser();
+  const token = await new QACartApiClient().register(user); // POST /api/v1/users/register
+  this.user  = user;
+  this.apiToken = token;
+  saveUser(user);
+  // Token visible dans les logs CI → preuve de l'appel REST
+});
+```
+
+`QACartApiClient` utilise **`playwright/test request.newContext()`** (built-in, zéro dépendance ajoutée)  
+avec `ignoreHTTPSErrors: true` → bypass proxy corporate SSL.
+
+| | Sans API Setup | Avec API Setup |
+|---|---|---|
+| Création user | UI Signup (3-5s, fragile) | `POST /api/v1/users/register` (300ms) |
+| Dépendance | Tests Login dépendent de Signup | Isolation totale |
+| Si Signup cassé | Login + Todo échouent | Login + Todo passent quand même |
+
+---
+
+## CI/CD — GitHub Actions
+
+Workflow `.github/workflows/ci-playwright.yml` déclenché sur :
+- Push sur `main` (path : `ui_playwright_bdd/**`)
+- Pull Request vers `main`
+- Dispatch manuel
+- Planification hebdomadaire (dimanche 08h00 UTC)
+
+**Étapes :**
+1. Checkout + Node.js 20
+2. `npm ci` + `npx playwright install --with-deps chromium`
+3. `cucumber-js --tags "@regression and not @wip"` (Chrome headless, 20min timeout)
+4. Génération rapport Allure
+5. Upload artefacts (rapport + traces + screenshots)
+6. Job Summary avec pass rate calculé
+
+```bash
+# Variable secrète GitHub à configurer :
+# Settings → Secrets → Actions → GROQ_API_KEY
 ```
 
 ---
