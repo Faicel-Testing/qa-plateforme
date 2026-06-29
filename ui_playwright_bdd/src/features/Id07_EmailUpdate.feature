@@ -1,14 +1,17 @@
 @ui @id07 @profile @contact
-Feature: Mise à jour de l'email
+Feature: Email Update
 
-  Scenario: Id07_EmailUpdate - Modifier l'email avec succès
-    Etant donné que je suis connecté
-    Lorsque je suis sur la page Profil
-    Lorsque je modifie mon email avec une adresse valide
-    Alors un email de confirmation est envoyé à la nouvelle adresse
+  Background:
+    Given I have a user in fixture
+    And I open the login page
+    When I login using fixture user
+    Then I should be logged in
+    And I navigate to the profile page
 
-  Scenario: Id07_EmailUpdate - Modifier l'email avec échec
-    Etant donné que je suis connecté
-    Lorsque je suis sur la page Profil
-    Lorsque je modifie mon email avec une adresse déjà utilisée
-    Alors un message d'erreur s'affiche
+  Scenario: Id07_EmailUpdate - update email successfully
+    When I update my email with a valid new address
+    Then a success message should be displayed
+
+  Scenario: Id07_EmailUpdate - update email with already used address
+    When I update my email with an already registered address
+    Then an email error message should be displayed

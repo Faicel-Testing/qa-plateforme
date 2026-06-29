@@ -1,14 +1,17 @@
 @ui @id08 @profile @security
-Feature: Suppression du compte
+Feature: Account Deletion
 
-  Scenario: Id08_AccountDeletion - Supprimer le compte avec succès
-    Etant donné que je suis connecté
-    Lorsque je suis sur la page Profil
-    Lorsque je confirme la suppression de mon compte
-    Alors je suis redirigé vers la page d'accueil
+  Background:
+    Given I have a user in fixture
+    And I open the login page
+    When I login using fixture user
+    Then I should be logged in
+    And I navigate to the profile page
 
-  Scenario: Id08_AccountDeletion - Supprimer le compte avec échec
-    Etant donné que je suis connecté
-    Lorsque je suis sur la page Profil
-    Lorsque je ne confirme pas la suppression de mon compte
-    Alors la suppression est annulée
+  Scenario: Id08_AccountDeletion - delete account successfully
+    When I confirm account deletion
+    Then I should be redirected to the home page
+
+  Scenario: Id08_AccountDeletion - cancel account deletion
+    When I cancel account deletion
+    Then the deletion should be cancelled and I remain on the profile page

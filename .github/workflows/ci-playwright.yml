@@ -1,0 +1,95 @@
+name: CI — Playwright BDD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'ui_playwright_bdd/**'
+      - '.github/workflows/ci-playwright.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'ui_playwright_bdd/**'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 8 * * 0'
+
+jobs:
+  test:
+    name: Playwright BDD — Chromium headless
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui_playwright_bdd
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ui_playwright_bdd/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run @regression tests (headless)
+        env:
+          BASE_URL:      https://qacart-todo.herokuapp.com
+          TEST_HEADLESS: 'true'
+          BROWSER:       chromium
+          GROQ_API_KEY:  ${{ secrets.GROQ_API_KEY }}
+        run: |
+          npx cucumber-js \
+            --require-module ts-node/register \
+            --require 'src/core/world.ts' \
+            --require 'src/hooks/**/*.ts' \
+            --require 'src/steps/**/*.ts' \
+            --format progress \
+            --format allure-cucumberjs/reporter \
+            --format-options '{"resultsDir":"allure-results"}' \
+            --tags '@regression and not @wip'
+        timeout-minutes: 20
+
+      - name: Generate Allure report
+        if: always()
+        run: npx allure generate allure-results -o allure-report --clean
+
+      - name: Upload Allure report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-playwright-${{ github.run_number }}
+          path: ui_playwright_bdd/allure-report
+          retention-days: 15
+
+      - name: Upload test results (traces + screenshots)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-playwright-${{ github.run_number }}
+          path: ui_playwright_bdd/test-results
+          retention-days: 7
+
+      - name: Post result summary
+        if: always()
+        run: |
+          PASSED=$(find allure-results -name "*.json" | xargs grep -l '"status":"passed"' 2>/dev/null | wc -l || echo 0)
+          FAILED=$(find allure-results -name "*.json" | xargs grep -l '"status":"failed"' 2>/dev/null | wc -l || echo 0)
+          TOTAL=$((PASSED + FAILED))
+          echo "## Playwright BDD Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Total | $TOTAL |" >> $GITHUB_STEP_SUMMARY
+          echo "| Passed | $PASSED |" >> $GITHUB_STEP_SUMMARY
+          echo "| Failed | $FAILED |" >> $GITHUB_STEP_SUMMARY
+          if [ "$TOTAL" -gt 0 ]; then
+            RATE=$(( PASSED * 100 / TOTAL ))
+            echo "| Pass Rate | $RATE% |" >> $GITHUB_STEP_SUMMARY
+          fi

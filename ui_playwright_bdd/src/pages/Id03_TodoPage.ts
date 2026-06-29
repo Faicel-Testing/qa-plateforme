@@ -102,4 +102,9 @@ export class TodoPage extends BasePage {
     const item = this.todoItems.filter({ hasText: task }).first();
     await expect(item).toHaveClass(/completed|done|checked/i, { timeout: 10000 });
   }
+
+  async assertEmptyList(): Promise<void> {
+    await this.page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
+    await expect(this.todoItems).toHaveCount(0, { timeout: 8_000 });
+  }
 }

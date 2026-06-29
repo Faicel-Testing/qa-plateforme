@@ -21,6 +21,9 @@ export class CustomWorld extends World {
   traceName?: string;
   tracingEnabled: boolean = false;
   lastTodo?: string;
+  apiToken?: string;
+  newPassword?: string;
+  newEmail?: string;
   consoleLogs: string[] = [];
   pageErrors: string[] = [];
   failedRequests: string[] = [];
