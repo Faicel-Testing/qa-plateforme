@@ -44,14 +44,10 @@ export class CustomWorld extends World {
     const headless =
       (process.env.TEST_HEADLESS || 'false').toLowerCase() === 'true';
 
-    console.log('================ ENV DEBUG ================');
-    console.log(`TEST_BROWSER = ${process.env.TEST_BROWSER}`);
-    console.log(`BROWSER      = ${process.env.BROWSER}`);
-    console.log(`BASE_URL     = ${this.baseUrl}`);
-    console.log(`TEST_HEADLESS= ${process.env.TEST_HEADLESS}`);
-    console.log(`Selected browser = ${this.browserName}`);
-    console.log(`Headless         = ${headless}`);
-    console.log('===========================================');
+    // Debug one-liner — visible une seule fois au démarrage si DEBUG=true
+    if (process.env.DEBUG === 'true') {
+      console.log(`[world] browser=${this.browserName} headless=${headless} url=${this.baseUrl}`);
+    }
 
     switch (this.browserName) {
       case 'firefox':
