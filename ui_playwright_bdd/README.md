@@ -341,8 +341,7 @@ N appels indépendants au même LLM, vote majoritaire sur le champ clé (`verdic
 
 ## Suite de tests
 
-9 domaines fonctionnels couverts · 12 fichiers `.feature` · **35 scénarios**  
-`@regression` (29 scénarios, suite CI) : 100% pass · `@profile` (Id06/07/08, 6 scénarios) : sélecteurs `ProfilePage` à corriger (issue connue, hors CI)
+6 domaines fonctionnels couverts · 9 fichiers `.feature` · **29 scénarios** · 100% pass (`@regression`)
 
 | ID | Feature | Tags | Positif | Négatif |
 |----|---------|------|---------|---------|
@@ -351,10 +350,9 @@ N appels indépendants au même LLM, vote majoritaire sur le champ clé (`verdic
 | Id03 | Gestion Todo | `@smoke @regression` | ✅ | ✅ |
 | Id04 | Suppression Todo | `@regression` | ✅ | ✅ |
 | Id05 | Connexion invalide | `@negative @regression` | — | ✅ |
-| Id06 | Mise à jour mot de passe | `@profile @security` | ✅ | ✅ |
-| Id07 | Mise à jour email | `@profile @contact` | ✅ | ✅ |
-| Id08 | Suppression de compte | `@profile @security` | ✅ | ✅ |
 | **Id09** ✨ | **API Setup — Pattern Senior** | `@api-setup @smoke @critical @negative @regression` | ✅ | ✅ |
+
+> **Id06/07/08 (Password Update, Email Update, Account Deletion) retirés du framework** — `qacart-todo.herokuapp.com` n'expose aucune page `/profile` (SPA React sans cette route, confirmé par inspection DOM). Ces features avaient été générées depuis des user stories Jira spéculatives (SCRUM-18/19/20) jamais implémentées côté application.
 
 ### Répartition par tag
 
@@ -362,12 +360,11 @@ N appels indépendants au même LLM, vote majoritaire sur le champ clé (`verdic
 |-----|-----------|-----------|
 | `@smoke` | 10 | Flux critiques — signup, login, todo, api-setup |
 | `@critical` | 8 | Signup + Login + API Setup |
-| `@regression` | 29 | Toutes les features stables (hors @profile) |
+| `@regression` | 29 | Toutes les features stables |
 | `@negative` | 23 | Cas d'erreur et validations |
 | `@api-setup` | 3 | Pattern Senior — préconditions via REST API |
-| `@profile` | 6 | Password update · Email update · Account deletion |
 
-**Page Object Model :** `BasePage` · `SignupPage` · `LoginPage` · `TodoPage` · `ProfilePage`  
+**Page Object Model :** `BasePage` · `SignupPage` · `LoginPage` · `TodoPage`  
 **Navigateurs :** Chromium · Firefox · multi-browser en parallèle
 
 ### Exécution parallèle (`test:headless`)
@@ -528,7 +525,6 @@ npm run test:allure:retry          # Tests + retry + rapport Allure
 npx cucumber-js --tags "@regression and not @wip"   # Suite principale CI
 npx cucumber-js --tags "@smoke"                     # Smoke rapide
 npx cucumber-js --tags "@api-setup"                 # Pattern Senior uniquement
-npx cucumber-js --tags "@profile"                   # Profil (Id06/07/08)
 npx cucumber-js --tags "@critical"                  # Critiques uniquement
 ```
 
@@ -690,7 +686,7 @@ ui_playwright_bdd/
 ├── src/
 │   ├── api/                         Client HTTP pour les préconditions (API Setup pattern)
 │   │   └── QACartApiClient.ts       POST register/login — Playwright request, ignoreHTTPSErrors
-│   ├── features/                    Scénarios Gherkin (Id01–Id09) · 12 fichiers · 35 scénarios
+│   ├── features/                    Scénarios Gherkin (Id01–Id05, Id09) · 9 fichiers · 29 scénarios
 │   │   ├── Id01_SignupTest.feature
 │   │   ├── Id01_SignupNegativeTest.feature
 │   │   ├── Id02_LoginTest.feature
@@ -699,17 +695,13 @@ ui_playwright_bdd/
 │   │   ├── Id04_DeleteTodoTest.feature
 │   │   ├── Id04_DeleteTodoNegativeTest.feature
 │   │   ├── Id05_LoginNegativeTest.feature
-│   │   ├── Id06_PasswordUpdate.feature
-│   │   ├── Id07_EmailUpdate.feature
-│   │   ├── Id08_AccountDeletion.feature
 │   │   └── Id09_ApiSetupTest.feature  ← Pattern Senior @api-setup @regression
 │   ├── steps/                       Step definitions TypeScript (1 fichier / feature)
 │   ├── pages/                       Page Object Model
 │   │   ├── BasePage.ts
 │   │   ├── Id01_SignupPage.ts
 │   │   ├── Id02_LoginPage.ts
-│   │   ├── Id03_TodoPage.ts
-│   │   └── ProfilePage.ts           ← Password · Email · Account deletion
+│   │   └── Id03_TodoPage.ts
 │   ├── core/
 │   │   ├── world.ts                 CucumberJS World (Playwright context)
 │   │   └── driver.ts               Gestionnaire navigateur

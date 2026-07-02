@@ -64,15 +64,14 @@
 | Id03 | Gestion Todo | ✅ | ✅ 4 scénarios | `@todo` `@smoke` `@regression` |
 | Id04 | Suppression Todo | ✅ | ✅ 4 scénarios | `@todo` `@regression` |
 | Id05 | Connexion invalide | — | ✅ 7 scénarios | `@login` `@negative` `@regression` |
-| Id06 | Mise à jour mot de passe | ✅ | ✅ | `@profile` `@security` |
-| Id07 | Mise à jour email | ✅ | ✅ | `@profile` `@contact` |
-| Id08 | Suppression de compte | ✅ | ✅ | `@profile` `@security` |
+| Id09 | API Setup — Pattern Senior | ✅ | ✅ | `@api-setup` `@smoke` `@critical` `@negative` `@regression` |
+
+> Id06/07/08 (Password Update, Email Update, Account Deletion) retirés : `qacart-todo.herokuapp.com` n'expose aucune page `/profile` (SPA React sans cette route). User stories Jira spéculatives (SCRUM-18/19/20) jamais implémentées côté application.
 
 ### Bilan couverture
 
 ```
-32 scénarios  |  11 fichiers .feature  |  4 Page Objects
-Positifs : 16    Négatifs : 16    Ratio : 50 / 50
+29 scénarios  |  9 fichiers .feature  |  4 Page Objects
 ```
 
 ---
@@ -220,17 +219,6 @@ npm run agent:runner:flaky        # 3 runs par défaut
 
 ---
 
-### 4.6 Tests de profil / sécurité (`@profile` `@security`)
-
-**But :** valider les fonctionnalités de gestion de compte.
-
-**Scénarios :**
-- Mise à jour mot de passe (succès + échec)
-- Mise à jour email (succès + échec)
-- Suppression de compte (succès + échec)
-
----
-
 ## 5. Couverture fonctionnelle
 
 ### Matrice de couverture
@@ -241,9 +229,6 @@ npm run agent:runner:flaky        # 3 runs par défaut
 | Connexion | ✅ | ✅ 7 cas | Champs vides, mauvais mdp | Complète |
 | Création todo | ✅ | ✅ 4 cas | Vide, whitespace, 250+ chars | Partielle* |
 | Suppression todo | ✅ | ✅ 4 cas | Non-existant, déjà supprimé | Complète |
-| Mise à jour mdp | ✅ | ✅ | — | Partielle |
-| Mise à jour email | ✅ | ✅ | — | Partielle |
-| Suppression compte | ✅ | ✅ | — | Partielle |
 
 > \* Partielle : l'app ne valide pas whitespace ni limite de caractères (bugs connus)
 
@@ -254,7 +239,6 @@ npm run agent:runner:flaky        # 3 runs par défaut
 | Signup | ✅ | ✅ | — | ✅ | — | — |
 | Login | ✅ | ✅ | ✅ | — | — | — |
 | Todo | ✅ | ✅ | ✅ | ✅ | — | — |
-| Profil | ✅ | ✅ | — | — | ✅ | — |
 
 ---
 
@@ -270,14 +254,14 @@ const user = randomUser();  // email unique avec timestamp
 // → { firstName, lastName, email: `qa_${Date.now()}@test.com`, password }
 ```
 
-### Fixture partagée (pattern inter-scénarios)
+### Utilisateur créé via API (pattern inter-scénarios)
 
-Pour les scénarios login (Id02, Id05) qui nécessitent un compte existant :
+Pour les scénarios login (Id02, Id05) qui nécessitent un compte existant, l'utilisateur est créé via l'API (`QACartApiClient.register`) et scopé au `World` du scénario — aucun fichier partagé entre workers (parallel-safe) :
 
 ```typescript
-// Lecture du fichier fixture (créé si absent)
-const user = loadUser() ?? createAndSaveUser();
-// → src/fixtures/user.json (gitignore recommandé)
+const user = randomUser();
+const token = await new QACartApiClient().register(user);
+world.user = user;
 ```
 
 ### Données sensibles
@@ -288,7 +272,7 @@ const user = loadUser() ?? createAndSaveUser();
 
 ### Nettoyage
 
-Les comptes créés pendant les tests ne sont pas supprimés automatiquement (l'app ne fournit pas d'API de cleanup). La suppression passe par le scénario `Id08_AccountDeletion`.
+Les comptes créés pendant les tests ne sont pas supprimés automatiquement (l'app ne fournit ni API ni page de suppression de compte).
 
 ---
 
@@ -538,8 +522,8 @@ Scenario: Id01_SignupNegative - signup with missing email should fail
 ### Tags obligatoires
 
 Tout scénario doit avoir **au minimum** :
-- Un tag de domaine : `@signup` `@login` `@todo` `@profile`
-- Un tag d'ID : `@Id01` … `@Id08`
+- Un tag de domaine : `@signup` `@login` `@todo`
+- Un tag d'ID : `@Id01` … `@Id05`, `@api-setup` pour Id09
 - Un tag de type : `@smoke` ou `@regression` ou `@negative`
 - `@ui` pour tous les tests E2E
 
