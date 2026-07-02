@@ -341,7 +341,8 @@ N appels indépendants au même LLM, vote majoritaire sur le champ clé (`verdic
 
 ## Suite de tests
 
-9 domaines fonctionnels couverts · 12 fichiers `.feature` · **35 scénarios** · 100% pass rate
+9 domaines fonctionnels couverts · 12 fichiers `.feature` · **35 scénarios**  
+`@regression` (29 scénarios, suite CI) : 100% pass · `@profile` (Id06/07/08, 6 scénarios) : sélecteurs `ProfilePage` à corriger (issue connue, hors CI)
 
 | ID | Feature | Tags | Positif | Négatif |
 |----|---------|------|---------|---------|
