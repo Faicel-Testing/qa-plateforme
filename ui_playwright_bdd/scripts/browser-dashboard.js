@@ -34,8 +34,30 @@ function normalizeBrowser(value) {
   return browser;
 }
 
-function extractDataFromAttachments(result) {
-  const attachments = result.attachments || [];
+function collectAttachments(node, acc = []) {
+  if (!node) return acc;
+
+  if (Array.isArray(node.attachments)) {
+    acc.push(...node.attachments);
+  }
+
+  if (Array.isArray(node.steps)) {
+    for (const step of node.steps) {
+      collectAttachments(step, acc);
+    }
+  }
+
+  return acc;
+}
+
+function extractDataFromAttachments(result, containerAttachmentsByUuid) {
+  // allure-cucumberjs writes the Before-hook attachments (Browser, Attempts...) into a
+  // separate *-container.json (befores[].steps[].attachments), linked via children: [uuid].
+  // result.attachments is always empty; result.steps only holds the Gherkin steps' own attachments.
+  const attachments = [
+    ...collectAttachments(result),
+    ...(containerAttachmentsByUuid.get(result.uuid) || [])
+  ];
 
   let browser = 'unknown';
   let attempts = 1;
@@ -60,12 +82,29 @@ function extractDataFromAttachments(result) {
   return { browser, attempts };
 }
 
-function buildDashboard(results) {
+function buildContainerAttachmentsByUuid(containers) {
+  const map = new Map();
+
+  for (const container of containers) {
+    const attachments = [
+      ...(container.befores || []).flatMap((b) => collectAttachments(b)),
+      ...(container.afters || []).flatMap((a) => collectAttachments(a))
+    ];
+
+    for (const childUuid of container.children || []) {
+      map.set(childUuid, attachments);
+    }
+  }
+
+  return map;
+}
+
+function buildDashboard(results, containerAttachmentsByUuid) {
   const dashboard = {};
 
   for (const result of results) {
     const status = result.status || 'unknown';
-    const { browser, attempts } = extractDataFromAttachments(result);
+    const { browser, attempts } = extractDataFromAttachments(result, containerAttachmentsByUuid);
 
     if (!dashboard[browser]) {
       dashboard[browser] = {
@@ -173,12 +212,18 @@ function main() {
 
   const files = fs.readdirSync(RESULTS_DIR);
   const resultFiles = files.filter((f) => f.endsWith('-result.json'));
+  const containerFiles = files.filter((f) => f.endsWith('-container.json'));
 
   const results = resultFiles
     .map((f) => readJSON(path.join(RESULTS_DIR, f)))
     .filter(Boolean);
 
-  const dashboard = buildDashboard(results);
+  const containers = containerFiles
+    .map((f) => readJSON(path.join(RESULTS_DIR, f)))
+    .filter(Boolean);
+
+  const containerAttachmentsByUuid = buildContainerAttachmentsByUuid(containers);
+  const dashboard = buildDashboard(results, containerAttachmentsByUuid);
   const textReport = toText(dashboard);
 
   fs.writeFileSync(OUTPUT_JSON, JSON.stringify(dashboard, null, 2), 'utf-8');
