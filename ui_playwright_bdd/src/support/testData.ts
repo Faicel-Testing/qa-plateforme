@@ -34,7 +34,8 @@ const firstNames = ['John', 'Mark', 'Anne', 'Luca', 'Mia', 'Noah', 'Emma', 'Owen
 const lastNames = ['Doe', 'Kane', 'Benn', 'Reed', 'Tate', 'Ross', 'Lane', 'Wade'];
 
 export function randomUser(): TestUser {
-  const id = Date.now();
+  // Date.now() seul peut collisionner entre workers parallèles tombant sur la même ms
+  const id = `${Date.now()}${Math.floor(Math.random() * 1_000_000)}`;
   const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
   const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
 

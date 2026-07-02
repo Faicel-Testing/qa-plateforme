@@ -1,22 +1,18 @@
 import { When, Then } from '@cucumber/cucumber';
 import { CustomWorld } from '../core/world';
 import { LoginPage } from '../pages/Id02_LoginPage';
-import { SignupPage } from '../pages/Id01_SignupPage';
-import { loadUser, saveUser } from '../support/fixtureStore';
+import { QACartApiClient } from '../api/QACartApiClient';
 import { randomUser } from '../support/testData';
 
+// Créé via API (pas de cache disque partagé) — isolé par scénario, parallel-safe
 async function ensureValidUser(world: CustomWorld): Promise<void> {
-  let user = loadUser();
-
-  if (!user) {
-    user = randomUser();
-    const signup = new SignupPage(world.page);
-    await signup.open();
-    await signup.signup(user.firstName, user.lastName, user.email, user.password);
-    await signup.assertSignedUp();
-    saveUser(user);
+  if (world.user) {
+    return;
   }
 
+  const user = randomUser();
+  const api = new QACartApiClient();
+  world.apiToken = await api.register(user);
   world.user = user;
 }
 

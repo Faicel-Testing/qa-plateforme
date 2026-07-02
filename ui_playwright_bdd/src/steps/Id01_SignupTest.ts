@@ -2,7 +2,6 @@ import { Given, When, Then } from '@cucumber/cucumber';
 import { CustomWorld } from '../core/world';
 import { SignupPage } from '../pages/Id01_SignupPage';
 import { randomUser } from '../support/testData';
-import { saveUser } from '../support/fixtureStore';
 
 Given('I open the signup page', async function (this: CustomWorld) {
   const signup = new SignupPage(this.page);
@@ -29,11 +28,8 @@ Then('I should be logged in after signup', async function (this: CustomWorld) {
 });
 
 Then('I save the created user in fixture', async function (this: CustomWorld) {
-  const user = this.user;
-
-  if (!user) {
+  // Utilisateur déjà scopé au World (this.user) — plus de cache disque partagé (parallel-safe)
+  if (!this.user) {
     throw new Error('No user generated');
   }
-
-  saveUser(user as import('../support/testData').TestUser);
 });

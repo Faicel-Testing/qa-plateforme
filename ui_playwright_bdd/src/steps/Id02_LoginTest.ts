@@ -1,26 +1,19 @@
 import { Given, When, Then } from '@cucumber/cucumber';
 import { CustomWorld } from '../core/world';
-import { loadUser, saveUser } from '../support/fixtureStore';
 import { LoginPage } from '../pages/Id02_LoginPage';
-import { SignupPage } from '../pages/Id01_SignupPage';
+import { QACartApiClient } from '../api/QACartApiClient';
 import { randomUser } from '../support/testData';
 
+// Créé via API (pas de cache disque partagé) — isolé par scénario, parallel-safe
 async function ensureValidFixtureUser(world: CustomWorld): Promise<void> {
-  let user = loadUser();
-
-  if (user) {
-    world.user = user;
+  if (world.user) {
     return;
   }
 
   const newUser = randomUser();
+  const api = new QACartApiClient();
+  world.apiToken = await api.register(newUser);
   world.user = newUser;
-  const signup = new SignupPage(world.page);
-
-  await signup.open();
-  await signup.signup(newUser.firstName, newUser.lastName, newUser.email, newUser.password);
-  await signup.assertSignedUp();
-  saveUser(newUser);
 }
 
 Given('I have a user in fixture', async function (this: CustomWorld) {

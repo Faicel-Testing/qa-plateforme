@@ -15,15 +15,23 @@ module.exports = {
   default: base,
 
   // Profil headless — @regression uniquement, tags gérés ici (pas en CLI)
+  // parallel: chaque scénario a son propre Browser/World (voir src/core/world.ts) et
+  // ses fixtures sont créées via API par scénario (plus de cache disque partagé) → safe
+  // 2 workers : machine à 2 coeurs physiques / RAM limitée — 4 provoquait des crashs intermittents
+  // retry: 1 — qacart-todo.herokuapp.com (démo publique) timeout parfois sous charge concurrente
   headless: {
     ...base,
-    tags: '@regression and not @wip'
+    tags: '@regression and not @wip',
+    parallel: 2,
+    retry: 1
   },
 
   // Profil smoke
   smoke: {
     ...base,
-    tags: '@smoke'
+    tags: '@smoke',
+    parallel: 2,
+    retry: 1
   },
 
   // Profil API Setup

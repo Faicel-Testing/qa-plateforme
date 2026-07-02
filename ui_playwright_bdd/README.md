@@ -369,6 +369,20 @@ N appels indépendants au même LLM, vote majoritaire sur le champ clé (`verdic
 **Page Object Model :** `BasePage` · `SignupPage` · `LoginPage` · `TodoPage` · `ProfilePage`  
 **Navigateurs :** Chromium · Firefox · multi-browser en parallèle
 
+### Exécution parallèle (`test:headless`)
+
+Le profil `headless` (`@regression and not @wip`) tourne avec `parallel: 2` + `retry: 1` dans `cucumber.js`.  
+Chaque scénario a son propre `Browser`/`World` (`src/core/world.ts`) et crée son utilisateur via l'API (`QACartApiClient.register`) plutôt qu'un fichier de fixture partagé — aucune donnée mutable n'est partagée entre workers.
+
+| Paramètre | Valeur | Raison |
+|-----------|--------|--------|
+| `parallel` | 2 | Calé sur les cœurs physiques disponibles — au-delà, crashs intermittents observés |
+| `retry` | 1 | Absorbe les timeouts réseau ponctuels de l'app de démo publique (`qacart-todo.herokuapp.com`) |
+
+### Rapport Allure
+
+![Allure Report](docs/screenshots/allure-report.png)
+
 ---
 
 ## Analyse des coûts LLM
@@ -707,8 +721,7 @@ ui_playwright_bdd/
 │   │   └── user.json               Données de test
 │   ├── support/
 │   │   ├── selectors.ts            Sélecteurs CSS centralisés
-│   │   ├── testData.ts             Données de test TypeScript
-│   │   └── fixtureStore.ts
+│   │   └── testData.ts             Données de test TypeScript (randomUser)
 │   └── utils/
 │       ├── allure-executor.ts
 │       ├── execution-metrics.ts
@@ -755,7 +768,7 @@ Given('I have a user created via API', async function (this: CustomWorld) {
   const token = await new QACartApiClient().register(user); // POST /api/v1/users/register
   this.user  = user;
   this.apiToken = token;
-  saveUser(user);
+  // Utilisateur scopé au World (pas de fichier partagé) → parallel-safe
   // Token visible dans les logs CI → preuve de l'appel REST
 });
 ```

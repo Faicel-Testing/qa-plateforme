@@ -3,7 +3,6 @@ import { CustomWorld } from '../core/world';
 import { QACartApiClient } from '../api/QACartApiClient';
 import { TodoPage } from '../pages/Id03_TodoPage';
 import { randomUser } from '../support/testData';
-import { saveUser } from '../support/fixtureStore';
 
 Given('I have a user created via API', async function (this: CustomWorld) {
   const user = randomUser();
@@ -12,7 +11,6 @@ Given('I have a user created via API', async function (this: CustomWorld) {
 
   this.user = user;
   this.apiToken = token;
-  saveUser(user);
 
   // Proof of REST call visible in CI logs and Allure report
   console.log(`[API Setup] User created: ${user.email}`);
