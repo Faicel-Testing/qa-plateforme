@@ -381,6 +381,18 @@ Chaque scénario a son propre `Browser`/`World` (`src/core/world.ts`) et crée s
 
 ![Allure Report](docs/screenshots/allure-report.png)
 
+Le graphique **Trend** ne s'alimente pas tout seul : `allure generate` lit l'historique dans `allure-results/history/`, qui doit être recopié depuis le rapport précédent (`allure-report/history/`) **avant** de relancer les tests. C'est le rôle du script `pretest` :
+
+```bash
+node scripts/copy-allure-history.js   # allure-report/history/ → allure-results/history/ (avant les tests)
+npm run test:headless                 # génère les nouveaux résultats
+npm run allure:generate               # merge historique + nouveaux résultats → Trend à jour
+```
+
+Si `allure-results/` ou `allure-report/` est nettoyé manuellement (`clean`, `clean:results`) sans repasser par ce script, l'historique repart de zéro.
+
+**Traces Playwright (`trace.zip`)** : capturées uniquement quand un scénario est retenté (`attempts > 1` dans `src/hooks/hooks.ts`) — pas à chaque run, pour ne pas alourdir `allure-results/` inutilement sur une suite qui passe à 100%. Elles apparaissent en pièce jointe du test concerné dans Allure dès qu'un `retry` se déclenche.
+
 ---
 
 ## Analyse des coûts LLM
