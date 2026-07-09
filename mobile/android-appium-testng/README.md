@@ -1,150 +1,81 @@
-# QA-Plateforme 
-# Unified Quality Engineering Platform – Ready for Enterprise Delivery
-# QA Automation Architect – UI | API | Performance | CI/CD
+# Mobile — Appium + TestNG (Android)
 
-# Pourquoi cette plateforme existe
-Dans la majorité des projets, la qualité est :
-- Fragmentée (UI d’un côté, API ailleurs, perf jamais testée),
-- Tardive (tests à la fin),
-- Peu décisionnelle (rapports sans impact réel).
-  
----> QA-Plateforme apporte une réponse claire :
-une plateforme unique, automatisée, qui aide à décider si un produit peut être livré sans risque.
+> Framework de tests E2E mobile natif pour Android, avec agents IA pour le triage, l'analyse de flaky tests et la génération de rapports.
 
-# Valeur apportée au client
- - Réduction des incidents en production,
- - Accélération des mises en production,
- - Décisions Go / No-Go basées sur des tests objectifs,
- - Standardisation QA multi-équipes,
- - Intégration native dans le CI/CD existant.
-   
----> Résultat : moins de risques, plus de vitesse, plus de confiance.
+---
 
-# Approche Quality Engineering
-Cette plateforme n’est pas un projet de tests, mais une architecture QA industrialisable :
-  - Test Pyramid respectée
-  - Quality Gates explicites
-  - Automatisation orientée risque
-  - Observabilité via rapports exploitables
-  - Adaptable à tout domaine métier
+## Stack
 
-# Architecture globale
-1. CI/CD Pipeline (Github / Gitlab)
-2. A) UI Automation (Selenium / BDD / Parcours users)
-   B) API Tests (Pytest / Contracts)
-   C) Performance (K6 / Load, Stress)
-3. Quality Gates (Go / No-Go)
+- **Appium** (java-client) + Selenium BOM — pilotage natif Android
+- **TestNG 7.9** — orchestration, retry, listeners
+- **Java 17** + Maven
+- **Allure 2** — reporting
+- **Agents IA** : Python (Groq / Ollama fallback)
 
----> Une seule plateforme, plusieurs niveaux de validation, une décision finale claire.
+## Application testée
 
-# Périmètre fonctionnel
-# UI Automation
-- Sécurisation des parcours critiques
-- BDD (lisible métier)
-- Tags : @smoke, @regression
-# API Automation
-- Validation des flux backend
-- Contrats API
-- Tests rapides et stables
-# Performance
-- Détection des régressions de charge
-- Seuils métier (temps de réponse, throughput)
-- Anticipation des incidents en production
+**Sauce Labs "My Demo App"** — app Android open-source de démo e-commerce (`com.saucelabs.mydemoapp.android`), APK embarqué dans `src/test/resources/apps/my-demo-app.apk`.
 
-# Quality Gates
-  # Gate 1 – Smoke (bloquant)
-- Parcours critiques
-- Échec = No-Go immédiat
-   # Gate 2 – Regression
-- Couverture fonctionnelle étendue
-- Validation avant release
-   # Gate 3 – Performance
-- Temps de réponse
-- Seuils définis avec le client
-- Alerte proactive
-  
----> Aucune mise en production sans validation automatique.
+## Scope — 6 parcours E2E
 
-# Exécution simplifiée
-- Smoke UI
-- Regression UI
-- API tests
-- Performance tests
-- Full quality gate
+| Test | Parcours |
+|---|---|
+| `Test01_Login` | Connexion utilisateur |
+| `Test02_Catalog` | Navigation catalogue produits |
+| `Test03_ProductDetail` | Fiche produit |
+| `Test04_Cart` | Panier |
+| `Test05_Checkout` | Tunnel de paiement (adresse → paiement → confirmation) |
+| `Test06_Navigation` | Menu de navigation |
 
-# Intégration CI/CD
-La plateforme est conçue pour :
-- Pull Request → Smoke Tests
-- Merge → Regression
-- Nightly → Full Suite
-- Manuel → Par tag ou périmètre ciblé
+Parcours e-commerce complet du login jusqu'à la confirmation de commande.
 
----> La QA devient un acteur de la décision produit.
+## Exécution locale
 
-# Adaptée à plusieurs secteurs
-# E-commerce
-- Parcours achat
-- Paiement
-- Panier / commandes
-- Pics de charge (soldes, promos)
+Prérequis : Android SDK + émulateur (ou device réel) démarré, serveur Appium lancé.
 
-# Transport
-- Réservations
-- Billetterie
-- Disponibilité temps réel
-- Robustesse des API
+```bash
+appium --base-path /wd/hub --port 4723
 
-# Énergie
-- Portails clients
-- Relevés / facturation
-- Fiabilité des flux backend
+mvn clean test -Denv=qa -Dudid=<device-id> -Dsurefire.suiteXmlFiles=testng.xml
+```
 
-# Secteur public
-- Portails citoyens
-- Accessibilité
-- Robustesse et stabilité
+Configuration par environnement : `src/test/resources/config/{qa,staging}.properties`, surchargeable via `-Dkey=value` ou variables d'environnement.
 
-# Tech / SaaS
-- Releases fréquentes
-- Scalabilité
-- Sécurité des parcours clés
+## Retry automatique
 
----> Même architecture, périmètres adaptés.
+`RetryAnalyzer` / `RetryTransformer` / `RetryRules` — relance automatique des scénarios flaky (jusqu'à 2x) au niveau TestNG.
 
-# Auteur / Positionnement
-# Faicel Ghanem
-# QA Automation Architect – Freelance
+## Agents IA — `agents/`
 
-Spécialités :
-- Architecture QA
-- UI / API / Performance Automation
-- CI/CD & Quality Gates
-- Environnements complexes et multi-équipes
+| Agent | Rôle |
+|---|---|
+| `triage-agent.py` | Classification des échecs |
+| `rca-agent.py` | Root cause analysis |
+| `flaky-agent.py` | Détection des tests instables |
+| `release-advisor-agent.py` | Recommandation GO/NO-GO |
+| `kpi-agent.py` | Indicateurs qualité |
+| `spec-generator-agent.py` | Génération de specs de test |
+| `userstory-generator-agent.py` | Génération de user stories |
+| `notification-agent.py` | Notifications Slack/Teams |
+| `jira-ticket-agent.py` / `jira-project-agent.py` / `jira_fetcher_agent.py` | Intégration Jira |
 
-# À propos de ce repository
-Ce dépôt est une vitrine d’architecture QA.
-Les implémentations client réelles sont maintenues dans des repositories privés.
+Variables requises : voir `.env.example` (clé Groq, config Jira, webhooks Slack/Teams).
 
-        
-  
+## CI/CD
 
+`.github/workflows/ci-mobile.yml` :
+- **À chaque push/PR** : compilation Maven (validation rapide, sans device).
+- **Sur déclenchement manuel** (`workflow_dispatch`, `run_emulator=true`) : provisionne un émulateur Android (API 30, Pixel 5), démarre Appium, exécute la suite TestNG complète.
 
+L'exécution complète sur émulateur est volontairement manuelle plutôt qu'automatique sur chaque PR — un run Appium + émulateur prend plusieurs minutes, ce qui n'est pas adapté à une gate bloquante de PR.
 
+## Reporting
 
+```bash
+mvn allure:report
+mvn allure:serve
+```
 
+---
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Le reste de l'architecture (quality gates, secteurs couverts, positionnement) est décrit dans le [README racine](../../README.md).

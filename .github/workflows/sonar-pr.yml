@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ "main" ]
     paths:
-      - "ui/selenium-cucumber-testng/**"
+      - "ui_selenium_bdd/**"
 
 permissions:
   contents: read
@@ -26,7 +26,7 @@ jobs:
           cache: maven
 
       - name: Build
-        working-directory: ui/selenium-cucumber-testng
+        working-directory: ui_selenium_bdd
         run: mvn -B clean verify
 
       - name: Sonar Scan
@@ -35,5 +35,5 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectBaseDir=ui/selenium-cucumber-testng
+            -Dsonar.projectBaseDir=ui_selenium_bdd
             -Dsonar.qualitygate.wait=true

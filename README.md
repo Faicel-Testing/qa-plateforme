@@ -43,10 +43,10 @@ CI/CD Pipeline (GitHub Actions)
 
 | Framework | Stack | Tests | Agents IA | Rapport |
 |---|---|---|---|---|
-| [ui_playwright_bdd](ui_playwright_bdd/) | Playwright · CucumberJS · TypeScript | 89 BDD | 10 agents | [Allure live](https://faicel-testing.github.io/qa-plateforme/ui_playwright_bdd/) |
-| [api-pytest-framework](api-pytest-framework/) | pytest-bdd · Requests · Python | 51 BDD | 31 agents | [Allure live](https://faicel-testing.github.io/qa-plateforme/api-pytest-framework/) |
-| [ui_selenium_bdd](ui_selenium_bdd/) | Selenium · Cucumber · Java | BDD | — | — |
-| [mobile](mobile/) | Appium · TestNG · Java | Mobile E2E | agents Python | — |
+| [ui_playwright_bdd](ui_playwright_bdd/) | Playwright · CucumberJS · TypeScript | 29 BDD | 10 agents | [Allure live](https://faicel-testing.github.io/qa-plateforme/ui_playwright_bdd/) |
+| [api-pytest-framework](api-pytest-framework/) | pytest-bdd · Requests · Python | 51 BDD | 10 agents | [Allure live](https://faicel-testing.github.io/qa-plateforme/api-pytest-framework/) |
+| [ui_selenium_bdd](ui_selenium_bdd/) | Selenium · Cucumber · Java | 34 BDD | 10 agents | — |
+| [mobile](mobile/) | Appium · TestNG · Java | 6 E2E | 11 agents | — |
 
 ---
 
@@ -82,6 +82,8 @@ Même architecture, périmètres adaptés au domaine métier.
 
 **Faicel Ghanem** — QA Automation Architect · Freelance  
 Spécialités : Architecture QA · UI / API / Mobile Automation · CI/CD · Quality Gates · Agents IA
+
+📧 [faicel.ganem@gmail.com](mailto:faicel.ganem@gmail.com) · 💼 [LinkedIn](https://www.linkedin.com/in/ghanem-faicel-b40787a8/) · 🔗 [Malt](https://www.malt.fr/profile/faicelghanem)
 
 > Ce dépôt est une vitrine d'architecture QA.  
 > Les implémentations client réelles sont maintenues dans des repositories privés.

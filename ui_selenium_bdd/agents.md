@@ -1,7 +1,7 @@
 # Agents IA — ui_selenium_bdd
 
 Framework : **Selenium 4 + Cucumber 7 + TestNG 7.9 + Java 17 + Maven**  
-Application : **automationexercise.com** — 26 cas de test  
+Application : **QACart Todo** — qacart-todo.herokuapp.com — 34 scénarios (9 features)  
 Agents : **Python** (appellent Maven via subprocess, lisent les résultats Allure JSON)
 
 ---
@@ -16,7 +16,7 @@ pipeline-agent.py          ← Orchestrateur maître
 ├── quality-agent.py       ← KPI, gate, flaky, vérification cohérence
 ├── advisor-agent.py       ← Vote GO/NO-GO, prédiction, recommandations
 ├── reporting-agent.py     ← Allure report, dashboard HTML, Slack/Teams
-├── planning-agent.py      ← Catalogue 26 TCs, couverture, gaps, Jira
+├── planning-agent.py      ← Catalogue 34 scénarios, couverture, gaps, Jira
 ├── ci-agent.py            ← Git commit (sans .env), push SSL, PR, release
 └── observability-agent.py ← Traces, circuit breaker, coûts LLM, prompts
 ```
@@ -51,10 +51,10 @@ python agents/pipeline-agent.py full
 # Pipeline nightly (regression + rapport)
 python agents/pipeline-agent.py nightly
 
-# Générer feature + steps + page pour TC1 et TC2
+# Générer feature + steps + page pour Id01 et Id02
 python agents/codegen-agent.py full --tc 1 2
 
-# Voir les 26 TCs et leur statut d'automatisation
+# Voir les 34 scénarios et leur statut d'automatisation
 python agents/planning-agent.py tc
 
 # Triage automatique des échecs
@@ -85,17 +85,20 @@ python agents/observability-agent.py prompts list
 
 ---
 
-## 26 TCs — automationexercise.com
+## 34 scénarios — qacart-todo.herokuapp.com
 
-| Tag | TCs |
+Features : Id01 Signup (+ Negative) · Id02 Login · Id03 Todo (+ Negative) · Id04 DeleteTodo (+ Negative) · Id05 LoginNegative · Id09 ApiSetup
+
+| Tag | Scénarios |
 |---|---|
-| `@smoke` | TC1, TC2, TC8, TC9 |
-| `@critical` | TC12, TC14, TC15, TC16 |
-| `@auth` | TC1-TC5 |
-| `@cart` | TC11-TC13, TC17, TC20, TC22 |
-| `@order` | TC14-TC16, TC23, TC24 |
-| `@products` | TC8, TC9, TC18-TC21 |
-| `@negative` | TC3, TC5 |
+| `@smoke` | 10 (parcours critiques) |
+| `@critical` | 8 |
+| `@regression` | 18 (suite complète) |
+| `@negative` | 10 (cas d'erreur) |
+| `@signup` | 4 |
+| `@login` | 4 |
+| `@todo` | 8 |
+| `@api-setup` | 2 |
 
 ---
 

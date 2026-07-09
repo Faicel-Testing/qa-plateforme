@@ -7,8 +7,8 @@ Convention inspirée de `CLAUDE.md` (Anthropic) — lisible par tout agent LLM.
 
 ## Ce que fait ce framework
 
-Tests UI BDD (Playwright + Cucumber + TypeScript) pour l'application **SwagLabs**
-(saucedemo.com) — 89 scénarios Gherkin couvrant Login, Inventory, Cart, Checkout.
+Tests UI BDD (Playwright + Cucumber + TypeScript) pour l'application **QACart Todo**
+(qacart-todo.herokuapp.com) — 29 scénarios Gherkin couvrant Signup, Login, Todo, Delete Todo, API Setup.
 
 ---
 
@@ -164,9 +164,9 @@ await llm.chatSelfConsistent(messages, schema,   // Vote majoritaire N fois
 
 ## Application testée
 
-- **App** : SwagLabs — saucedemo.com
-- **Utilisateurs de test** : standard_user, problem_user, performance_glitch_user
-- **Features** : Login (US-001), Inventory (US-002), Cart (US-003), Checkout (US-004)
+- **App** : QACart Todo — qacart-todo.herokuapp.com
+- **Utilisateurs de test** : créés dynamiquement via API Setup (POST register), pas de compte statique
+- **Features** : Signup, Login, Todo, Delete Todo, API Setup (Id01, Id02, Id03, Id04, Id05, Id09)
 - **Projet Jira** : SCRUM
 
 ---
