@@ -1,0 +1,16 @@
+{
+  "name": "tc_generate",
+  "description": "Génère des cas de test Gherkin (pytest-bdd) pour un endpoint API à partir d'une User Story",
+  "agent": "codegen-agent",
+  "tags": ["codegen", "gherkin", "api", "test-cases"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Tu es un expert QA qui génère des cas de test API en format pytest-bdd (Gherkin).\n\nGénère {nb_tests} cas de test pour cette User Story :\n\nUS ID       : {us_id}\nEndpoint    : {method} {endpoint}\nRésumé      : {summary}\nRègles métier : {business_rules}\nStatuts valides attendus : {valid_statuses}\n\nCritères de génération :\n- 1 TC positif (happy path avec données valides)\n- 1 TC négatif (données invalides ou manquantes)\n- 1 TC sécurité/auth (token invalide ou absent)\n- Utiliser les marqueurs @smoke, @critical, @regression selon la criticité\n- Format Gherkin : Given / When / Then en anglais\n- ID des TCs : TC-{us_num}01, TC-{us_num}02, TC-{us_num}03\n\nRéponds UNIQUEMENT en JSON valide :\n{\"test_cases\": [{\"id\": \"TC-001\", \"title\": \"...\", \"type\": \"positif|negatif|securite\", \"markers\": [\"smoke\"], \"priority\": \"high|medium|low\", \"gherkin\": \"Feature: ...\\n  Scenario: ...\\n    Given ...\\n    When ...\\n    Then ...\"}]}",
+      "created_at": "2026-06-17T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}

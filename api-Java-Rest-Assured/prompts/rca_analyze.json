@@ -1,0 +1,16 @@
+{
+  "name": "rca_analyze",
+  "description": "Root Cause Analysis pour un échec de test API — identifie cause racine, chaîne de causalité et fix recommandé",
+  "agent": "bug-agent",
+  "tags": ["rca", "analysis", "api"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Tu es un expert en Root Cause Analysis pour les APIs REST.\n\nAnalyse la cause racine de cet échec de test :\n\nTest          : {test_name}\nEndpoint      : {method} {endpoint}\nStatut reçu   : {status_code} (attendu: {expected_status})\nErreur        : {error_message}\nRéponse body  : {response_body}\nHeaders       : {response_headers}\nPayload envoyé: {request_payload}\nContexte TC   : {tc_id} | {us_id}\n\nIdentifie :\n1. La cause racine précise (pas les symptômes)\n2. La chaîne de causalité (de la cause à l'échec)\n3. La couche affectée (API, test, config, infra)\n4. L'action corrective avec priorité\n\nRéponds UNIQUEMENT en JSON valide :\n{\"root_cause\": \"description précise\", \"cause_category\": \"assertion|network|auth|data|timeout|regression|schema\", \"chain\": [\"step 1\", \"step 2\", \"step 3\"], \"affected_layer\": \"api|test|config|infra\", \"fix_action\": \"description de la correction\", \"fix_priority\": \"immediate|short_term|long_term\", \"related_tcs\": []}",
+      "created_at": "2026-06-17T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}

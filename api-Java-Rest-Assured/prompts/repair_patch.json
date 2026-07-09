@@ -1,0 +1,16 @@
+{
+  "name": "repair_patch",
+  "description": "Analyse un échec de test API et propose un patch de code correctif (CoT → JSON structuré)",
+  "agent": "bug-agent",
+  "tags": ["repair", "patch", "autofix", "api"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Analyse cet échec de test API et propose un correctif :\n\nTest    : {test_name}\nTC      : {tc}\nMessage : {error_message}\nTrace   :\n{stack_trace}\n\nFichiers sources disponibles :\n{source_context}\n\nRaisonne étape par étape pour identifier la cause précise et proposer le code corrigé.\nSois conservateur : ne modifie que ce qui est strictement nécessaire.\nIdentifie le fichier exact à modifier (step definitions, test, feature ou config).",
+      "created_at": "2026-06-18T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}

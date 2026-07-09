@@ -1,0 +1,16 @@
+{
+  "name": "triage_classify",
+  "description": "Classifie un échec de test API en catégorie (real_bug, flaky, environment, config_error, test_bug)",
+  "agent": "bug-agent",
+  "tags": ["triage", "classification", "api"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Tu es un expert QA analysant les échecs de tests API REST.\n\nClassifie cet échec dans UNE des catégories suivantes :\n- real_bug      : le code de l'application est cassé (regression, bug serveur)\n- flaky         : le test est instable (timing, réseau, données aléatoires, race condition)\n- environment   : problème d'infrastructure ou de configuration serveur\n- config_error  : mauvaise configuration du test, des fixtures ou du payload\n- test_bug      : le test lui-même est mal écrit (assertion incorrecte, mauvais endpoint)\n\nTest en échec  : {test_name}\nEndpoint       : {endpoint}\nMéthode HTTP   : {method}\nStatut reçu    : {status_code} (attendu: {expected_status})\nMarqueurs      : {markers}\nErreur         : {error_message}\nStack trace    : {stack_trace}\n\nRéponds UNIQUEMENT en JSON valide sans markdown :\n{\"category\": \"real_bug|flaky|environment|config_error|test_bug\", \"confidence\": 0.0, \"reason\": \"explication en 1 phrase\", \"suggested_action\": \"action recommandée\"}\n\nExemple : {\"category\": \"real_bug\", \"confidence\": 0.92, \"reason\": \"Le statut 500 indique une régression serveur non liée au test\", \"suggested_action\": \"Créer un bug Jira priorité HIGH et notifier l'équipe backend\"}",
+      "created_at": "2026-06-17T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}
