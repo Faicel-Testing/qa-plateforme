@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.2](https://github.com/Faicel-Testing/qa-plateforme/compare/v1.6.1...v1.6.2) (2026-07-09)
+
+
+### Documentation
+
+* fix client-readiness gaps in portfolio README and module docs ([55cf938](https://github.com/Faicel-Testing/qa-plateforme/commit/55cf9388aa6260190788c34b68289a4f29bf571d))
+
 ## [1.1.4](https://github.com/Faicel-Testing/qa-plateforme/compare/v1.1.3...v1.1.4) (2026-02-27)
 
 
