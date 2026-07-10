@@ -1,0 +1,16 @@
+{
+  "name": "predict_gate",
+  "description": "Prédit si le quality gate va passer au prochain run Playwright en analysant les tendances",
+  "agent": "advisor-agent",
+  "tags": ["predict", "gate", "forecast", "playwright"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Analyse les tendances de cette suite de tests UI Playwright et prédis pour le PROCHAIN run :\n\nPass rate  : {pass_rate}% ({passed}/{total} tests)\nÉchecs     : {failures_count}\nBrisés     : {broken}\nHistorique : {history_summary}\n\nSur la base de ces données :\n1. Le quality gate va-t-il passer ? (seuils : Pass ≥ 90%, Fail ≤ 5%)\n2. Quels scénarios risquent d'échouer ?\n3. Quels tests risquent de devenir flaky ?\n4. Niveau de risque global ?\n5. Actions recommandées avant le prochain run ?\n\nRéponds avec un JSON structuré : gate_will_pass, confidence, likely_failures, likely_flaky, risk_level, reasoning, recommended_actions.",
+      "created_at": "2026-06-18T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}

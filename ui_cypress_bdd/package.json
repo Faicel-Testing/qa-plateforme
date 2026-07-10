@@ -1,0 +1,62 @@
+{
+  "name": "ui-cypress-bdd",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cypress + Cucumber (JavaScript) BDD framework — QACart Todo",
+  "scripts": {
+    "clean": "rimraf allure-results allure-report",
+    "clean:results": "rimraf allure-results",
+    "clean:report": "rimraf allure-report",
+    "test": "cypress run",
+    "test:smoke": "cypress run --env tags=@smoke",
+    "test:critical": "cypress run --env tags=@critical",
+    "test:regression": "cypress run --env tags=@regression",
+    "test:open": "cypress open",
+    "test:report": "npm run clean:results && npm run test && npm run allure:generate",
+    "allure:generate": "allure generate allure-results --clean -o allure-report",
+    "allure:open": "allure open allure-report",
+    "allure:report": "npm run allure:generate && npm run allure:open",
+    "agent:pipeline": "node scripts/agents/pipeline-agent.js",
+    "agent:pipeline:full": "node scripts/agents/pipeline-agent.js full",
+    "agent:pipeline:quick": "node scripts/agents/pipeline-agent.js quick",
+    "agent:pipeline:status": "node scripts/agents/pipeline-agent.js status",
+    "agent:runner": "node scripts/agents/runner-agent.js",
+    "agent:runner:smoke": "node scripts/agents/runner-agent.js smoke",
+    "agent:runner:critical": "node scripts/agents/runner-agent.js critical",
+    "agent:runner:flaky": "node scripts/agents/runner-agent.js flaky",
+    "agent:quality": "node scripts/agents/quality-agent.js",
+    "agent:quality:triage": "node scripts/agents/quality-agent.js triage",
+    "agent:quality:rca": "node scripts/agents/quality-agent.js rca",
+    "agent:bug": "node scripts/agents/bug-agent.js",
+    "agent:bug:analyze": "node scripts/agents/bug-agent.js analyze",
+    "agent:advisor": "node scripts/agents/advisor-agent.js",
+    "agent:advisor:advise": "node scripts/agents/advisor-agent.js advise",
+    "agent:advisor:gate": "node scripts/agents/advisor-agent.js gate",
+    "agent:reporting": "node scripts/agents/reporting-agent.js",
+    "agent:reporting:dashboard": "node scripts/agents/reporting-agent.js dashboard",
+    "agent:planning": "node scripts/agents/planning-agent.js",
+    "agent:planning:coverage": "node scripts/agents/planning-agent.js coverage analyze",
+    "agent:ci": "node scripts/agents/ci-agent.js",
+    "agent:observability": "node scripts/agents/observability-agent.js",
+    "agent:codegen": "node scripts/agents/codegen-agent.js"
+  },
+  "devDependencies": {
+    "@badeball/cypress-cucumber-preprocessor": "^26.0.0",
+    "@bahmutov/cypress-esbuild-preprocessor": "^2.2.2",
+    "allure-commandline": "^2.38.1",
+    "allure-cypress": "^3.6.0",
+    "cypress": "13.17.0",
+    "dotenv": "^17.4.1",
+    "groq-sdk": "^1.2.1",
+    "ollama": "^0.6.3",
+    "rimraf": "^6.1.3"
+  },
+  "cypress-cucumber-preprocessor": {
+    "stepDefinitions": [
+      "cypress/step_definitions/**/*.js"
+    ],
+    "messages": {
+      "enabled": false
+    }
+  }
+}

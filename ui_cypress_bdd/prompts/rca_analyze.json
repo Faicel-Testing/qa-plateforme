@@ -1,0 +1,16 @@
+{
+  "name": "rca_analyze",
+  "description": "Root Cause Analysis pour un échec de test UI Playwright — identifie cause racine et action corrective",
+  "agent": "bug-agent",
+  "tags": ["rca", "analysis", "ui", "playwright"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Tu es un expert en Root Cause Analysis pour les tests UI Playwright.\n\nAnalyse la cause racine de cet échec de test :\n\nTest          : {test_name}\nFeature       : {feature_file}\nScénario      : {scenario_name}\nStep en échec : {failed_step}\nErreur        : {error_message}\nSélecteur     : {selector}\nURL au moment : {current_url}\nPage Object   : {page_object}\nTitre de page : {page_title}\n\nIdentifie :\n1. La cause racine précise (pas le symptôme)\n2. La chaîne causale (contexte → action → échec)\n3. La couche affectée (UI, POM, step, config, CI)\n4. L'action corrective avec priorité\n\nRéponds UNIQUEMENT en JSON valide :\n{\"root_cause\": \"description précise\", \"cause_category\": \"selector|timing|navigation|assertion|data|environment|regression\", \"chain\": [\"step 1\", \"step 2\", \"step 3\"], \"affected_layer\": \"ui|pom|step|config|ci\", \"fix_action\": \"description de la correction\", \"fix_priority\": \"immediate|short_term|long_term\", \"related_scenarios\": []}",
+      "created_at": "2026-06-17T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}
