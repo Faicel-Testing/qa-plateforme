@@ -28,9 +28,9 @@ Dans la majorité des projets, la qualité est fragmentée (UI d'un côté, API 
 ```
 CI/CD Pipeline (GitHub Actions)
         │
-        ├── UI Automation   →  Playwright BDD (TypeScript)  ·  Selenium BDD (Java)
-        ├── API Tests        →  pytest-bdd (Python)
-        └── Mobile Tests     →  Appium + TestNG (Java)
+        ├── UI Automation   →  Playwright BDD (TypeScript)  ·  Selenium BDD (Java)  ·  Cypress BDD (JavaScript)
+        ├── API Tests        →  pytest-bdd (Python)  ·  RestAssured BDD (Java)
+        └── Mobile Tests     →  Appium + TestNG (Java) — hors CI continue, exécution manuelle
                 │
                 ▼
         Quality Gates — Go / No-Go
@@ -45,8 +45,10 @@ CI/CD Pipeline (GitHub Actions)
 |---|---|---|---|---|
 | [ui_playwright_bdd](ui_playwright_bdd/) | Playwright · CucumberJS · TypeScript | 29 BDD | 10 agents | [Allure live](https://faicel-testing.github.io/qa-plateforme/ui_playwright_bdd/) |
 | [api-pytest-framework](api-pytest-framework/) | pytest-bdd · Requests · Python | 51 BDD | 10 agents | [Allure live](https://faicel-testing.github.io/qa-plateforme/api-pytest-framework/) |
+| [api-Java-Rest-Assured](api-Java-Rest-Assured/) | RestAssured · Cucumber · Java | 51 BDD | 10 agents | — |
 | [ui_selenium_bdd](ui_selenium_bdd/) | Selenium · Cucumber · Java | 34 BDD | 10 agents | — |
-| [mobile](mobile/) | Appium · TestNG · Java | 6 E2E | 11 agents | — |
+| [ui_cypress_bdd](ui_cypress_bdd/) | Cypress · CucumberJS · JavaScript | 29 BDD | 10 agents | — |
+| [mobile](mobile/) | Appium · TestNG · Java | 6 E2E | 11 agents | CI désactivée (manuel) |
 
 ---
 
