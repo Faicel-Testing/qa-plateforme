@@ -1,0 +1,40 @@
+{
+  "name": "perf-k6-qacart",
+  "version": "1.0.0",
+  "private": true,
+  "description": "k6 (JavaScript) performance testing framework — QACart Todo auth API",
+  "scripts": {
+    "clean": "rimraf reports docs/kpi-dashboard.html docs/pipeline-dashboard.html docs/bug-report.html docs/advisor-report.html docs/observability-report.html",
+    "test:smoke": "k6 run --summary-export=reports/summary-smoke.json k6/scenarios/smoke.js",
+    "test:load": "k6 run --summary-export=reports/summary-load.json k6/scenarios/load.js",
+    "test:stress": "k6 run --summary-export=reports/summary-stress.json k6/scenarios/stress.js",
+    "agent:pipeline": "node scripts/agents/pipeline-agent.js",
+    "agent:pipeline:full": "node scripts/agents/pipeline-agent.js full",
+    "agent:pipeline:quick": "node scripts/agents/pipeline-agent.js quick",
+    "agent:pipeline:status": "node scripts/agents/pipeline-agent.js status",
+    "agent:runner": "node scripts/agents/runner-agent.js",
+    "agent:runner:run": "node scripts/agents/runner-agent.js run",
+    "agent:runner:smoke": "node scripts/agents/runner-agent.js smoke",
+    "agent:quality": "node scripts/agents/quality-agent.js",
+    "agent:quality:triage": "node scripts/agents/quality-agent.js triage",
+    "agent:quality:rca": "node scripts/agents/quality-agent.js rca",
+    "agent:bug": "node scripts/agents/bug-agent.js",
+    "agent:bug:analyze": "node scripts/agents/bug-agent.js analyze",
+    "agent:advisor": "node scripts/agents/advisor-agent.js",
+    "agent:advisor:advise": "node scripts/agents/advisor-agent.js advise",
+    "agent:advisor:gate": "node scripts/agents/advisor-agent.js gate",
+    "agent:reporting": "node scripts/agents/reporting-agent.js",
+    "agent:reporting:dashboard": "node scripts/agents/reporting-agent.js dashboard",
+    "agent:planning": "node scripts/agents/planning-agent.js",
+    "agent:planning:coverage": "node scripts/agents/planning-agent.js coverage analyze",
+    "agent:ci": "node scripts/agents/ci-agent.js",
+    "agent:observability": "node scripts/agents/observability-agent.js",
+    "agent:codegen": "node scripts/agents/codegen-agent.js"
+  },
+  "devDependencies": {
+    "dotenv": "^17.4.1",
+    "groq-sdk": "^1.2.1",
+    "ollama": "^0.6.3",
+    "rimraf": "^6.1.3"
+  }
+}

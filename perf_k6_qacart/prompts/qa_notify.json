@@ -1,0 +1,16 @@
+{
+  "name": "qa_notify",
+  "description": "Génère un message de notification Slack/Teams après un run k6 — concis, professionnel, actionnable",
+  "agent": "reporting-agent",
+  "tags": ["notification", "slack", "teams", "summary", "performance", "k6"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Tu es un expert en tests de performance k6 générant un résumé de run pour l'équipe.\n\nRésultats par scénario :\n{scenario_summary}\n\nSeuils dépassés : {failures_count} total ({blocking_count} bloquant(s) en smoke/load)\nVerdict : {verdict}\n\nConsignes de rédaction :\n- 3 à 4 lignes maximum\n- Ton professionnel, sans jargon k6 excessif\n- En français\n- Sans emojis excessifs (1 maximum)\n- Inclure : verdict GO/NO-GO, p95 le plus critique, action prioritaire si dépassement\n- Si GO : message positif + p95 des scénarios clés\n- Si NO-GO : action immédiate claire\n\nGénère uniquement le texte du message, sans balises JSON.",
+      "created_at": "2026-07-11T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}

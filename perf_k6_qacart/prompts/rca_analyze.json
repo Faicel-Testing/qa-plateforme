@@ -1,0 +1,16 @@
+{
+  "name": "rca_analyze",
+  "description": "Root Cause Analysis pour un dépassement de seuil k6 — identifie cause racine et action corrective",
+  "agent": "quality-agent",
+  "tags": ["rca", "analysis", "performance", "k6"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Tu es un expert en Root Cause Analysis pour les tests de performance k6.\n\nAnalyse la cause racine de ce dépassement de seuil :\n\nMétrique      : {test_name}\nSuite         : {suite}\nExpression seuil : {error_message}\nValeurs observées : {stack_trace}\n\nContexte : QACart Todo tourne sur un dyno Heroku gratuit partagé (démo publique utilisée par\nd'autres apprenants), pas une infra dédiée. Une dégradation en charge peut être un résultat\nLÉGITIME du backend, pas un bug du scénario k6.\n\nIdentifie :\n1. La cause racine précise (pas le symptôme)\n2. La couche affectée (backend, database, network, k6_config, infra)\n3. L'action corrective avec priorité\n\nRéponds UNIQUEMENT en JSON valide :\n{\"root_cause\": \"description précise\", \"cause_category\": \"latency|error_rate|throughput|config|infra_partagee|unknown\", \"affected_layer\": \"backend|database|network|k6_config|infra\", \"fix_action\": \"description de la correction\", \"fix_priority\": \"immediate|high|medium|low\", \"related_scenarios\": []}",
+      "created_at": "2026-07-11T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}

@@ -30,6 +30,7 @@ CI/CD Pipeline (GitHub Actions)
         │
         ├── UI Automation   →  Playwright BDD (TypeScript)  ·  Selenium BDD (Java)  ·  Cypress BDD (JavaScript)
         ├── API Tests        →  pytest-bdd (Python)  ·  RestAssured BDD (Java)
+        ├── Performance      →  k6 (JavaScript) — smoke / load / stress
         └── Mobile Tests     →  Appium + TestNG (Java) — hors CI continue, exécution manuelle
                 │
                 ▼
@@ -48,6 +49,7 @@ CI/CD Pipeline (GitHub Actions)
 | [api-Java-Rest-Assured](api-Java-Rest-Assured/) | RestAssured · Cucumber · Java | 51 BDD | 10 agents | — |
 | [ui_selenium_bdd](ui_selenium_bdd/) | Selenium · Cucumber · Java | 34 BDD | 10 agents | — |
 | [ui_cypress_bdd](ui_cypress_bdd/) | Cypress · CucumberJS · JavaScript | 29 BDD | 10 agents | — |
+| [perf_k6_qacart](perf_k6_qacart/) | k6 · JavaScript | 3 scénarios (smoke/load/stress) | 10 agents | — |
 | [mobile](mobile/) | Appium · TestNG · Java | 6 E2E | 11 agents | CI désactivée (manuel) |
 
 ---

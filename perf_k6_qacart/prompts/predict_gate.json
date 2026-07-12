@@ -1,0 +1,16 @@
+{
+  "name": "predict_gate",
+  "description": "Prédit si le quality gate perf va passer au prochain run k6 en analysant les tendances p95/error_rate",
+  "agent": "advisor-agent",
+  "tags": ["predict", "gate", "forecast", "performance", "k6"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Analyse les tendances de cette métrique k6 et prédis pour le PROCHAIN run :\n\nMétrique   : {test_name}\nOccurrences : {failures_count}\nHistorique  : {history_summary}\n\nSur la base de ces données :\n1. Le quality gate va-t-il passer au prochain run (smoke/load sans dépassement) ?\n2. Quels scénarios risquent de dépasser leur seuil ?\n3. La dégradation est-elle progressive (tendance) ou ponctuelle ?\n4. Niveau de risque global ?\n5. Actions recommandées avant le prochain run ?\n\nRéponds avec un JSON structuré : gate_will_pass, confidence, likely_breaches, trend, risk_level, reasoning, recommended_actions.",
+      "created_at": "2026-07-11T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}

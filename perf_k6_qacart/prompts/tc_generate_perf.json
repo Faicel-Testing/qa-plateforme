@@ -1,0 +1,16 @@
+{
+  "name": "tc_generate_perf",
+  "description": "Génère un scénario k6 (JavaScript) pour une User Story de performance sur QACart Todo",
+  "agent": "codegen-agent",
+  "tags": ["codegen", "k6", "performance", "javascript"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Tu es un expert k6 qui génère des scénarios de performance JavaScript.\n\nGénère un scénario k6 pour cette User Story :\n\nUS ID       : {us_id}\nRésumé      : {summary}\nDescription : {description}\n\nContraintes strictes :\n- import { randomUser } from '../lib/testData.js';\n- import les fonctions nécessaires depuis '../lib/api.js' (registerUser, loginUser, loginWrongPassword, getHomepage)\n- 'export const options' avec stages OU vus/iterations, ET un bloc 'thresholds' réaliste (p95, error rate)\n- QACart Todo est une démo publique partagée (dyno Heroku gratuit) : VUs modestes (≤20), jamais de rupture volontaire\n- 'export default function () { ... }' — style k6 natif, pas d'async/await inutile\n- Commentaire en tête expliquant l'objectif du scénario\n\nRéponds UNIQUEMENT avec le JavaScript complet (pas de markdown).",
+      "created_at": "2026-07-11T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+node_modules/
+.env
+reports/
+docs/kpi-dashboard.html
+docs/pipeline-dashboard.html
+docs/bug-report.html
+docs/advisor-report.html
+docs/observability-report.html
+docs/rca-report.json
+docs/baseline.json
+logs/
+memory/

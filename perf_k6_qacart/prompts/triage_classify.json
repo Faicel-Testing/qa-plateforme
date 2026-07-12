@@ -1,0 +1,16 @@
+{
+  "name": "triage_classify",
+  "description": "Classifie un seuil k6 dépassé en catégorie (backend_degradation, test_config_too_aggressive, network_flakiness, env_shared_demo)",
+  "agent": "quality-agent",
+  "tags": ["triage", "classification", "performance", "k6"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Tu es un expert en tests de performance k6 analysant un dépassement de seuil.\n\nClassifie ce dépassement dans UNE des catégories suivantes :\n- backend_degradation         : le backend réel est plus lent sous charge (latence/erreurs qui augmentent avec la concurrence)\n- test_config_too_aggressive  : le seuil ou la charge du scénario est mal calibré pour le contexte testé\n- network_flakiness           : variance réseau/latence ponctuelle, non représentative\n- env_shared_demo             : dégradation due à l'infra partagée (démo publique, dyno gratuit, pas d'environnement dédié)\n\nScénario       : {test_name}\nMétrique       : {status}\nExpression seuil : {error_message}\nValeur observée : {stack_trace}\nHistorique     : {context}\n\nRéponds UNIQUEMENT en JSON valide sans markdown :\n{\"category\": \"backend_degradation|test_config_too_aggressive|network_flakiness|env_shared_demo\", \"confidence\": 0.0, \"reason\": \"explication en 1 phrase\", \"suggested_action\": \"action recommandée\"}",
+      "created_at": "2026-07-11T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}

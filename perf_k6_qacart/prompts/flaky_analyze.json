@@ -1,0 +1,16 @@
+{
+  "name": "flaky_analyze",
+  "description": "Analyse la variance de latence/erreur entre runs k6 successifs et propose des actions de stabilisation",
+  "agent": "quality-agent",
+  "tags": ["variance", "stability", "analysis", "performance", "k6"],
+  "current_version": "1.0.0",
+  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "history": [
+    {
+      "version": "1.0.0",
+      "content": "Ces métriques k6 varient fortement d'un run à l'autre (p95/error_rate instables) :\n{flaky_list}\n\nEn 3 points concis, explique :\n1. Les causes probables (charge réseau ambiante, cold start du dyno, contention CPU/DB partagée, variance du trafic tiers sur une démo publique...)\n2. Les patterns communs entre les scénarios affectés\n3. Les actions de stabilisation recommandées (plus d'itérations pour lisser p95, isolation d'environnement, fenêtre de mesure plus longue...)",
+      "created_at": "2026-07-11T00:00:00Z",
+      "note": "Version initiale"
+    }
+  ]
+}
