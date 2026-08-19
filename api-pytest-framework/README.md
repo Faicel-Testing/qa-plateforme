@@ -115,6 +115,15 @@ python agents/quality-agent.py kpi
 # Rapport Allure
 python agents/reporting-agent.py publish
 
+# Ouverture du rapport Allure (génère si besoin + sert en local — évite le blocage "Loading..." de file://)
+python agents/reporting-agent.py serve
+
+# Triage des bugs (rapport HTML généré par bug-agent.py report)
+start docs\bug-report.html
+
+# Tests Smoke + Critical (verdict GO/NO-GO production)
+python agents/runner-agent.py gono-go
+
 # Agentic bug loop
 python agents/bug-agent.py loop
 
