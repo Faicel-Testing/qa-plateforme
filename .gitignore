@@ -18,6 +18,10 @@ tmp_*.ts
 hs_err_pid*.log
 replay_pid*.log
 
+# Secrets — never commit
+**/.env
+!**/.env.example
+
 # Internal tooling config
 .mcp.json
 

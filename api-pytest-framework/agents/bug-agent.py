@@ -50,6 +50,17 @@ HARD_CAP         = 20
 
 # ── Schémas Structured Output ──────────────────────────────────────────────
 
+TRIAGE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "category":            {"type": "string", "enum": ["real_bug", "flaky", "env_issue", "false_positive"]},
+        "confidence":          {"type": "number"},
+        "reasoning":           {"type": "string"},
+        "needs_human_review":  {"type": "boolean"},
+    },
+    "required": ["category", "confidence", "reasoning", "needs_human_review"]
+}
+
 RCA_SCHEMA = {
     "type": "object",
     "properties": {
@@ -166,20 +177,18 @@ def classify_failure(failure: dict) -> dict:
         error_message=failure['message'] or 'aucun message',
         stack_trace=(failure['trace'] or 'aucune trace')[:200],
     )}]
-    raw = llm.chat_confident(messages)
-    _ps.record_usage("triage_classify", confidence=float(raw.get("confidence", 0.5)))
-    response_text = str(raw.get("response", "")).lower()
-    category = "unknown"
-    for cat in ("real_bug", "flaky", "env_issue", "false_positive"):
-        if cat in response_text:
-            category = cat
-            break
+    raw = llm.chat_structured(messages, TRIAGE_SCHEMA)
+    confidence = float(raw.get("confidence", 0.5)) if isinstance(raw.get("confidence"), (int, float)) else 0.5
+    _ps.record_usage("triage_classify", confidence=confidence)
+    category = str(raw.get("category", "unknown")).strip().lower()
+    if category not in ("real_bug", "flaky", "env_issue", "false_positive"):
+        category = "unknown"
     return {
         **failure,
         "category":           category,
-        "confidence":         float(raw.get("confidence", 0.5)),
+        "confidence":         confidence,
         "reasoning":          raw.get("reasoning", ""),
-        "needs_human_review": raw.get("needs_human_review", True),
+        "needs_human_review": bool(raw.get("needs_human_review", confidence < CONFIDENCE_THRESHOLD)),
     }
 
 
@@ -259,7 +268,7 @@ def print_rca(r: dict, show_cot: bool = False):
     cat_color  = CATEGORY_COLORS.get(r.get("cause_category", "unknown"), Y)
     prio_color = PRIORITY_COLORS.get(r.get("fix_priority", "medium"), Y)
     print(f"\n  {W}{'─'*54}{E}")
-    print(f"  {W}{r.get('tc','?'):>8}{E}  {r['name'][:50]}")
+    print(f"  {W}{(r.get('tc') or '?'):>8}{E}  {r['name'][:50]}")
     print(f"  Categorie : {cat_color}{W}{r.get('cause_category','?'):<12}{E}  Couche : {r.get('affected_layer','?')}")
     print(f"  Priorite  : {prio_color}{W}{r.get('fix_priority','?'):<10}{E}")
     chain = r.get("chain", [])
@@ -466,7 +475,7 @@ def cmd_report():
         prio  = r.get("fix_priority", "medium")
         chain_html = " → ".join(r.get("chain", []))
         rca_rows += (f"<tr>"
-                     f"<td style='font-family:monospace'>{r.get('tc','—')}</td>"
+                     f"<td style='font-family:monospace'>{r.get('tc') or '—'}</td>"
                      f"<td style='font-size:12px'>{r['name'][:50]}</td>"
                      f"<td><span style='background:{CAT_COLORS_HTML.get(cat,'#95a5a6')};color:#fff;"
                      f"padding:2px 7px;border-radius:3px;font-size:11px'>{cat}</span></td>"

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><title>Observability Report</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>body{font-family:sans-serif;background:#0f172a;color:#e2e8f0;padding:24px}
+h1{color:#7c3aed}h2{color:#94a3b8;font-size:1rem;margin-top:24px}
+.card{background:#1e293b;border-radius:8px;padding:16px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.metric{background:#1e293b;border-radius:8px;padding:16px;text-align:center}
+.metric .val{font-size:1.8rem;font-weight:700;color:#7c3aed}
+.metric .lbl{font-size:.75rem;color:#64748b;margin-top:4px}
+.ok{color:#4ade80}.warn{color:#fbbf24}.err{color:#f87171}
+table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #1e293b;font-size:.85rem}
+th{color:#64748b;text-align:left}</style></head>
+<body>
+<h1>🔭 Observability Report</h1>
+<p style="color:#64748b">Généré le 19/08/2026 23:47:27</p>
+<div class="grid">
+  <div class="metric"><div class="val">13</div><div class="lbl">Appels LLM</div></div>
+  <div class="metric"><div class="val ok">0</div><div class="lbl">Erreurs</div></div>
+  <div class="metric"><div class="val">9113ms</div><div class="lbl">Durée moy.</div></div>
+  <div class="metric"><div class="val"><span class="ok">CLOSED</span></div><div class="lbl">Circuit Breaker</div></div>
+  <div class="metric"><div class="val">0</div><div class="lbl">Cache LLM</div></div>
+</div>
+<div class="card"><h2>Appels LLM récents (20 derniers)</h2>
+<table><tr><th>Date</th><th>Agent</th><th>Fonction</th><th>Durée</th><th>Statut</th></tr>
+<tr>
+  <td>21:44:45</td><td>advisor-agent</td><td>adviseSelfConsistent</td>
+  <td class="warn">5844ms</td>
+  <td class="ok">OK</td>
+</tr><tr>
+  <td>21:44:08</td><td>advisor-agent</td><td>gateStructured</td>
+  <td class="ok">1542ms</td>
+  <td class="ok">OK</td>
+</tr><tr>
+  <td>21:42:28</td><td>advisor-agent</td><td>adviseSelfConsistent</td>
+  <td class="warn">3509ms</td>
+  <td class="ok">OK</td>
+</tr><tr>
+  <td>21:38:54</td><td>quality-agent</td><td>verifyAdversarial</td>
+  <td class="err">72522ms</td>
+  <td class="ok">OK</td>
+</tr><tr>
+  <td>17:35:53</td><td>ci-agent</td><td>releaseNotes</td>
+  <td class="ok">1807ms</td>
+  <td class="ok">OK</td>
+</tr><tr>
+  <td>17:31:30</td><td>ci-agent</td><td>gitCommit</td>
+  <td class="ok">961ms</td>
+  <td class="ok">OK</td>
+</tr><tr>
+  <td>16:01:57</td><td>quality-agent</td><td>rcaChatCot</td>
+  <td class="err">11149ms</td>
+  <td class="ok">OK</td>
+</tr><tr>
+  <td>16:01:46</td><td>quality-agent</td><td>rcaChatCot</td>
+  <td class="warn">3444ms</td>
+  <td class="ok">OK</td>
+</tr><tr>
+  <td>16:01:43</td><td>quality-agent</td><td>rcaChatCot</td>
+  <td class="warn">3198ms</td>
+  <td class="ok">OK</td>
+</tr><tr>
+  <td>16:01:39</td><td>quality-agent</td><td>rcaChatCot</td>
+  <td class="warn">3504ms</td>
+  <td class="ok">OK</td>
+</tr><tr>
+  <td>16:01:36</td><td>quality-agent</td><td>rcaChatCot</td>
+  <td class="warn">3563ms</td>
+  <td class="ok">OK</td>
+</tr><tr>
+  <td>16:01:32</td><td>quality-agent</td><td>rcaChatCot</td>
+  <td class="warn">3586ms</td>
+  <td class="ok">OK</td>
+</tr><tr>
+  <td>16:01:29</td><td>quality-agent</td><td>rcaChatCot</td>
+  <td class="warn">3845ms</td>
+  <td class="ok">OK</td>
+</tr>
+</table></div>
+<div class="card"><h2>Prompts versionnés (8)</h2>
+<table><tr><th>Nom</th><th>Version</th><th>Appels</th><th>Description</th></tr>
+<tr><td>flaky_analyze</td><td>v1.0.0</td><td>0</td><td style="color:#94a3b8">Analyse les patterns de flakiness UI Playwright et</td></tr><tr><td>predict_gate</td><td>v1.0.0</td><td>0</td><td style="color:#94a3b8">Prédit si le quality gate va passer au prochain ru</td></tr><tr><td>qa_notify</td><td>v1.0.0</td><td>0</td><td style="color:#94a3b8">Génère un message de notification Slack/Teams aprè</td></tr><tr><td>rca_analyze</td><td>v1.0.0</td><td>0</td><td style="color:#94a3b8">Root Cause Analysis pour un échec de test UI Playw</td></tr><tr><td>release_vote</td><td>v1.0.0</td><td>2</td><td style="color:#94a3b8">Vote GO/NO-GO pour une décision de release UI — ut</td></tr><tr><td>repair_patch</td><td>v1.0.0</td><td>0</td><td style="color:#94a3b8">Analyse un échec de test Playwright et propose un </td></tr><tr><td>tc_generate_ui</td><td>v1.0.0</td><td>0</td><td style="color:#94a3b8">Génère des scénarios Gherkin Playwright/Cucumber p</td></tr><tr><td>triage_classify</td><td>v1.0.0</td><td>0</td><td style="color:#94a3b8">Classifie un échec de test UI Playwright en catégo</td></tr>
+</table></div>
+</body></html>

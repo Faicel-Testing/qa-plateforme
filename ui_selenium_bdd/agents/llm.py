@@ -27,7 +27,7 @@ load_dotenv()
 
 GROQ_API_KEY  = os.getenv("GROQ_API_KEY")
 GROQ_BASE_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL    = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_MODEL    = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL    = os.getenv("OLLAMA_MODEL", "llama3")
@@ -103,13 +103,15 @@ def chat_structured(messages: list[dict], schema: dict, model: str = None) -> di
         )
     }
     for attempt in range(1, MAX_RETRIES + 1):
-        raw = chat([struct_instruction] + messages, model=model, temperature=0.0)
+        raw = _resilient_call([struct_instruction] + messages, model=model,
+                              temperature=0.0, fn_name="chat_structured")
         parsed = _extract_json(raw)
         if parsed is not None:
             return parsed
         if attempt < MAX_RETRIES:
             time.sleep(1)
-    raise ValueError(f"LLM n'a pas retourné un JSON valide après {MAX_RETRIES} tentatives.\nRéponse : {raw[:200]}")
+    # Fallback structuré minimal plutôt que lever une exception
+    return {"error": "llm_unavailable", "message": "Analyse manuelle requise"}
 
 
 # ── Confidence Scoring ─────────────────────────────────────────────────────

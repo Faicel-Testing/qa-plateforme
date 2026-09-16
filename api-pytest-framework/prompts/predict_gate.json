@@ -2,9 +2,18 @@
   "name": "predict_gate",
   "description": "Prédit si le quality gate va passer au prochain run en analysant les tendances du run actuel",
   "agent": "advisor-agent",
-  "tags": ["predict", "gate", "forecast", "api"],
+  "tags": [
+    "predict",
+    "gate",
+    "forecast",
+    "api"
+  ],
   "current_version": "1.0.0",
-  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "metrics": {
+    "calls": 2,
+    "avg_confidence": 0.75,
+    "last_used": "2026-08-19T20:44:58Z"
+  },
   "history": [
     {
       "version": "1.0.0",

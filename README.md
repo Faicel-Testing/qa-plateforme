@@ -44,12 +44,12 @@ CI/CD Pipeline (GitHub Actions)
 
 | Framework | Stack | Tests | Agents IA | Rapport |
 |---|---|---|---|---|
-| [ui_playwright_bdd](ui_playwright_bdd/) | Playwright · CucumberJS · TypeScript | 29 BDD | 10 agents | [Allure live](https://faicel-testing.github.io/qa-plateforme/ui_playwright_bdd/) |
-| [api-pytest-framework](api-pytest-framework/) | pytest-bdd · Requests · Python | 51 BDD | 10 agents | [Allure live](https://faicel-testing.github.io/qa-plateforme/api-pytest-framework/) |
-| [api-Java-Rest-Assured](api-Java-Rest-Assured/) | RestAssured · Cucumber · Java | 51 BDD | 10 agents | — |
-| [ui_selenium_bdd](ui_selenium_bdd/) | Selenium · Cucumber · Java | 34 BDD | 10 agents | — |
-| [ui_cypress_bdd](ui_cypress_bdd/) | Cypress · CucumberJS · JavaScript | 29 BDD | 10 agents | — |
-| [perf_k6_qacart](perf_k6_qacart/) | k6 · JavaScript | 3 scénarios (smoke/load/stress) | 10 agents | — |
+| [ui_playwright_bdd](ui_playwright_bdd/) | Playwright · CucumberJS · TypeScript | 29 BDD | 10 agents | Rapport CI (Allure, interne) |
+| [api-pytest-framework](api-pytest-framework/) | pytest-bdd · Requests · Python | 51 BDD | 10 agents | Rapport CI (Allure, interne) |
+| [api-Java-Rest-Assured](api-Java-Rest-Assured/) | RestAssured · Cucumber · Java | 51 BDD | 10 agents | [Allure live](https://faicel-testing.github.io/qa-plateforme/api-Java-Rest-Assured/) |
+| [ui_selenium_bdd](ui_selenium_bdd/) | Selenium · Cucumber · Java | 34 BDD | 10 agents | Rapport CI (Allure, interne) |
+| [ui_cypress_bdd](ui_cypress_bdd/) | Cypress · CucumberJS · JavaScript | 29 BDD | 10 agents | Rapport CI (Allure, interne) |
+| [perf_k6_qacart](perf_k6_qacart/) | k6 · JavaScript | 3 scénarios (smoke/load/stress) | 10 agents | [Dashboards live](https://faicel-testing.github.io/qa-plateforme/perf_k6_qacart/) |
 | [mobile](mobile/) | Appium · TestNG · Java | 6 E2E | 11 agents | CI désactivée (manuel) |
 
 ---

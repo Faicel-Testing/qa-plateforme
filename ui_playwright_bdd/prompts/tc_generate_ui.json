@@ -1,16 +1,33 @@
 {
   "name": "tc_generate_ui",
-  "description": "Génère des scénarios Gherkin Playwright/Cucumber pour une User Story UI (SwagLabs)",
+  "description": "Génère un fichier .feature Gherkin français pour une User Story UI, depuis Jira",
   "agent": "codegen-agent",
-  "tags": ["codegen", "gherkin", "ui", "playwright", "cucumber"],
-  "current_version": "1.0.0",
-  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "tags": [
+    "codegen",
+    "gherkin",
+    "ui",
+    "playwright",
+    "cucumber"
+  ],
+  "_status": "RÉÉCRIT (v2.0.0), CÂBLÉ ET VALIDÉ le 2026-08-24 — remplace les prompts en dur dupliqués et incohérents (3-5 vs minimum 5 scénarios) de cmdSpec()/cmdGherkin() dans codegen-agent.js par ce template unique versionné. Testé en isolation avec une story Jira simulée (Jira non configuré en local) : .feature français généré correctement, 6 scénarios, tags @scrum-42 @regression corrects. Point à vérifier séparément : le prompt demande des steps 'en français' et le LLM a traduit jusqu'aux mots-clés Gherkin (Étant donné/Quand/Alors), alors que les .feature existants du repo (ex. Id03_TodoTest.feature) utilisent Given/When/Then en anglais — à clarifier si on veut une convention uniforme.",
+  "current_version": "2.0.0",
+  "metrics": {
+    "calls": 1,
+    "avg_confidence": null,
+    "last_used": "2026-08-24T17:40:45Z"
+  },
   "history": [
     {
       "version": "1.0.0",
       "content": "Tu es un expert QA qui génère des scénarios UI Gherkin pour Playwright/Cucumber.\n\nGénère {nb_tests} scénarios pour cette User Story :\n\nUS ID       : {us_id}\nPage UI     : {page_name}\nRésumé      : {summary}\nURL         : {url}\nActions clés: {key_actions}\nRègles UI   : {ui_rules}\n\nCritères de génération :\n- 1 scénario positif (happy path — utilisateur standard)\n- 1 scénario négatif (données invalides, champ vide, erreur attendue)\n- 1 scénario edge case (comportement limite ou utilisateur problématique)\n- Utiliser les marqueurs @smoke, @critical, @regression selon criticité\n- Format Gherkin : Given / When / Then / And en anglais\n- Les steps doivent correspondre aux Page Object Methods existants\n- Utiliser 'standard_user' pour les tests positifs, 'locked_out_user' pour les négatifs si besoin\n\nRéponds UNIQUEMENT en JSON valide :\n{\"scenarios\": [{\"id\": \"TC-UI-001\", \"title\": \"...\", \"type\": \"positif|negatif|edge_case\", \"markers\": [\"smoke\"], \"priority\": \"high|medium|low\", \"gherkin\": \"Feature: ...\\n  @smoke\\n  Scenario: ...\\n    Given ...\\n    When ...\\n    Then ...\"}]}",
       "created_at": "2026-06-17T00:00:00Z",
       "note": "Version initiale"
+    },
+    {
+      "version": "2.0.0",
+      "content": "Tu es un expert QA BDD. Génère un fichier .feature Gherkin complet et professionnel pour cette User Story.\n\nClé Jira     : {us_key}\nTitre        : {us_title}\nDescription  : {us_description}\nStatut       : {us_status}\n\nExigences :\n- Feature avec description claire\n- Background avec préconditions si nécessaire\n- Minimum 5 Scenarios : 2 positifs, 2 négatifs, 1 cas limite\n- Tags : @{us_key_lower} @regression\n- Steps en français, style BDD (Given/When/Then)\n\nRéponds UNIQUEMENT avec le contenu .feature brut (pas de bloc markdown, pas de JSON).",
+      "created_at": "2026-08-24T17:37:54Z",
+      "note": "Fix 2026-08-24 : contenu précédent en anglais, format SwagLabs (standard_user/locked_out_user), demandait un JSON {scenarios:[...]} — incompatible avec codegen-agent.js qui génère du Gherkin français en texte brut. Nouveau contenu aligné sur les prompts réellement utilisés par cmdSpec()/cmdGherkin() (unifiés en un seul template au passage — ils étaient dupliqués avec une légère incohérence : 3-5 scénarios vs minimum 5)."
     }
   ]
 }

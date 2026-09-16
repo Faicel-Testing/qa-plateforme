@@ -11,7 +11,7 @@
 #   python agents/reporting-agent.py publish    → génère + notifie (pipeline complet)
 # ============================================================
 
-import sys, os, json, glob, subprocess, re, time, webbrowser, http.server, threading, requests
+import sys, os, json, glob, subprocess, re, time, shutil, webbrowser, http.server, threading, requests
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -27,7 +27,7 @@ W = "\033[1m";  E = "\033[0m"
 
 SLACK_WEBHOOK  = os.getenv("SLACK_WEBHOOK_URL", "")
 TEAMS_WEBHOOK  = os.getenv("TEAMS_WEBHOOK_URL", "")
-ALLURE_CMD     = os.getenv("ALLURE_CMD", "allure")
+ALLURE_CMD     = shutil.which(os.getenv("ALLURE_CMD", "allure")) or os.getenv("ALLURE_CMD", "allure")
 DEFAULT_PORT   = 8080
 
 
@@ -78,6 +78,10 @@ def cmd_generate() -> bool:
 
     result_count = len(glob.glob(os.path.join(RESULTS_DIR, "*-result.json")))
     print(f"  {result_count} resultats Allure trouves")
+
+    kpi_script = os.path.join(os.path.dirname(__file__), "quality-agent.py")
+    subprocess.run([sys.executable, kpi_script, "kpi", "env"], cwd=FRAMEWORK,
+                   capture_output=True, text=True, encoding="utf-8", errors="replace")
 
     if not allure_available():
         print(f"{Y}  [WARN] Allure CLI introuvable. Rapport non genere.{E}")

@@ -19,9 +19,18 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const fs   = require('fs');
 const path = require('path');
-const llm  = require('./llm');
-const jira = require('./jira-fetcher');
-const tracer = require('./shared/tracer');
+const llm         = require('./llm');
+const jira        = require('./jira-fetcher');
+const tracer      = require('./shared/tracer');
+const promptStore = require('./shared/prompt-store');
+
+function fmt(template, vars) {
+  let result = template;
+  for (const [k, v] of Object.entries(vars)) {
+    result = result.split('{' + k + '}').join(String(v ?? '?'));
+  }
+  return result;
+}
 
 const FRAMEWORK    = path.join(__dirname, '..', '..');
 const FEATURES_DIR = path.join(FRAMEWORK, 'src', 'features');
@@ -57,25 +66,22 @@ async function cmdSpec() {
     console.log(`  ${B}[${story.key}]${E} ${story.summary.slice(0, 55)}`);
     const span = new tracer.Span('chatSpec', story.summary, llm.MODEL).begin();
     try {
-      const prompt = `Tu es un expert QA BDD. Génère un fichier .feature Gherkin complet pour cette User Story.
-
-Clé Jira  : ${story.key}
-Titre      : ${story.summary}
-Description: ${story.description || 'Non fournie'}
-Statut     : ${story.status}
-
-Exigences:
-- Feature avec description claire
-- Background si nécessaire
-- 3 à 5 Scenarios: positif, négatif, limite
-- Tags: @${story.key.toLowerCase()} @regression
-- Steps en français, style BDD (Given/When/Then)
-
-Réponds UNIQUEMENT avec le contenu .feature (pas de bloc markdown).`;
+      const _tpl = promptStore.get('tc_generate_ui') ||
+        'Tu es un expert QA BDD. Génère un fichier .feature Gherkin complet pour cette User Story.\n\n' +
+        'Clé Jira  : {us_key}\nTitre      : {us_title}\nDescription: {us_description}\nStatut     : {us_status}\n\n' +
+        'Exigences:\n- Feature avec description claire\n- Background si nécessaire\n' +
+        '- Minimum 5 Scenarios: 2 positifs, 2 négatifs, 1 limite\n- Tags: @{us_key_lower} @regression\n' +
+        '- Steps en français, style BDD (Given/When/Then)\n\nRéponds UNIQUEMENT avec le contenu .feature (pas de bloc markdown).';
+      const prompt = fmt(_tpl, {
+        us_key: story.key, us_title: story.summary,
+        us_description: story.description || 'Non fournie', us_status: story.status,
+        us_key_lower: story.key.toLowerCase(),
+      });
 
       const resp    = await llm.chat([{ role: 'user', content: prompt }]);
       const content = (resp.message.content || '').replace(/```[a-z]*\n?/g, '').trim();
       span.response = content; span.end(true);
+      promptStore.recordUsage('tc_generate_ui');
 
       const filepath = path.join(FEATURES_DIR, `${story.key.toLowerCase()}.feature`);
       if (DRY_RUN) {
@@ -210,25 +216,24 @@ async function cmdGherkin(usKey) {
   }
   console.log(`  ${C}${story.key} — ${story.summary}${E}\n`);
 
-  const prompt = `Génère un fichier .feature Gherkin BDD complet et professionnel.
-
-${story.key} — ${story.summary}
-${story.description ? `Description: ${story.description}` : ''}
-
-Exigences:
-- Feature descriptif
-- Background avec préconditions
-- Minimum 5 Scenarios: 2 positifs, 2 négatifs, 1 limite
-- Tags: @${story.key.toLowerCase()} @regression
-- Steps en français
-
-Réponds uniquement avec le contenu .feature.`;
+  const _tpl = promptStore.get('tc_generate_ui') ||
+    'Génère un fichier .feature Gherkin BDD complet et professionnel.\n\n' +
+    '{us_key} — {us_title}\nDescription: {us_description}\n\n' +
+    'Exigences:\n- Feature descriptif\n- Background avec préconditions\n' +
+    '- Minimum 5 Scenarios: 2 positifs, 2 négatifs, 1 limite\n- Tags: @{us_key_lower} @regression\n' +
+    '- Steps en français\n\nRéponds uniquement avec le contenu .feature.';
+  const prompt = fmt(_tpl, {
+    us_key: story.key, us_title: story.summary,
+    us_description: story.description || 'Non fournie', us_status: story.status,
+    us_key_lower: story.key.toLowerCase(),
+  });
 
   const span = new tracer.Span('chatGherkin', prompt, llm.MODEL).begin();
   try {
     const resp    = await llm.chat([{ role: 'user', content: prompt }]);
     const content = (resp.message.content || '').replace(/```[a-z]*\n?/g, '').trim();
     span.response = content; span.end(true);
+    promptStore.recordUsage('tc_generate_ui');
 
     console.log(content);
     if (!DRY_RUN) {

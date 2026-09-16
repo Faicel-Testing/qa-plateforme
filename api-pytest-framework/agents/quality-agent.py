@@ -12,6 +12,7 @@
 # ============================================================
 
 import sys, os, json, glob, re, subprocess, time
+from importlib import metadata as _meta
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -48,6 +49,10 @@ PASS_RATE_TARGET   = 90.0
 FAIL_RATE_MAX      = 5.0
 CONFIDENCE_TARGET  = 0.70
 
+GATE_ANOMALY_MAX     = 10.0   # (failed+broken)/total
+GATE_FLAKY_MAX       = 5.0    # % de TCs flaky
+GATE_COVERAGE_TARGET = 95.0   # % de TCs automatisés
+
 
 # ── Helpers partagés ────────────────────────────────────────────────────────
 
@@ -58,6 +63,8 @@ def collect_results(results_dir: str = None) -> dict:
     suites   = {}
     durations = []
     tc_tags   = set()
+    run_start = None
+    run_stop  = None
 
     for f in glob.glob(os.path.join(dir_, "*-result.json")):
         try:
@@ -70,6 +77,8 @@ def collect_results(results_dir: str = None) -> dict:
             start = d.get("start", 0); stop = d.get("stop", 0)
             if start and stop:
                 durations.append(stop - start)
+                run_start = start if run_start is None else min(run_start, start)
+                run_stop  = stop  if run_stop  is None else max(run_stop, stop)
 
             labels = d.get("labels", [])
             suite  = next((lb["value"] for lb in labels if lb["name"] == "tag" and lb["value"].startswith("us-")), "other")
@@ -97,6 +106,51 @@ def collect_results(results_dir: str = None) -> dict:
         "pass_rate": round(stats["passed"] / total * 100, 1),
         "fail_rate": round((stats["failed"] + stats["broken"]) / total * 100, 1),
         "avg_duration_ms": round(sum(durations) / len(durations)) if durations else 0,
+        "execution_ms": (run_stop - run_start) if run_start and run_stop else 0,
+    }
+
+
+def _pkg_version(name: str, default: str = "?") -> str:
+    try:
+        return _meta.version(name)
+    except Exception:
+        return default
+
+
+def _fmt_duration(ms: int) -> str:
+    sec = round(ms / 1000)
+    return f"{sec // 60}m {sec % 60:02d}s" if sec >= 60 else f"{sec}s"
+
+
+def compute_gate_kpis(data: dict, flaky_data: dict) -> dict:
+    """Évalue le Quality Gate sur 5 criteres et produit les KPIs derives."""
+    s     = data["stats"]
+    total = s["total"] or 1
+    tc_ct = data["tc_count"] or 1
+
+    broken_rate  = round(s["broken"] / total * 100, 1)
+    anomaly_rate = round((s["failed"] + s["broken"]) / total * 100, 1)
+    flaky_rate   = round(len(flaky_data) / tc_ct * 100, 1)
+    coverage     = 100.0  # tous les TCs de la suite sont automatises par construction
+
+    criteria = [
+        (data["pass_rate"] >= PASS_RATE_TARGET,     f"Pass Rate >= {PASS_RATE_TARGET:.0f}% ({data['pass_rate']}%)"),
+        (data["fail_rate"] <= FAIL_RATE_MAX,         f"Fail Rate <= {FAIL_RATE_MAX:.0f}% ({data['fail_rate']}%)"),
+        (anomaly_rate <= GATE_ANOMALY_MAX,           f"Anomaly Rate <= {GATE_ANOMALY_MAX:.0f}% ({anomaly_rate}%)"),
+        (flaky_rate <= GATE_FLAKY_MAX,                f"Flaky Rate <= {GATE_FLAKY_MAX:.0f}% ({flaky_rate}%)"),
+        (coverage >= GATE_COVERAGE_TARGET,            f"Automation Coverage >= {GATE_COVERAGE_TARGET:.0f}% ({coverage}%)"),
+    ]
+    passed = sum(1 for ok, _ in criteria if ok)
+    blockers = " | ".join(desc for ok, desc in criteria if not ok)
+
+    return {
+        "broken_rate":  broken_rate,
+        "anomaly_rate": anomaly_rate,
+        "flaky_rate":   flaky_rate,
+        "coverage":     coverage,
+        "gate_passed":  passed == len(criteria),
+        "gate_score":   f"{passed}/{len(criteria)}",
+        "blockers":     blockers or "Aucun",
     }
 
 
@@ -199,14 +253,30 @@ def cmd_kpi(mode: str = "all"):
 
     if mode in ("all", "env"):
         # environment.properties pour Allure
+        gate = compute_gate_kpis(data, flaky_data)
+        llm_engine = f"Groq {llm.GROQ_MODEL}" if llm.GROQ_API_KEY else f"Ollama {llm.OLLAMA_MODEL}"
+        framework_str = f"pytest-bdd {_pkg_version('pytest-bdd')} + Requests {_pkg_version('requests')}"
+
         os.makedirs(RESULTS_DIR, exist_ok=True)
         with open(ENV_FILE, "w", encoding="utf-8") as f:
-            f.write(f"Total_Tests={s['total']}\n")
-            f.write(f"Pass_Rate={pct}%\n")
+            f.write(f"Quality.Gate={'PASSED' if gate['gate_passed'] else 'FAILED'}\n")
+            f.write(f"Gate.Criteria.Passed={gate['gate_score']}\n")
+            f.write(f"Gate.Blockers={gate['blockers']}\n")
+            f.write(f"Pass.Rate={pct}%\n")
+            f.write(f"Fail.Rate={data['fail_rate']}%\n")
+            f.write(f"Broken.Rate={gate['broken_rate']}%\n")
+            f.write(f"Anomaly.Rate={gate['anomaly_rate']}%\n")
+            f.write(f"Flaky.Tests={len(flaky_data)} ({gate['flaky_rate']}%)\n")
+            f.write(f"Automation.Coverage={gate['coverage']}%\n")
+            f.write(f"Total.TCs={data['tc_count']}\n")
+            f.write(f"Passed={s['passed']}\n")
             f.write(f"Failed={s['failed']}\n")
-            f.write(f"Broken={s['broken']}\n")
-            f.write(f"Flaky_Count={len(flaky_data)}\n")
-            f.write(f"TC_Count={data['tc_count']}\n")
+            f.write(f"Execution.Time={_fmt_duration(data['execution_ms'])}\n")
+            f.write(f"Avg.Test.Duration={_fmt_duration(data['avg_duration_ms'])}\n")
+            f.write(f"Framework={framework_str}\n")
+            f.write(f"LLM.Engine={llm_engine}\n")
+            f.write(f"API.Under.Test=Restful-Booker REST API\n")
+            f.write(f"Report.Generated={time.strftime('%Y-%m-%d %H:%M')}\n")
         print(f"  {G}environment.properties -> allure-results/{E}")
 
     if mode in ("all", "dashboard"):

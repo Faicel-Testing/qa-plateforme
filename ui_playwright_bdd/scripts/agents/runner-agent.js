@@ -20,9 +20,18 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const fs     = require('fs');
 const path   = require('path');
 const { spawnSync } = require('child_process');
-const llm    = require('./llm');
-const tracer = require('./shared/tracer');
-const memory = require('./shared/memory-store');
+const llm         = require('./llm');
+const tracer      = require('./shared/tracer');
+const memory      = require('./shared/memory-store');
+const promptStore = require('./shared/prompt-store');
+
+function fmt(template, vars) {
+  let result = template;
+  for (const [k, v] of Object.entries(vars)) {
+    result = result.split('{' + k + '}').join(String(v ?? '?'));
+  }
+  return result;
+}
 
 const FRAMEWORK    = path.join(__dirname, '..', '..');
 const RESULTS_DIR  = path.join(FRAMEWORK, 'allure-results');
@@ -172,8 +181,33 @@ async function cmdFlaky() {
     console.log(`  ${icon}  ${t.name.slice(0,55).padEnd(55)} ${Math.round(t.flakiness*100)}% (${t.fails}/${t.runs})`);
   }
 
+  // Analyse qualitative LLM des causes — uniquement s'il y a des tests flaky à expliquer
+  let analysis = null;
+  if (flaky.length) {
+    const span = new tracer.Span('flakyAnalyze', JSON.stringify(flaky), llm.MODEL).begin();
+    try {
+      const _tpl = promptStore.get('flaky_analyze') ||
+        'Ces tests UI Playwright sont flaky (passent parfois, échouent parfois) :\n{flaky_list}\n\n' +
+        'En 3 points concis, explique :\n' +
+        '1. Les causes probables (timing animations, lazy loading, sélecteurs fragiles, état partagé...)\n' +
+        '2. Les patterns communs entre les scénarios affectés\n' +
+        '3. Les actions de stabilisation recommandées (waitFor, locators robustes, isolation d\'état...)';
+      const flakyList = flaky.map(t => `- ${t.name} : ${Math.round(t.flakiness*100)}% d'échec (${t.fails}/${t.runs} runs)`).join('\n');
+      const prompt = fmt(_tpl, { flaky_list: flakyList });
+
+      const resp = await llm.chat([{ role: 'user', content: prompt }]);
+      analysis = resp.message.content || '';
+      span.response = analysis; span.end(true);
+      promptStore.recordUsage('flaky_analyze');
+      console.log(`\n  ${B}Analyse IA des causes :${E}\n  ${analysis.split('\n').join('\n  ')}`);
+    } catch (e) {
+      span.error = e.message; span.end(false);
+      console.error(`  ${R}✗ Analyse flaky : ${e.message}${E}`);
+    }
+  }
+
   if (!DRY_RUN) {
-    fs.writeFileSync(path.join(DOCS_DIR, 'flaky-report.json'), JSON.stringify({ ts: new Date().toISOString(), runs: RUNS_ARG, flaky, critical }, null, 2), 'utf8');
+    fs.writeFileSync(path.join(DOCS_DIR, 'flaky-report.json'), JSON.stringify({ ts: new Date().toISOString(), runs: RUNS_ARG, flaky, critical, analysis }, null, 2), 'utf8');
     console.log(`\n  ${G}✓ docs/flaky-report.json${E}`);
   }
 

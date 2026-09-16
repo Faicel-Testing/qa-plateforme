@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Bug Agent — Triage & RCA</title>
+<style>
+  body{font-family:Arial,sans-serif;background:#f5f5f5;color:#333;margin:0;padding:20px}
+  h1{color:#2c3e50} h2{color:#34495e;margin-top:30px}
+  .stat{display:inline-block;background:#fff;border-radius:8px;padding:15px 25px;margin:8px;
+         box-shadow:0 2px 6px rgba(0,0,0,.1);text-align:center}
+  .stat-val{font-size:28px;font-weight:bold}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;
+         box-shadow:0 2px 8px rgba(0,0,0,.1);margin-top:15px}
+  th{background:#2c3e50;color:#fff;padding:10px;text-align:left;font-size:13px}
+  td{padding:9px 10px;border-bottom:1px solid #ecf0f1;vertical-align:middle}
+  tr:hover{background:#f8f9fa}
+</style>
+</head>
+<body>
+<h1>Bug Agent — Triage & RCA</h1>
+<div>
+  <div class="stat"><div class="stat-val" style="color:#e74c3c">3</div>Echecs analysés</div>
+  <div class="stat"><div class="stat-val" style="color:#e67e22">95%</div>Confiance moyenne</div>
+  <div class="stat"><div class="stat-val" style="color:#e74c3c">3</div>Révisions humaines</div>
+  <div class="stat"><div class="stat-val" style="color:#e74c3c">3</div>Vrais bugs</div>
+  <div class="stat"><div class="stat-val" style="color:#e67e22">0</div>Flaky</div>
+</div>
+<h2>Triage — Classification (3 échecs)</h2>
+<table>
+  <tr><th>TC</th><th>Nom du test</th><th>Catégorie</th><th>Confiance</th><th>Raisonnement</th><th>Action</th></tr>
+  <tr><td style='font-family:monospace;font-size:12px'>tc-029</td><td style='font-size:12px'>test_tc029__checkin_posterieur_a_checkout_post_booking</td><td><span style='background:#e74c3c;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px'>VRAI BUG</span></td><td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#e74c3c;width:95%;height:100%;border-radius:4px"></div></div> 95%</td><td style='font-size:11px;color:#666'>Le serveur renvoie 200 au lieu de 400 pour une réservation avec check‑in postéri</td><td><span style="background:#e74c3c;color:#fff;padding:1px 6px;border-radius:3px;font-size:11px">⚠ RÉVISION</span></td></tr><tr><td style='font-family:monospace;font-size:12px'>tc-031</td><td style='font-size:12px'>test_tc031__xss_payload_dans_firstname_post_booking</td><td><span style='background:#e74c3c;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px'>VRAI BUG</span></td><td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#e74c3c;width:95%;height:100%;border-radius:4px"></div></div> 95%</td><td style='font-size:11px;color:#666'>Le serveur renvoie le payload XSS non filtré dans la réponse, indiquant une fail</td><td><span style="background:#e74c3c;color:#fff;padding:1px 6px;border-radius:3px;font-size:11px">⚠ RÉVISION</span></td></tr><tr><td style='font-family:monospace;font-size:12px'>tc-028</td><td style='font-size:12px'>test_tc028__totalprice_negatif_post_booking</td><td><span style='background:#e74c3c;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px'>VRAI BUG</span></td><td><div style="background:#eee;border-radius:4px;height:14px;width:120px;display:inline-block"><div style="background:#e74c3c;width:96%;height:100%;border-radius:4px"></div></div> 96%</td><td style='font-size:11px;color:#666'>Le serveur renvoie 200 pour un totalprice négatif alors que le test attend 400/5</td><td><span style="background:#e74c3c;color:#fff;padding:1px 6px;border-radius:3px;font-size:11px">⚠ RÉVISION</span></td></tr>
+</table>
+<h2>RCA — Causes racines (3 analyses)</h2>
+<table>
+  <tr><th>TC</th><th>Test</th><th>Catégorie</th><th>Chaîne causale</th><th>Cause racine</th><th>Action</th><th>Priorité</th></tr>
+  <tr><td style='font-family:monospace'>tc-029</td><td style='font-size:12px'>test_tc029__checkin_posterieur_a_checkout_post_boo</td><td><span style='background:#95a5a6;color:#fff;padding:2px 7px;border-radius:3px;font-size:11px'>data</span></td><td style='font-size:11px;color:#555'>Le payload contient des dates incohérentes (check‑in > check‑out). → L'implémentation de l'endpoint </td><td style='font-size:12px'>L'API ne réalise pas de validation métier sur la cohérence des dates (</td><td style='font-size:12px;color:#27ae60'>Ajouter une validation côté serveur qui compare les champs checkin et </td><td><span style='background:#e74c3c;color:#fff;padding:2px 7px;border-radius:3px;font-size:11px'>immediate</span></td></tr><tr><td style='font-family:monospace'>tc-028</td><td style='font-size:12px'>test_tc028__totalprice_negatif_post_booking</td><td><span style='background:#95a5a6;color:#fff;padding:2px 7px;border-radius:3px;font-size:11px'>data</span></td><td style='font-size:11px;color:#555'>Le test envoie un payload avec totalprice=-100 → L'API ne possède pas de validation pour détecter la</td><td style='font-size:12px'>L'API ne valide pas la contrainte métier interdisant une valeur négati</td><td style='font-size:12px;color:#27ae60'>Implémenter une validation du champ totalprice dans la logique métier </td><td><span style='background:#e74c3c;color:#fff;padding:2px 7px;border-radius:3px;font-size:11px'>immediate</span></td></tr><tr><td style='font-family:monospace'>tc-031</td><td style='font-size:12px'>test_tc031__xss_payload_dans_firstname_post_bookin</td><td><span style='background:#95a5a6;color:#fff;padding:2px 7px;border-radius:3px;font-size:11px'>data</span></td><td style='font-size:11px;color:#555'>Le payload contenant du JavaScript est envoyé dans le champ firstname. → L'API stocke le champ tel q</td><td style='font-size:12px'>Absence de validation/sanitation du champ firstname dans l'endpoint de</td><td style='font-size:12px;color:#27ae60'>Implémenter une validation d'entrée et/ou un encodage de sortie pour l</td><td><span style='background:#e74c3c;color:#fff;padding:2px 7px;border-radius:3px;font-size:11px'>immediate</span></td></tr>
+</table>
+<p style="color:#999;font-size:12px;margin-top:30px">Généré par Bug Agent — Triage + RCA (CoT + Confidence Scoring)</p>
+</body>
+</html>

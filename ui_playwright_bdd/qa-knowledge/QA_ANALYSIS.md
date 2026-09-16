@@ -1,4 +1,5 @@
-# QA Analysis and RAG Knowledge Base for ui_playwright_bdd
+# QA Analysis Notes for ui_playwright_bdd
+> Manually maintained notes — not a live RAG pipeline. No agent reads this file (see `README.md` in this folder).
 
 ## Application under test
 - `https://qacart-todo.herokuapp.com`
@@ -9,9 +10,9 @@
 - Allure reporting configured via npm scripts
 - Shared test user persisted in `src/fixtures/user.json`
 
-## Goal for this RAG integration
-- Capture QA analysis, user stories, acceptance criteria, and missing coverage in a central RAG-friendly document
-- Link the knowledge directly to implemented feature files and page object patterns
+## Goal for these notes
+- Capture QA analysis, user stories, acceptance criteria, and missing coverage in one place
+- Link the analysis directly to implemented feature files and page object patterns
 - Make the framework self-healing by generating stable fixture users when stale
 
 ## Current implemented coverage
@@ -117,7 +118,7 @@
 - Edge cases: network failures, timeouts, concurrent requests, data persistence
 
 ## Automation plan
-- Keep the RAG document updated alongside feature files.
+- Keep this document updated alongside feature files.
 - Add new BDD scenarios for negative login and todo validation.
 - Keep page object selectors aligned with actual app HTML.
 - Use fixture user recovery logic to reduce test flakiness.

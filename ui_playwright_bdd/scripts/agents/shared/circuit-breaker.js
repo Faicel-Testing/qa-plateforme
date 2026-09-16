@@ -51,21 +51,24 @@ function saveCache(c) {
   try { fs.writeFileSync(CACHE_FILE, JSON.stringify(c, null, 2), 'utf8'); } catch {}
 }
 
-function cacheKey(messages) {
-  return crypto.createHash('sha256').update(JSON.stringify(messages)).digest('hex');
+function cacheKey(messages, variant) {
+  // `variant` distingue des appels aux messages identiques mais aux paramètres
+  // d'échantillonnage différents (ex. température) — sans ça, 3 votes self-consistency
+  // sur le même prompt renverraient tous la réponse mise en cache du premier appel.
+  return crypto.createHash('sha256').update(JSON.stringify({ messages, variant })).digest('hex');
 }
 
-function cacheGet(messages) {
+function cacheGet(messages, variant) {
   const cache = loadCache();
-  const entry = cache[cacheKey(messages)];
+  const entry = cache[cacheKey(messages, variant)];
   if (!entry) return null;
   if (Date.now() / 1000 - entry.ts > CONFIG.cacheTtlSeconds) return null;
   return entry.value;
 }
 
-function cacheSet(messages, value) {
+function cacheSet(messages, value, variant) {
   const cache = loadCache();
-  const key   = cacheKey(messages);
+  const key   = cacheKey(messages, variant);
   cache[key]  = { value, ts: Math.floor(Date.now() / 1000) };
   const keys  = Object.keys(cache);
   if (keys.length > CONFIG.cacheMaxEntries) {
@@ -78,9 +81,11 @@ function cacheSet(messages, value) {
 // fn       : async (messages) => string | object
 // messages : tableau de messages LLM
 // fnName   : clé pour DEFAULT_RESPONSES
-async function execute(fn, messages, fnName = 'chat') {
+// variant  : optionnel — ex. la température, pour ne pas partager le cache entre
+//            des appels aux mêmes messages mais à l'échantillonnage différent
+async function execute(fn, messages, fnName = 'chat', variant) {
   // 1. Cache hit → pas d'appel LLM
-  const cached = cacheGet(messages);
+  const cached = cacheGet(messages, variant);
   if (cached !== null) return { value: cached, fromCache: true, fallback: false };
 
   const s   = loadCbState();
@@ -99,7 +104,7 @@ async function execute(fn, messages, fnName = 'chat') {
   try {
     const result = await fn(messages);
     const value  = typeof result === 'string' ? result : JSON.stringify(result);
-    cacheSet(messages, value);
+    cacheSet(messages, value, variant);
 
     s.failures = 0;
     if (s.state === STATE.HALF_OPEN) {
@@ -121,10 +126,14 @@ function getStatus() {
   return { ...loadCbState(), config: CONFIG, cacheSize: Object.keys(loadCache()).length };
 }
 
+function getDefaultResponse(fnName) {
+  return DEFAULT_RESPONSES[fnName] || DEFAULT_RESPONSES.chat;
+}
+
 function reset() {
   saveCbState({ state: STATE.CLOSED, failures: 0, successes: 0, openedAt: null });
 }
 
 function clearCache() { saveCache({}); }
 
-module.exports = { execute, getStatus, reset, clearCache, STATE, CONFIG, CB_FILE, CACHE_FILE };
+module.exports = { execute, getStatus, getDefaultResponse, reset, clearCache, STATE, CONFIG, CB_FILE, CACHE_FILE };

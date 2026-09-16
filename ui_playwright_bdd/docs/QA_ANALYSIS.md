@@ -158,11 +158,11 @@
 ## Current automation updates
 - Added fixture recovery logic for stale saved users.
 - Added a negative login validation scenario for invalid credentials.
-- Added a dedicated RAG QA analysis file in `RAG/QA_ANALYSIS.md`.
+- Added a dedicated QA analysis file in `qa-knowledge/QA_ANALYSIS.md` (renamed from `RAG/` on 2026-08-25 — manual notes, not an actual RAG pipeline).
 
 ## Recommended next steps
 1. Add `src/pages/TodoPage.ts` with common todo actions.
 2. Add BDD scenarios for todo creation and deletion.
 3. Add agent scaffolding scripts in `scripts/agents/`.
-4. Add a RAG document store under `RAG/`.
+4. If genuine RAG is needed later, index `memory/episodes.jsonl` with embeddings + similarity search — rather than the manual notes in `qa-knowledge/`.
 5. Run the new BDD scenarios and publish the Allure report.

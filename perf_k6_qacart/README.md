@@ -219,7 +219,7 @@ BASE_URL=https://qacart-todo.herokuapp.com
 
 # LLM (obligatoire — l'un ou l'autre)
 GROQ_API_KEY=gsk_...
-GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_MODEL=openai/gpt-oss-120b
 OLLAMA_HOST=http://localhost:11434
 OLLAMA_MODEL=qwen2.5-coder:7b
 

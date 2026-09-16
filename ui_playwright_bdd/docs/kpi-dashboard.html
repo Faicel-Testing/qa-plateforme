@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><title>KPI Dashboard — Playwright BDD</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body{font-family:sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:24px}
+  h1{color:#7c3aed;font-size:1.5rem}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:24px 0}
+  .card{background:#1e293b;border-radius:12px;padding:20px;text-align:center}
+  .card .val{font-size:2rem;font-weight:700;color:#7c3aed}
+  .card .lbl{font-size:.8rem;color:#94a3b8;margin-top:4px}
+  .gate{padding:12px 20px;border-radius:8px;margin:16px 0;font-weight:600}
+  .gate.ok{background:#052e16;color:#4ade80}.gate.fail{background:#450a0a;color:#f87171}
+  canvas{max-height:260px}
+  table{width:100%;border-collapse:collapse;margin-top:16px}
+  th{background:#1e293b;padding:8px;text-align:left;color:#94a3b8}
+  td{padding:8px;border-bottom:1px solid #1e293b}
+  .tag-failed{color:#f87171}.tag-broken{color:#fb923c}
+</style></head>
+<body>
+<h1>📊 KPI Dashboard — Playwright BDD</h1>
+<p style="color:#64748b">Généré le 22/08/2026 18:25:36</p>
+<div class="gate ok">✅ QUALITY GATE PASSED</div>
+<div class="grid">
+  <div class="card"><div class="val">100%</div><div class="lbl">Pass Rate</div></div>
+  <div class="card"><div class="val">29</div><div class="lbl">Passed</div></div>
+  <div class="card"><div class="val" style="color:#f87171">0</div><div class="lbl">Failed</div></div>
+  <div class="card"><div class="val" style="color:#fb923c">0</div><div class="lbl">Broken</div></div>
+  <div class="card"><div class="val">29</div><div class="lbl">Total</div></div>
+</div>
+<canvas id="donut" width="300" height="260"></canvas>
+<p style="color:#4ade80;margin-top:16px">✅ Aucun échec</p>
+<script>
+new Chart(document.getElementById('donut'),{type:'doughnut',
+  data:{labels:['Passed','Failed','Broken','Skipped'],
+    datasets:[{data:[29,0,0,0],
+      backgroundColor:['#22c55e','#ef4444','#f97316','#64748b'],borderWidth:0}]},
+  options:{plugins:{legend:{labels:{color:'#e2e8f0'}}}}});
+</script>
+</body></html>

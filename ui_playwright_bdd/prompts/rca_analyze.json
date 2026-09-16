@@ -3,6 +3,7 @@
   "description": "Root Cause Analysis pour un échec de test UI Playwright — identifie cause racine et action corrective",
   "agent": "bug-agent",
   "tags": ["rca", "analysis", "ui", "playwright"],
+  "_status": "CÂBLÉ — quality-agent.js:159 (promptStore.get('rca_analyze'), commande `quality-agent rca`), mais utilisé UNIQUEMENT comme 1ère passe de raisonnement libre (llm.chatCot, étape ÉTAPE1/ÉTAPE2/CONCLUSION). Incohérence : le schéma JSON demandé en fin de ce prompt (cause_category: selector|timing|navigation|assertion|data|environment|regression, fix_priority: immediate|short_term|long_term, related_scenarios) ne correspond PAS au schéma réellement extrait en 2e passe — RCA_SCHEMA, codé en dur dans quality-agent.js, utilise cause_category: assertion|auth|data|network|config|selector|logic|unknown, fix_priority: immediate|high|medium|low, et related_tests (pas related_scenarios). Le contenu de ce fichier devrait être aligné sur RCA_SCHEMA ou celui-ci extrait du fichier plutôt que dupliqué en dur dans le code.",
   "current_version": "1.0.0",
   "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
   "history": [

@@ -41,7 +41,7 @@ class CBState(Enum):
 # ── Configuration ──────────────────────────────────────────────────────────
 
 CB_CONFIG = {
-    "failure_threshold":  3,      # Nb d'échecs avant ouverture
+    "failure_threshold":  5,      # Nb d'échecs avant ouverture
     "success_threshold":  2,      # Nb de succès en HALF_OPEN pour refermer
     "cooldown_seconds":   30,     # Durée d'attente avant HALF_OPEN
     "cache_max_entries":  200,    # Nb max d'entrées en cache

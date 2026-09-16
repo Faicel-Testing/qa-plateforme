@@ -21,8 +21,17 @@ const fs    = require('fs');
 const path  = require('path');
 const https = require('https');
 const http  = require('http');
-const llm   = require('./llm');
-const tracer = require('./shared/tracer');
+const llm         = require('./llm');
+const tracer      = require('./shared/tracer');
+const promptStore = require('./shared/prompt-store');
+
+function fmt(template, vars) {
+  let result = template;
+  for (const [k, v] of Object.entries(vars)) {
+    result = result.split('{' + k + '}').join(String(v ?? '?'));
+  }
+  return result;
+}
 
 const FRAMEWORK   = path.join(__dirname, '..', '..');
 const RESULTS_DIR = path.join(FRAMEWORK, 'allure-results');
@@ -141,17 +150,38 @@ async function cmdNotify(target = 'slack') {
   const kpi      = computeKpi(results);
   const failures = results.filter(r => ['failed','broken'].includes(r.status)).slice(0,5);
 
+  // Flaky count — réutilise le rapport du Runner Agent (`runner flaky`) si disponible
+  let flakyCount = 0;
+  const flakyReportPath = path.join(DOCS_DIR, 'flaky-report.json');
+  if (fs.existsSync(flakyReportPath)) {
+    try { flakyCount = (JSON.parse(fs.readFileSync(flakyReportPath, 'utf8')).flaky || []).length; } catch {}
+  }
+
+  // Durée totale — somme des durées Allure (start/stop en ms) quand présentes
+  const durationMs = results.reduce((sum, r) => sum + ((r.stop && r.start) ? (r.stop - r.start) : 0), 0);
+  const durationStr = durationMs ? `${(durationMs / 1000).toFixed(1)}s` : 'N/A';
+
   const span = new tracer.Span('notifySummary', JSON.stringify(kpi), llm.MODEL).begin();
   let summary;
   try {
-    const prompt = `Tu es un expert QA. Génère un résumé Slack concis (2-3 phrases) du run Playwright.
-Pass rate: ${kpi.pass_rate}% | ${kpi.passed}/${kpi.total} passés
-Échecs: ${failures.map(f=>f.name).join(', ')||'aucun'}
-Ton: direct. Si PASSED → rassurant. Si FAILED → factuel, action concrète.`;
+    const _tpl = promptStore.get('qa_notify') ||
+      'Tu es un expert QA. Génère un résumé Slack concis (2-3 phrases) du run Playwright.\n' +
+      'Pass rate: {pass_rate}% | {passed}/{total} passés\n' +
+      'Échecs: {failures_list}\n' +
+      'Ton: direct. Si PASSED → rassurant. Si FAILED → factuel, action concrète.';
+    const prompt = fmt(_tpl, {
+      total: kpi.total, passed: kpi.passed, pass_rate: kpi.pass_rate,
+      failed: kpi.failed, broken: kpi.broken, flaky_count: flakyCount,
+      verdict: kpi.gate_ok ? 'GO' : 'NO-GO',
+      browser: process.env.TEST_BROWSER || 'chromium',
+      duration: durationStr,
+      failures_list: failures.map(f => `- ${f.name}: ${(f.statusDetails?.message || '').slice(0, 80)}`).join('\n') || 'aucun',
+    });
 
     const resp = await llm.chat([{ role: 'user', content: prompt }]);
     summary = resp.message.content || '';
     span.end(true);
+    promptStore.recordUsage('qa_notify');
   } catch (e) {
     span.error = e.message; span.end(false);
     summary = `Run Playwright : ${kpi.pass_rate}% de réussite (${kpi.passed}/${kpi.total}).`;

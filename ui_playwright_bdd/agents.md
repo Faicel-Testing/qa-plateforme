@@ -30,7 +30,15 @@ npm run test:smoke
 npm run test:regression
 npm run test:critical
 ```
+### Gouvernance IA et validation humaine
 
+```bash
+node scripts/agents/governance-agent.js status               # État de la gouvernance IA
+node scripts/agents/governance-agent.js security             # Analyse de sécurité des prompts
+node scripts/agents/governance-agent.js audit                # Historique des décisions IA
+node scripts/agents/governance-agent.js approve <id> <reviewer>  # Validation humaine
+node scripts/agents/governance-agent.js critical --dry-run   # Simulation d'une décision critique
+```
 ### Analyser la qualité
 
 ```bash
@@ -106,7 +114,7 @@ prompts/                     ← templates de prompts versionnés (JSON)
 logs/                        ← traces LLM (NE PAS COMMITTER)
 memory/                      ← épisodes agentiques (NE PAS COMMITTER)
 allure-results/              ← résultats de test (NE PAS COMMITTER)
-RAG/                         ← base de connaissances QA
+qa-knowledge/                ← notes QA manuelles (pas un pipeline RAG, non lu par les agents)
 docs/                        ← rapports HTML, specs, traceability matrix
 ```
 

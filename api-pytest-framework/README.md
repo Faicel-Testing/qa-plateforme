@@ -5,8 +5,8 @@
 [![Pass](https://img.shields.io/badge/Pass-48%2F51-brightgreen)](https://faicel-testing.github.io/qa-plateforme/api-pytest-framework/)
 [![Allure Report](https://img.shields.io/badge/Allure-Report-orange)](https://faicel-testing.github.io/qa-plateforme/api-pytest-framework/)
 [![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)](https://www.python.org/)
-[![pytest-bdd](https://img.shields.io/badge/pytest--bdd-7.3-green)](https://github.com/pytest-dev/pytest-bdd)
-[![LLM](https://img.shields.io/badge/LLM-Groq%20LLaMA%203.3-purple)](https://console.groq.com/)
+[![pytest-bdd](https://img.shields.io/badge/pytest--bdd-8.1-green)](https://github.com/pytest-dev/pytest-bdd)
+[![LLM](https://img.shields.io/badge/LLM-Groq%20gpt--oss--120b-purple)](https://console.groq.com/)
 [![Agents](https://img.shields.io/badge/AI%20Agents-10-blueviolet)](#les-10-agents-ia)
 
 ---
@@ -40,7 +40,7 @@ api-pytest-framework/
 │   ├── ci-agent.py            # CI/CD : commit, push, pr, ci, release, changelog
 │   ├── planning-agent.py      # Planning : setup, stories, sprint, tc, tickets, sync
 │   ├── pipeline-agent.py      # Orchestrateur : full, quick, nightly, report, gate, status
-│   ├── llm.py                 # 6 patterns LLM (Groq / LLaMA 3.3 70B)
+│   ├── llm.py                 # 6 patterns LLM (Groq / openai gpt-oss-120b)
 │   ├── circuit_breaker.py     # Résilience LLM (CLOSED/OPEN/HALF_OPEN)
 │   ├── memory_store.py        # Mémoire épisodique (JSONL)
 │   ├── prompt_store.py        # Versioning sémantique des prompts (semver)

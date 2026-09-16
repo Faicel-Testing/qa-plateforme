@@ -2,9 +2,17 @@
   "name": "triage_classify",
   "description": "Classifie un échec de test API en catégorie (real_bug, flaky, environment, config_error, test_bug)",
   "agent": "bug-agent",
-  "tags": ["triage", "classification", "api"],
+  "tags": [
+    "triage",
+    "classification",
+    "api"
+  ],
   "current_version": "1.0.0",
-  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "metrics": {
+    "calls": 107,
+    "avg_confidence": 0.911,
+    "last_used": "2026-08-19T21:20:47Z"
+  },
   "history": [
     {
       "version": "1.0.0",

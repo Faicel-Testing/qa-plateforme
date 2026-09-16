@@ -1,0 +1,21 @@
+{
+  "gate_will_pass": false,
+  "confidence": 0.72,
+  "likely_failures": [
+    "tc-031",
+    "tc-028",
+    "tc-029"
+  ],
+  "likely_flaky": [
+    "tc-028"
+  ],
+  "risk_level": "medium",
+  "reasoning": "Le taux de réussite actuel est de 94,1 % mais le taux d'échec de 5,9 % dépasse légèrement la limite de 5 %, ce qui rend probable le non‑passage du quality gate. Les trois échecs récurrents indiquent des défauts persistants, et le test tc-028 montre des signes de comportement intermittent qui pourrait devenir flaky.",
+  "recommended_actions": [
+    "Corriger les assertions et la logique des tests tc-031, tc-028 et tc-029.",
+    "Analyser et remédier à la vulnérabilité XSS détectée dans tc-031.",
+    "Vérifier la gestion des codes d’erreur HTTP dans tc-028 et tc-029.",
+    "Ajouter des vérifications de stabilité pour tc-028 afin de prévenir le flakiness.",
+    "Mettre à jour la suite de tests avec des cas de bord supplémentaires pour renforcer la couverture."
+  ]
+}

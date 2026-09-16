@@ -281,7 +281,7 @@ python agents/observability-agent.py prompts rollback triage_classify
 ```bash
 # Obligatoire pour les agents IA
 GROQ_API_KEY=gsk_...
-GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_MODEL=openai/gpt-oss-120b
 
 # Notifications (optionnel)
 SLACK_WEBHOOK_URL=https://hooks.slack.com/...

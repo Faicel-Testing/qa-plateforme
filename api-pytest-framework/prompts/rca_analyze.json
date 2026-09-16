@@ -2,9 +2,17 @@
   "name": "rca_analyze",
   "description": "Root Cause Analysis pour un échec de test API — identifie cause racine, chaîne de causalité et fix recommandé",
   "agent": "bug-agent",
-  "tags": ["rca", "analysis", "api"],
+  "tags": [
+    "rca",
+    "analysis",
+    "api"
+  ],
   "current_version": "1.0.0",
-  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "metrics": {
+    "calls": 38,
+    "avg_confidence": null,
+    "last_used": "2026-08-19T21:20:49Z"
+  },
   "history": [
     {
       "version": "1.0.0",

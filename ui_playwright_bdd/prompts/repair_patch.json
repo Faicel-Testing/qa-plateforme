@@ -3,6 +3,7 @@
   "description": "Analyse un échec de test Playwright et propose un patch de code correctif",
   "agent": "bug-agent",
   "tags": ["repair", "patch", "autofix", "playwright", "typescript"],
+  "_status": "CÂBLÉ — bug-agent.js:238 (promptStore.get('repair_patch'), commande `bug-agent repair`). Cohérent : pas de schéma JSON demandé ici, l'agent conclut via le tool report_analysis (function-calling), donc pas de dérive possible entre ce prompt et un schéma d'extraction séparé. calls=0 ci-dessous signifie seulement qu'aucun `bug-agent repair` n'a encore été exécuté sur des échecs réels.",
   "current_version": "1.0.0",
   "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
   "history": [

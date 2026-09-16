@@ -64,7 +64,7 @@ Feature: US-004 -- Creer une reservation (POST /booking)
     When j'envoie POST /booking avec un body vide {}
     Then le status code est 400 ou 500
 
-  @securite @tc-031  # HBAPI-41
+  @critical @securite @tc-031  # HBAPI-41
   Scenario: TC-031 -- XSS payload dans firstname (POST /booking)
     When j'envoie POST /booking avec un payload XSS dans firstname
     Then le status code est 400 ou 200

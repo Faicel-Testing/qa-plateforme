@@ -297,6 +297,76 @@ Persiste l'historique des exécutions dans `memory/episodes.jsonl` :
 - `getRecurringFailures(minOccurrences=3)` → failures répétitives
 - `getContextFor(tcId)` → string formaté pour injection dans le prompt (trend: ↑↓→)
 
+### shared/ai-governance.js — Gouvernance IA explicite
+
+Ajoute un niveau d’activation explicite pour les usages critiques de l’IA dans le QA :
+
+- validation humaine obligatoire sur décisions critiques
+- sécurisation des prompts (détection de secrets, injection, données sensibles)
+- traçabilité des décisions IA dans `logs/ai-governance-audit.jsonl`
+- écriture d’un historique d’approbation dans `logs/ai-governance-approvals.json`
+- scoring de risque et gestion des décisions à forte criticité
+
+Commandes associées :
+
+```bash
+node scripts/agents/governance-agent.js status
+node scripts/agents/governance-agent.js security
+node scripts/agents/governance-agent.js audit
+node scripts/agents/governance-agent.js approve <id> <reviewer>
+```
+
+### shared/qa-workflow-engine.js — Workflow métier QA IA
+
+Formalise le cycle de validation de la génération IA de tests en étapes explicites et en gardant une approbation humaine sur les décisions critiques :
+
+1. `gherkin` → validation QA du scénario généré
+2. `script` → validation QA du script Playwright généré
+3. `execution` → exécution de la suite
+4. `analysis` → analyse des résultats, triage et RCA
+5. `decision` → verdict final GO/NO-GO, qui reste bloqué jusqu’à approbation humaine si le risque est critique
+
+Le moteur garde un état clair pour chaque artefact (`pending`, `approved`, `rejected`, `blocked`, `completed`) et applique la règle de gouvernance suivante : le workflow ne peut aller vers une décision finale critique sans validation humaine explicite.
+
+#### Workflow validé et testée
+
+Cette logique a été vérifiée dans le projet avec la séquence suivante :
+
+```bash
+node scripts/agents/qa-workflow-agent.js create SPEC-001
+node scripts/agents/qa-workflow-agent.js approve SPEC-001 gherkin QA-Lead
+node scripts/agents/qa-workflow-agent.js approve SPEC-001 script QA-Lead
+node scripts/agents/qa-workflow-agent.js approve SPEC-001 execution QA-Lead
+node scripts/agents/qa-workflow-agent.js approve SPEC-001 analysis QA-Lead
+node scripts/agents/qa-workflow-agent.js gate SPEC-001 critical
+node scripts/agents/qa-workflow-agent.js status SPEC-001
+```
+
+Résultat attendu du `gate` :
+
+```json
+{
+  "ok": true,
+  "blocked": true,
+  "reason": "Final decision requires human approval"
+}
+```
+
+Cela confirme que le workflow autorise l’automatisation des étapes de génération/validation, mais impose bien une validation humaine pour une décision critique.
+
+Commandes associées :
+
+```bash
+node scripts/agents/qa-workflow-agent.js create SPEC-001
+node scripts/agents/qa-workflow-agent.js approve <id> gherkin QA-Lead
+node scripts/agents/qa-workflow-agent.js approve <id> script QA-Lead
+node scripts/agents/qa-workflow-agent.js approve <id> execution QA-Lead
+node scripts/agents/qa-workflow-agent.js approve <id> analysis QA-Lead
+node scripts/agents/qa-workflow-agent.js gate <id> critical
+node scripts/agents/qa-workflow-agent.js status <id>
+node scripts/agents/qa-workflow-agent.js list
+```
+
 ### shared/prompt-store.js — Versioning des prompts
 
 Versionne les prompts en semver (`1.0.0` → patch/minor/major) dans `prompts/<name>.json` :
@@ -754,7 +824,7 @@ ui_playwright_bdd/
 ├── allure-results/                  Résultats bruts Allure
 ├── allure-report/                   Rapport Allure généré
 ├── specs/                           Spécifications métier source
-├── RAG/                             Base de connaissances QA
+├── qa-knowledge/                    Notes QA manuelles (pas un pipeline RAG)
 ├── cucumber.js                      Configuration CucumberJS
 ├── tsconfig.json                    Configuration TypeScript
 └── .env.example                     Template de configuration

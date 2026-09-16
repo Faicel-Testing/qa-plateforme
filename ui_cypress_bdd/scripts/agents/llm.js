@@ -21,7 +21,7 @@ const https = require('https');
 
 // ── Provider detection ────────────────────────────────────────────────────────
 const USE_GROQ   = !!process.env.GROQ_API_KEY;
-const GROQ_MODEL = process.env.GROQ_MODEL  || 'llama-3.3-70b-versatile';
+const GROQ_MODEL = process.env.GROQ_MODEL  || 'openai/gpt-oss-120b';
 const OLMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5-coder:7b';
 const OLMA_HOST  = (process.env.OLLAMA_HOST || 'http://localhost:11434').replace(/\/$/, '');
 

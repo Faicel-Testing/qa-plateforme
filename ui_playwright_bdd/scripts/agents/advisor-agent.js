@@ -24,6 +24,7 @@ const llm    = require('./llm');
 const tracer = require('./shared/tracer');
 const memory      = require('./shared/memory-store');
 const promptStore = require('./shared/prompt-store');
+const governance  = require('./shared/ai-governance');
 
 function fmt(template, vars) {
   let result = template;
@@ -114,6 +115,23 @@ async function cmdAdvise(nVotes = N_VOTES) {
     });
 
     if (winner) {
+      const gate = governance.checkDecisionGate({
+        decision: { ...winner, confidence: 0.82, critical: winner.risk === 'critical' || winner.verdict === 'NO-GO' },
+        id: 'release-gate-' + Date.now(),
+        item: 'QA Release Gate',
+        type: 'go_no_go',
+        prompt: prompt,
+        actor: 'advisor-agent',
+      });
+
+      if (gate.blocked) {
+        winner.verdict = 'NO-GO';
+        winner.risk = winner.risk || 'critical';
+        winner.blockers = [...(winner.blockers || []), ...gate.blockers];
+        console.log(`\n  ${R}🚫 GOVERNANCE BLOCKED${E}`);
+        gate.blockers.forEach(b => console.log(`    • ${b}`));
+      }
+
       const verdictIcon = winner.verdict === 'GO' ? G + '✅ GO — RELEASE AUTORISÉE' + E : R + '❌ NO-GO — BLOCAGE RELEASE' + E;
       console.log(`\n  ${B}Décision finale :${E} ${verdictIcon}`);
       console.log(`  Risque : ${winner.risk?.toUpperCase()}`);
@@ -121,7 +139,7 @@ async function cmdAdvise(nVotes = N_VOTES) {
       if (winner.warnings?.length) { console.log(`  ${Y}Warnings :${E}`);  winner.warnings.forEach(w => console.log(`    • ${w}`)); }
       console.log(`\n  ${C}${winner.reasoning||''}${E}`);
 
-      memory.recordEpisode('advisor-agent', [{ verdict: winner.verdict, risk: winner.risk, votes: vote_counts }], `Release: ${winner.verdict} (risque ${winner.risk})`, 'advise');
+      memory.recordEpisode('advisor-agent', [{ verdict: winner.verdict, risk: winner.risk, votes: vote_counts, governanceBlocked: gate.blocked }], `Release: ${winner.verdict} (risque ${winner.risk})`, 'advise');
     }
   } catch (e) {
     span.error = e.message; span.end(false);
@@ -202,10 +220,25 @@ Critères: pass_rate≥90% PASS, ≥80% WARNING, <80% FAIL`;
     const gate = await llm.chatStructured([{ role: 'user', content: prompt }], GATE_SCHEMA);
     span.end(true);
 
-    const icon = gate.verdict === 'PASS' ? G+'✅ PASS'+E : R+'❌ FAIL'+E;
+    const gov = governance.checkDecisionGate({
+      decision: { verdict: gate.verdict, score: gate.score, confidence: 0.8, critical: gate.verdict === 'FAIL' || Number(gate.score) < 80 },
+      id: 'quality-gate-' + Date.now(),
+      item: 'Quality Gate',
+      type: 'go_no_go',
+      prompt,
+      actor: 'advisor-agent',
+    });
+
+    const finalVerdict = gov.blocked ? 'FAIL' : gate.verdict;
+    const icon = finalVerdict === 'PASS' ? G+'✅ PASS'+E : R+'❌ FAIL'+E;
     console.log(`\n  ${icon}  Score : ${gate.score}/100`);
-    if (gate.blockers?.length) gate.blockers.forEach(b => console.log(`  ${R}• ${b}${E}`));
+    const blockers = [...(gate.blockers || []), ...(gov.blocked ? gov.blockers : [])];
+    if (blockers.length) blockers.forEach(b => console.log(`  ${R}• ${b}${E}`));
     if (gate.improvement) console.log(`  ${C}→ ${gate.improvement}${E}`);
+
+    if (gov.blocked) {
+      console.log(`  ${R}🚫 Quality gate blocked by AI governance requirements.${E}`);
+    }
   } catch (e) {
     span.error = e.message; span.end(false);
     console.error(`  ${R}✗ ${e.message}${E}`);

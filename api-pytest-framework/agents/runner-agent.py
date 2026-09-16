@@ -12,7 +12,7 @@
 #   python agents/runner-agent.py baseline           → enregistre la baseline
 # ============================================================
 
-import sys, os, subprocess, json, glob, time, requests, tempfile
+import sys, os, subprocess, json, glob, time, requests, tempfile, shutil
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -53,7 +53,20 @@ def run_pytest(marker: str, label: str, extra_args: list = None) -> tuple:
         cmd += extra_args
     proc = subprocess.run(cmd, cwd=FRAMEWORK, capture_output=True, text=True,
                           encoding="utf-8", errors="replace")
+    _sync_to_shared_results(result_dir)
     return proc.returncode, result_dir
+
+
+def _sync_to_shared_results(result_dir: str):
+    """Reflete ce run dans allure-results/ (source partagee lue par gate/report/bug-agent)."""
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    for f in glob.glob(os.path.join(RESULTS_DIR, "*")):
+        try:
+            os.remove(f)
+        except OSError:
+            pass
+    for f in glob.glob(os.path.join(result_dir, "*")):
+        shutil.copy2(f, RESULTS_DIR)
 
 
 def parse_results(results_dir: str) -> dict:

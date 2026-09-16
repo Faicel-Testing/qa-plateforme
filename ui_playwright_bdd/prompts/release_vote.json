@@ -2,9 +2,20 @@
   "name": "release_vote",
   "description": "Vote GO/NO-GO pour une décision de release UI — utilisé en Self-Consistency (N votes, majorité gagne)",
   "agent": "advisor-agent",
-  "tags": ["release", "go-nogo", "decision", "self-consistency", "ui"],
+  "tags": [
+    "release",
+    "go-nogo",
+    "decision",
+    "self-consistency",
+    "ui"
+  ],
+  "_status": "CÂBLÉ ET RÉELLEMENT UTILISÉ — advisor-agent.js:83 (promptStore.get('release_vote'), commande `advisor advise`). Schéma cohérent avec VOTE_SCHEMA (verdict, risk, blockers, warnings, reasoning). CORRIGÉ le 2026-08-24 : chatSelfConsistent() (llm.js) définissait des températures [0.3, 0.7, 0.9] jamais appliquées à l'appel LLM, et le cache SHA256 du Circuit Breaker (circuit-breaker.js) pouvait renvoyer 3× la même réponse à des messages identiques. Les deux ont été corrigés : temperature circule maintenant jusqu'à _rawGroqChat/_rawOllamaChat, et la clé de cache inclut la variante de température (cacheKey(messages, variant)). Validé par une exécution réelle (`advisor advise 3` sur allure-results existants) : les 3 votes produisent désormais des raisonnements réellement distincts, pas une réponse dupliquée.",
   "current_version": "1.0.0",
-  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "metrics": {
+    "calls": 4,
+    "avg_confidence": null,
+    "last_used": "2026-08-24T15:41:33Z"
+  },
   "history": [
     {
       "version": "1.0.0",

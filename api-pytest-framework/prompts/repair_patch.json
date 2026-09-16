@@ -2,9 +2,18 @@
   "name": "repair_patch",
   "description": "Analyse un échec de test API et propose un patch de code correctif (CoT → JSON structuré)",
   "agent": "bug-agent",
-  "tags": ["repair", "patch", "autofix", "api"],
+  "tags": [
+    "repair",
+    "patch",
+    "autofix",
+    "api"
+  ],
   "current_version": "1.0.0",
-  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "metrics": {
+    "calls": 7,
+    "avg_confidence": null,
+    "last_used": "2026-08-19T21:20:56Z"
+  },
   "history": [
     {
       "version": "1.0.0",

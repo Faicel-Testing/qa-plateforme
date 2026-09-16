@@ -2,9 +2,20 @@
   "name": "qa_notify",
   "description": "Génère un message de notification Slack/Teams après un run QA UI — concis, professionnel, actionnable",
   "agent": "reporting-agent",
-  "tags": ["notification", "slack", "teams", "summary", "ui"],
+  "tags": [
+    "notification",
+    "slack",
+    "teams",
+    "summary",
+    "ui"
+  ],
+  "_status": "CÂBLÉ ET VALIDÉ le 2026-08-24 — reporting-agent.js:cmdNotify() (commande `reporting notify`). {verdict} vient du Quality Gate déjà calculé (kpi.gate_ok), {flaky_count} est lu depuis docs/flaky-report.json s'il existe (écrit par `runner flaky`), {duration} est sommé depuis les champs start/stop Allure, {browser} depuis TEST_BROWSER (défaut chromium). Testé en réel via `reporting notify --dry-run` sur les allure-results existants : calls=1, message généré incluant correctement verdict GO/NO-GO, pass rate et navigateur.",
   "current_version": "1.0.0",
-  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "metrics": {
+    "calls": 1,
+    "avg_confidence": null,
+    "last_used": "2026-08-24T17:07:51Z"
+  },
   "history": [
     {
       "version": "1.0.0",

@@ -226,10 +226,16 @@ ${sample}
 Évalue: complétude, correctitude, cohérence, bonnes pratiques.`;
 
       const { proposal, critique, final } = await llm.chatAdversarial([{ role: 'user', content: prompt }]);
+
+      const VERDICT_SCHEMA = { verdict: 'VALID | WARNING | INVALID', reasoning: 'string — justification courte' };
+      const verdictMsgs = [{ role: 'user', content:
+        `Voici une évaluation qualité rendue par un auditeur :\n\n${final}\n\n` +
+        `Extrais le verdict global de cette évaluation.` }];
+      const extracted = await llm.chatStructured(verdictMsgs, VERDICT_SCHEMA);
+      const verdict = ['VALID', 'WARNING', 'INVALID'].includes(extracted.verdict) ? extracted.verdict : 'WARNING';
       span.end(true);
 
-      const verdict = final.toLowerCase().includes('valide') || final.toLowerCase().includes('correct') ? 'VALID' : 'WARNING';
-      const icon    = verdict === 'VALID' ? G+'✓ VALID'+E : Y+'⚠ WARNING'+E;
+      const icon = verdict === 'VALID' ? G+'✓ VALID'+E : verdict === 'INVALID' ? R+'✗ INVALID'+E : Y+'⚠ WARNING'+E;
       console.log(`  ${icon} : ${final.slice(0,100)}`);
       verdicts.push({ check: check.name, verdict, detail: final });
     } catch (e) {

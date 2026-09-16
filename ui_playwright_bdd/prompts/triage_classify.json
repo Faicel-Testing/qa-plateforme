@@ -3,6 +3,7 @@
   "description": "Classifie un échec de test UI Playwright en catégorie (real_bug, flaky, environment, selector_bug, test_bug)",
   "agent": "bug-agent",
   "tags": ["triage", "classification", "ui", "playwright"],
+  "_status": "CÂBLÉ — quality-agent.js:80 (promptStore.get('triage_classify'), commande `quality-agent triage`). Attention : le schéma JSON demandé en fin de ce prompt (category/confidence/reason/suggested_action) est en pratique écrasé — le code appelle ensuite llm.chatConfident(), qui ajoute SA PROPRE instruction de schéma générique {result, confidence, reasoning}. Le champ réellement lu par le code est `result` (qui contient la catégorie), pas `category`. Les deux instructions JSON coexistent dans le prompt final envoyé au LLM, ce qui est redondant/source de confusion pour le modèle.",
   "current_version": "1.0.0",
   "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
   "history": [

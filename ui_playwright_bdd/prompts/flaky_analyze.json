@@ -1,10 +1,21 @@
 {
   "name": "flaky_analyze",
   "description": "Analyse les patterns de flakiness UI Playwright et propose des actions de stabilisation",
-  "agent": "quality-agent",
-  "tags": ["flaky", "stability", "analysis", "playwright", "ui"],
+  "agent": "runner-agent",
+  "tags": [
+    "flaky",
+    "stability",
+    "analysis",
+    "playwright",
+    "ui"
+  ],
+  "_status": "CÂBLÉ le 2026-08-24 — runner-agent.js:cmdFlaky() (commande `runner flaky`), pas dans quality-agent comme le champ 'agent' l'indiquait à l'origine (corrigé ci-dessus) : la détection flaky vit dans runner-agent.js, c'est là que l'analyse qualitative des causes a été ajoutée, juste après le calcul statistique du taux d'échec. Validé en isolation (simulation d'un tableau flaky[] sans relancer de vrais tests Playwright) : sortie cohérente et actionnable (causes, patterns communs, actions de stabilisation). Reste à valider en conditions réelles via `runner flaky --runs=N` sur une vraie suite instable.",
   "current_version": "1.0.0",
-  "metrics": { "calls": 0, "avg_confidence": null, "last_used": null },
+  "metrics": {
+    "calls": 1,
+    "avg_confidence": null,
+    "last_used": "2026-08-24T17:31:26Z"
+  },
   "history": [
     {
       "version": "1.0.0",

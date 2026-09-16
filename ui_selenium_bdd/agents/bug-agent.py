@@ -9,7 +9,7 @@
 #   python agents/bug-agent.py report          → rapport HTML docs/bug-report.html
 # ============================================================
 
-import sys, os, json, glob, re, shutil, difflib, argparse
+import sys, os, json, glob, re, shutil, difflib, argparse, time
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -229,7 +229,17 @@ def run_rca(failure: dict, all_tests: list) -> dict:
         f"Sur la base de cette RCA Selenium :\n\n{cot_reasoning}\n\n"
         f"Extrais les informations structurées."
     )}]
-    structured = llm.chat_structured(struct_messages, RCA_SCHEMA)
+    try:
+        structured = llm.chat_structured(struct_messages, RCA_SCHEMA)
+    except (ValueError, Exception):
+        # LLM indisponible : fallback structuré depuis le raisonnement CoT
+        structured = {
+            "cause_category": "unknown",
+            "affected_layer": "unknown",
+            "fix_priority":   "high",
+            "root_cause":     cot_reasoning[:120] if cot_reasoning else "Analyse LLM indisponible",
+            "fix_action":     "Analyse manuelle requise",
+        }
     return {**failure, **structured, "cot_reasoning": cot_reasoning}
 
 
@@ -243,7 +253,13 @@ def cmd_rca(name_filter: str = None):
     rcas = []
     for i, f in enumerate(failures, 1):
         print(f"  {C}[{i}/{len(failures)}]{E} RCA pour {f['name'][:50]}...", flush=True)
-        r = run_rca(f, all_tests)
+        if i > 1:
+            time.sleep(2)  # évite le rate limit Groq entre appels
+        try:
+            r = run_rca(f, all_tests)
+        except Exception as e:
+            print(f"  {Y}[SKIP] LLM indisponible pour ce test : {e}{E}\n")
+            continue
         rcas.append(r)
         cat_color  = CATEGORY_COLORS.get(r.get("cause_category", ""), Y)
         prio_color = PRIORITY_COLORS.get(r.get("fix_priority", "medium"), Y)
@@ -411,9 +427,12 @@ def cmd_report():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Bug Agent — Selenium BDD")
     parser.add_argument("command", choices=["triage", "rca", "repair", "loop", "report"])
-    parser.add_argument("filter", nargs="?", default=None, help="Filtre sur le nom du test")
+    parser.add_argument("filter", nargs="?", default=None, help="Filtre positionnel sur le nom du test")
+    parser.add_argument("--filter", dest="filter_opt", default=None, help="Filtre option sur le nom du test")
     parser.add_argument("--max-iter", type=int, default=DEFAULT_MAX_ITER)
     args = parser.parse_args()
+    if args.filter_opt:
+        args.filter = args.filter_opt
 
     if args.command == "triage":  cmd_triage(args.filter)
     elif args.command == "rca":   cmd_rca(args.filter)

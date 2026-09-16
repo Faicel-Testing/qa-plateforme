@@ -18,10 +18,11 @@ require('dotenv').config();
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const http  = require('http');
 const https = require('https');
+const cb    = require('./shared/circuit-breaker');
 
 // ── Provider detection ────────────────────────────────────────────────────────
 const USE_GROQ   = !!process.env.GROQ_API_KEY;
-const GROQ_MODEL = process.env.GROQ_MODEL  || 'llama-3.3-70b-versatile';
+const GROQ_MODEL = process.env.GROQ_MODEL  || 'openai/gpt-oss-120b';
 const OLMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5-coder:7b';
 const OLMA_HOST  = (process.env.OLLAMA_HOST || 'http://localhost:11434').replace(/\/$/, '');
 
@@ -92,37 +93,62 @@ function parseArgs(raw) {
   return raw;
 }
 
-// ── Chat (non-streaming) ──────────────────────────────────────────────────────
-async function chat(messages, opts = {}) {
-  const tools = opts.tools ? toOpenAITools(opts.tools) : undefined;
+// ── Appels bruts (sans résilience) ─────────────────────────────────────────────
+async function _rawGroqChat(messages, tools, temperature) {
+  const groq = getGroq();
+  const req = { model: GROQ_MODEL, messages, stream: false };
+  if (tools) req.tools = tools;
+  if (temperature != null) req.temperature = temperature;
+  const resp = await groq.chat.completions.create(req);
+  // Normalise vers format Ollama pour que les agents n'aient pas besoin de changer
+  const choice = resp.choices[0];
+  return {
+    message: {
+      role: 'assistant',
+      content: choice.message.content || '',
+      tool_calls: choice.message.tool_calls?.map(tc => ({
+        function: {
+          name: tc.function.name,
+          arguments: tc.function.arguments
+        }
+      }))
+    },
+    done: choice.finish_reason === 'stop' || choice.finish_reason === 'tool_calls'
+  };
+}
 
-  if (USE_GROQ) {
-    const groq = getGroq();
-    const req = { model: GROQ_MODEL, messages, stream: false };
-    if (tools) req.tools = tools;
-    const resp = await groq.chat.completions.create(req);
-    // Normalise vers format Ollama pour que les agents n'aient pas besoin de changer
-    const choice = resp.choices[0];
-    return {
-      message: {
-        role: 'assistant',
-        content: choice.message.content || '',
-        tool_calls: choice.message.tool_calls?.map(tc => ({
-          function: {
-            name: tc.function.name,
-            arguments: tc.function.arguments
-          }
-        }))
-      },
-      done: choice.finish_reason === 'stop' || choice.finish_reason === 'tool_calls'
-    };
-  }
-
-  // Ollama
+async function _rawOllamaChat(messages, tools, temperature) {
   const ollama = getOllama();
   const req = { model: OLMA_MODEL, messages, stream: false };
   if (tools) req.tools = tools;
+  if (temperature != null) req.options = { temperature };
   return ollama.chat(req);
+}
+
+// ── Chat (non-streaming) — protégé par Circuit Breaker + fallback Ollama ──────
+// Chaîne de résilience : Groq (CB-gated) → Ollama → cache → réponse par défaut
+async function chat(messages, opts = {}) {
+  const tools       = opts.tools ? toOpenAITools(opts.tools) : undefined;
+  const fnName      = opts._fnName || 'chat';
+  const temperature = opts.temperature;
+
+  if (!USE_GROQ) return _rawOllamaChat(messages, tools, temperature);
+
+  try {
+    const { value, fallback } = await cb.execute(
+      () => _rawGroqChat(messages, tools, temperature), messages, fnName, temperature
+    );
+    if (fallback) {
+      // Circuit OPEN — tenter Ollama en secours avant d'accepter la reponse par defaut
+      try { return await _rawOllamaChat(messages, tools, temperature); }
+      catch { return { message: { role: 'assistant', content: value }, done: true }; }
+    }
+    return JSON.parse(value);
+  } catch (err) {
+    // Echec Groq (CB laisse passer mais l'appel a echoue) — fallback Ollama
+    try { return await _rawOllamaChat(messages, tools, temperature); }
+    catch { return { message: { role: 'assistant', content: cb.getDefaultResponse(fnName) }, done: true }; }
+  }
 }
 
 // ── Chat (streaming) ──────────────────────────────────────────────────────────
@@ -156,7 +182,7 @@ async function chatCot(messages, structuredPrompt = null) {
     ...messages,
     { role: 'user', content: 'Raisonne étape par étape avant de conclure. Préfixe ta réponse par ÉTAPE 1, ÉTAPE 2, ... CONCLUSION.' }
   ];
-  const step1 = await chat(cotMessages);
+  const step1 = await chat(cotMessages, { _fnName: 'chatCot' });
   const reasoning = step1.message.content || '';
 
   if (!structuredPrompt) return reasoning;
@@ -166,12 +192,12 @@ async function chatCot(messages, structuredPrompt = null) {
     { role: 'assistant', content: reasoning },
     { role: 'user', content: structuredPrompt }
   ];
-  const step2 = await chat(step2Messages);
+  const step2 = await chat(step2Messages, { _fnName: 'chatCot' });
   return { reasoning, structured: step2.message.content || '' };
 }
 
 // ── chatStructured — Structured Output (JSON schema enforcement) ───────────────
-async function chatStructured(messages, schema, maxRetries = 3) {
+async function chatStructured(messages, schema, maxRetries = 3, temperature = null) {
   const schemaStr = JSON.stringify(schema, null, 2);
   const systemMsg = {
     role: 'user',
@@ -180,7 +206,7 @@ async function chatStructured(messages, schema, maxRetries = 3) {
   const augmented = [...messages, systemMsg];
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
-    const resp = await chat(augmented);
+    const resp = await chat(augmented, { _fnName: 'chatStructured', temperature });
     const raw  = (resp.message.content || '').trim();
     const match = raw.match(/\{[\s\S]*\}/);
     if (match) {
@@ -250,7 +276,7 @@ async function chatSelfConsistent(messages, schema, n = 3) {
 
   for (let i = 0; i < n; i++) {
     try {
-      const data = await chatStructured(messages, schema);
+      const data = await chatStructured(messages, schema, 3, temps[i]);
       responses.push(data);
     } catch {
       // ignore failed vote

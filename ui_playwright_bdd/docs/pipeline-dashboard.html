@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><title>Pipeline Dashboard</title>
+<style>
+body{font-family:sans-serif;background:#0f172a;color:#e2e8f0;padding:24px;margin:0}
+h1{color:#7c3aed}p{color:#64748b;font-size:.9rem}
+.summary{display:flex;gap:16px;margin:16px 0}
+.badge{background:#1e293b;border-radius:8px;padding:12px 20px;font-size:1.2rem;font-weight:700}
+.badge.ok{color:#4ade80}.badge.ko{color:#f87171}.badge.time{color:#94a3b8}
+table{width:100%;border-collapse:collapse;margin-top:16px}
+th{background:#1e293b;padding:10px 14px;text-align:left;color:#64748b;font-size:.8rem}
+td{padding:9px 14px;border-bottom:1px solid #1e293b;font-size:.85rem}
+tr.ok td:first-child{color:#4ade80}tr.ko td:first-child{color:#f87171}tr.skip td:first-child{color:#fbbf24}
+tr:hover td{background:#1e293b22}
+</style></head>
+<body>
+<h1>Pipeline Dashboard</h1>
+<p>Mode : <strong>full</strong> &nbsp;|&nbsp; 22/08/2026 18:26:11</p>
+<div class="summary">
+  <div class="badge ok">✓ 8 OK</div>
+  <div class="badge ko">✗ 2 KO</div>
+  <div class="badge time">653.5s</div>
+</div>
+<table>
+  <tr><th>État</th><th>Étape</th><th>Durée</th></tr>
+  <tr class="ok"><td>✓</td><td>Planning → Analyse couverture</td><td>3.0s</td></tr><tr class="ok"><td>✓</td><td>Codegen → Génération specs</td><td>3.7s</td></tr><tr class="ko"><td>✗</td><td>Runner → Exécution tests</td><td>300.2s</td></tr><tr class="ko"><td>✗</td><td>Quality → Triage + RCA</td><td>300.2s</td></tr><tr class="ok"><td>✓</td><td>Bug → Analyse échecs</td><td>6.7s</td></tr><tr class="ok"><td>✓</td><td>Reporting → Dashboard KPI</td><td>4.0s</td></tr><tr class="ok"><td>✓</td><td>Reporting → Sync Jira</td><td>6.5s</td></tr><tr class="ok"><td>✓</td><td>Advisor → Recommandation GO/NO-GO</td><td>8.0s</td></tr><tr class="ok"><td>✓</td><td>Observability → Métriques</td><td>3.7s</td></tr><tr class="ok"><td>✓</td><td>CI → État pipeline GitHub</td><td>17.2s</td></tr>
+</table>
+</body></html>

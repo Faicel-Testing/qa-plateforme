@@ -255,7 +255,7 @@ jobs:
           TRIGGER: ${{ github.event_name }}
         run: |
           python - <<'PY'
-          import os, smtplib
+          import os, smtplib, textwrap
           from email.mime.text import MIMEText
 
           smtp_user = os.getenv("SMTP_USER")
@@ -278,25 +278,26 @@ jobs:
 
           icon    = "OK" if status == "SUCCESS" else "FAIL"
 
-          body = f"""[{icon}] API Tests BDD -- {repo}
+          body = textwrap.dedent(f"""\
+              [{icon}] API Tests BDD -- {repo}
 
-Status    : {status}
-Suite     : {suite}
-Declencheur: {trigger}
-Branche   : {branch}
-Commit    : {sha}
+              Status    : {status}
+              Suite     : {suite}
+              Declencheur: {trigger}
+              Branche   : {branch}
+              Commit    : {sha}
 
-Run URL   : {run_url}
+              Run URL   : {run_url}
 
-Artifacts disponibles :
-  - allure-results (raw JSON)
-  - allure-report  (HTML)
+              Artifacts disponibles :
+                - allure-results (raw JSON)
+                - allure-report  (HTML)
 
-Telecharger localement :
-  gh run download {run_id} --repo {repo}
+              Telecharger localement :
+                gh run download {run_id} --repo {repo}
 
--- GitHub Actions / api-pytest-framework
-"""
+              -- GitHub Actions / api-pytest-framework
+              """)
           msg            = MIMEText(body, "plain", "utf-8")
           msg["Subject"] = f"[GitHub Actions] [{icon}] API Tests BDD -- {branch} (suite:{suite})"
           msg["From"]    = smtp_user
