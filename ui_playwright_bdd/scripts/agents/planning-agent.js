@@ -5,13 +5,10 @@
 // Absorbe : user-stories-agent, test-case-agent, sprint-agent, coverage-agent
 //
 // Usage:
-//   node scripts/agents/planning-agent.js stories              Liste les US Jira
-//   node scripts/agents/planning-agent.js stories create       Crée les US dans Jira
+//   node scripts/agents/planning-agent.js stories              Liste les US Plane
+//   node scripts/agents/planning-agent.js stories create       Crée les US dans Plane
 //   node scripts/agents/planning-agent.js testcases            Liste les TCs existants
-//   node scripts/agents/planning-agent.js sprint list          Liste les sprints
-//   node scripts/agents/planning-agent.js sprint create <nom>  Crée un sprint
-//   node scripts/agents/planning-agent.js sprint start <id>    Démarre un sprint
-//   node scripts/agents/planning-agent.js sprint close <id>    Ferme un sprint
+//   node scripts/agents/planning-agent.js cycles list          Liste les cycles Plane
 //   node scripts/agents/planning-agent.js coverage analyze     Analyse la couverture .feature
 //   node scripts/agents/planning-agent.js coverage gaps        Identifie les manques
 //   node scripts/agents/planning-agent.js coverage suggest     Suggestions LLM
@@ -19,158 +16,48 @@
 // Coût LLM : bas à moyen — seulement sur coverage suggest
 // ============================================================
 require('dotenv').config();
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const fs   = require('fs');
 const path = require('path');
-const https = require('https');
 const llm  = require('./llm');
-const jira = require('./jira-fetcher');
 const tracer = require('./shared/tracer');
 
 const FRAMEWORK    = path.join(__dirname, '..', '..');
+const verifier = require('./shared/agent-verifier').createVerifier({ agent: 'planning', root: FRAMEWORK, runtimeProcess: process });
 const FEATURES_DIR = path.join(FRAMEWORK, 'src', 'features');
 const DOCS_DIR     = path.join(FRAMEWORK, 'docs');
 
 fs.mkdirSync(DOCS_DIR, { recursive: true });
 
 const DRY_RUN = process.argv.includes('--dry-run');
-const PROJECT = process.env.JIRA_PROJECT || 'SCRUM';
-const JIRA_BASE_URL = (process.env.JIRA_BASE_URL || '').replace(/\/$/, '');
-const JIRA_AUTH = Buffer.from(`${process.env.JIRA_EMAIL}:${process.env.JIRA_TOKEN}`).toString('base64');
 
 const G = '\x1b[32m', R = '\x1b[31m', Y = '\x1b[33m', C = '\x1b[36m', B = '\x1b[1m', E = '\x1b[0m';
 
-// ── Agile API helper ───────────────────────────────────────────────────────────
-function agileGet(endpoint) {
-  return new Promise((resolve, reject) => {
-    const url = `${JIRA_BASE_URL}/rest/agile/1.0${endpoint}`;
-    https.get(url, { headers: { Authorization: `Basic ${JIRA_AUTH}`, Accept: 'application/json' } }, res => {
-      let d = ''; res.on('data', c => d += c);
-      res.on('end', () => { try { resolve({ status: res.statusCode, body: JSON.parse(d) }); } catch { reject(new Error(d.slice(0,200))); } });
-    }).on('error', reject);
-  });
+// Plane is the only remote planning provider.
+async function connectedPlane() {
+  const plane = require('./plane-fetcher').client();
+  const project = await plane.request();
+  console.log('Planning connecté à Plane : ' + project.name + ' (' + project.identifier + ')');
+  return plane;
 }
-
-function agilePost(endpoint, body) {
-  return new Promise((resolve, reject) => {
-    const data = JSON.stringify(body);
-    const url  = new URL(`${JIRA_BASE_URL}/rest/agile/1.0${endpoint}`);
-    const req  = https.request({ hostname: url.hostname, path: url.pathname, method: 'POST',
-      headers: { Authorization: `Basic ${JIRA_AUTH}`, 'Content-Type': 'application/json', Accept: 'application/json', 'Content-Length': Buffer.byteLength(data) }
-    }, res => {
-      let d = ''; res.on('data', c => d += c);
-      res.on('end', () => { try { resolve({ status: res.statusCode, body: d ? JSON.parse(d) : {} }); } catch { resolve({ status: res.statusCode, body: d }); } });
-    });
-    req.on('error', reject); req.write(data); req.end();
-  });
-}
-
-// ── STORIES ───────────────────────────────────────────────────────────────────
 async function cmdStories(action) {
-  console.log(`\n${B}=== PLANNING — STORIES ===${E}`);
-  try {
-    await jira.assertJira();
-    const stories = await jira.fetchStories(PROJECT, 100);
-
-    if (action === 'create') {
-      console.log(`  ${Y}⚠  Création manuelle requise — utilisez Jira UI ou jira-ticket-agent${E}`);
-      console.log(`  URL Backlog : ${JIRA_BASE_URL}/jira/software/projects/${PROJECT}/boards`);
-      return;
-    }
-
-    console.log(`  ${C}${stories.length} User Stories dans ${PROJECT}${E}\n`);
-    console.log(`  ${'Clé'.padEnd(12)} ${'Statut'.padEnd(15)} ${'Priorité'.padEnd(10)} Titre`);
-    console.log(`  ${'─'.repeat(80)}`);
-    for (const s of stories) {
-      const statusColor = s.status === 'Done' ? G : s.status === 'In Progress' ? C : '';
-      console.log(`  ${s.key.padEnd(12)} ${statusColor}${s.status.padEnd(15)}${E} ${s.priority.padEnd(10)} ${s.summary.slice(0,45)}`);
-    }
-  } catch (e) {
-    console.error(`  ${R}✗ Jira: ${e.message}${E}`);
-  }
+  if (action && !['list', 'create'].includes(action)) throw Error('Usage: stories [list|create]');
+  const plane = await connectedPlane();
+  const result = action === 'create'
+    ? await require('./shared/plane-stories').importStories(plane, { dryRun: DRY_RUN })
+    : await plane.fetchStories();
+  console.log(JSON.stringify(result, null, 2));
 }
-
-// ── TEST CASES ────────────────────────────────────────────────────────────────
 async function cmdTestCases() {
-  console.log(`\n${B}=== PLANNING — TEST CASES ===${E}`);
-  try {
-    await jira.assertJira();
-    const jql = encodeURIComponent(`project = ${PROJECT} AND issuetype = "Sub-task" ORDER BY created DESC`);
-    const { body } = await new Promise((resolve, reject) => {
-      https.get(`${JIRA_BASE_URL}/rest/api/3/search/jql?jql=${jql}&maxResults=100&fields=summary,status,priority,parent`, {
-        headers: { Authorization: `Basic ${JIRA_AUTH}`, Accept: 'application/json' }
-      }, res => { let d = ''; res.on('data', c => d += c); res.on('end', () => resolve({ body: JSON.parse(d) })); }).on('error', reject);
-    });
-    const tcs = body.issues || [];
-    console.log(`  ${C}${tcs.length} Test Cases dans ${PROJECT}${E}\n`);
-    tcs.slice(0, 20).forEach(tc => {
-      const s = tc.fields.status?.name || '?';
-      const icon = s === 'Done' ? G+'✓'+E : s === 'In Progress' ? C+'→'+E : '○';
-      console.log(`  ${icon} ${tc.key.padEnd(12)} ${tc.fields.summary?.slice(0,55)}`);
-    });
-    if (tcs.length > 20) console.log(`  \x1b[2m... et ${tcs.length-20} autres\x1b[0m`);
-  } catch (e) {
-    console.error(`  ${R}✗ ${e.message}${E}`);
-  }
+  const plane = await connectedPlane();
+  const items = await plane.list('work-items/');
+  const cases = items.filter(i => i.external_source === require('./shared/plane-testcases').SOURCE);
+  console.log(JSON.stringify(cases.sort((a,b) => a.sequence_id-b.sequence_id).map(i => ({ id:i.id, sequence:i.sequence_id, name:i.name, parent:i.parent, state:i.state, labels:i.labels })), null, 2));
 }
-
-// ── SPRINT ────────────────────────────────────────────────────────────────────
-async function cmdSprint(action, arg) {
-  console.log(`\n${B}=== PLANNING — SPRINT ${action?.toUpperCase()||''} ===${E}`);
-  try {
-    // Trouver le board du projet
-    const { body: boardBody } = await agileGet(`/board?projectKeyOrId=${PROJECT}`);
-    const board = boardBody.values?.[0];
-    if (!board) { console.log(`  ${Y}⚠  Aucun board Agile trouvé pour ${PROJECT}${E}`); return; }
-    const boardId = board.id;
-
-    if (action === 'list' || !action) {
-      const { body } = await agileGet(`/board/${boardId}/sprint?state=active,future,closed&maxResults=20`);
-      const sprints  = body.values || [];
-      console.log(`  ${C}Board : ${board.name}${E}\n`);
-      sprints.forEach(s => {
-        const stateColor = s.state === 'active' ? G : s.state === 'future' ? C : '\x1b[2m';
-        console.log(`  ${stateColor}[${s.state.toUpperCase()}]${E}  #${s.id}  ${s.name}  ${s.startDate?.slice(0,10)||''}→${s.endDate?.slice(0,10)||''}`);
-      });
-
-    } else if (action === 'create') {
-      const name = arg || `Sprint ${new Date().toLocaleDateString('fr-FR')}`;
-      if (DRY_RUN) { console.log(`  ${Y}[DRY-RUN] Aurait créé: ${name}${E}`); return; }
-      const { status, body } = await agilePost(`/sprint`, { name, originBoardId: boardId });
-      if (status === 201) console.log(`  ${G}✓ Sprint créé : #${body.id} — ${name}${E}`);
-      else console.error(`  ${R}✗ HTTP ${status}: ${JSON.stringify(body).slice(0,100)}${E}`);
-
-    } else if (action === 'start') {
-      if (!arg) { console.log(`  Usage: planning sprint start <id>`); return; }
-      if (DRY_RUN) { console.log(`  ${Y}[DRY-RUN] Aurait démarré sprint #${arg}${E}`); return; }
-      const start = new Date(); const end = new Date(start); end.setDate(end.getDate()+14);
-      const { status } = await new Promise((resolve, reject) => {
-        const data = JSON.stringify({ state: 'active', startDate: start.toISOString(), endDate: end.toISOString() });
-        const url  = new URL(`${JIRA_BASE_URL}/rest/agile/1.0/sprint/${arg}`);
-        const req  = https.request({ hostname: url.hostname, path: url.pathname, method: 'POST',
-          headers: { Authorization: `Basic ${JIRA_AUTH}`, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) }
-        }, res => resolve({ status: res.statusCode }));
-        req.on('error', reject); req.write(data); req.end();
-      });
-      console.log(status < 300 ? `  ${G}✓ Sprint #${arg} démarré${E}` : `  ${R}✗ HTTP ${status}${E}`);
-
-    } else if (action === 'close') {
-      if (!arg) { console.log(`  Usage: planning sprint close <id>`); return; }
-      if (DRY_RUN) { console.log(`  ${Y}[DRY-RUN] Aurait fermé sprint #${arg}${E}`); return; }
-      const data = JSON.stringify({ state: 'closed' });
-      const url  = new URL(`${JIRA_BASE_URL}/rest/agile/1.0/sprint/${arg}`);
-      const { status } = await new Promise((resolve, reject) => {
-        const req = https.request({ hostname: url.hostname, path: url.pathname, method: 'POST',
-          headers: { Authorization: `Basic ${JIRA_AUTH}`, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) }
-        }, res => resolve({ status: res.statusCode }));
-        req.on('error', reject); req.write(data); req.end();
-      });
-      console.log(status < 300 ? `  ${G}✓ Sprint #${arg} fermé${E}` : `  ${R}✗ HTTP ${status}${E}`);
-    }
-  } catch (e) {
-    console.error(`  ${R}✗ ${e.message}${E}`);
-  }
+async function cmdCycles(action) {
+  if (action && action !== 'list') throw Error('Seule la consultation des cycles Plane est prise en charge : cycles list. Gérer leurs dates dans Plane.');
+  const plane = await connectedPlane();
+  console.log(JSON.stringify(await plane.list('cycles/'), null, 2));
 }
 
 // ── COVERAGE ──────────────────────────────────────────────────────────────────
@@ -234,8 +121,10 @@ Format: @feature @type\nScenario: ...\n  Given...\n  When...\n  Then...`;
 
       const resp = await llm.chat([{ role: 'user', content: prompt }]);
       span.response = resp.message.content; span.end(true);
-      console.log(resp.message.content);
+      verifier.check('suggest', resp.message.content, { gaps });
+      console.log('[PROPOSITION NON VÉRIFIÉE]\n' + resp.message.content);
     } catch (e) {
+      verifier.failure(e);
       span.error = e.message; span.end(false);
       console.error(`  ${R}✗ ${e.message}${E}`);
     }
@@ -245,24 +134,24 @@ Format: @feature @type\nScenario: ...\n  Given...\n  When...\n  Then...`;
 // ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
   const args = process.argv.slice(2).filter(a => !a.startsWith('--'));
-  const [cmd, sub, arg3] = args;
-  await llm.assertRunning();
+  const [cmd, sub] = args;
+  if (cmd === 'coverage' && sub === 'suggest') await llm.assertRunning();
 
   switch (cmd) {
     case 'stories':   await cmdStories(sub);         break;
     case 'testcases': await cmdTestCases();           break;
-    case 'sprint':    await cmdSprint(sub, arg3);     break;
+    case 'check':     await connectedPlane();         break;
+    case 'cycles':
+    case 'sprint':    await cmdCycles(sub);           break;
     case 'coverage':  await cmdCoverage(sub);         break;
     default:
       console.log(`
 ${B}Planning Agent${E} — Gestion projet & couverture
 
-  stories [create]         Liste ou crée les User Stories Jira
-  testcases                Liste les Test Cases (sous-tâches Jira)
-  sprint list              Liste les sprints du board
-  sprint create [nom]      Crée un nouveau sprint
-  sprint start <id>        Démarre un sprint
-  sprint close <id>        Ferme un sprint
+  check                    Vérifie la connexion au projet Plane
+  stories [create]         Liste ou importe les User Stories Plane
+  testcases                Liste les cas de test enfants dans Plane
+  cycles list              Liste les cycles Plane (sprint list : alias)
   coverage analyze         Analyse la couverture des .feature
   coverage gaps            Identifie les types de test manquants
   coverage suggest         Suggestions LLM pour combler les manques
@@ -271,9 +160,10 @@ Options:
   --dry-run    Simulation sans écriture
 
 Variables:
-  JIRA_PROJECT=SCRUM       Projet Jira cible
+  PLANE_WORKSPACE / PLANE_PROJECT_ID / PLANE_API_KEY
 `);
   }
 }
 
-main().catch(e => { console.error(R + e.message + E); process.exit(1); });
+if (require.main === module) main().catch(e => { console.error(R + e.message + E); process.exitCode = 1; });
+module.exports = { main, connectedPlane, cmdStories, cmdTestCases, cmdCycles };

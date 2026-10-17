@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "reviewStatus": "DRAFT",
+  "description": "Cas initiaux dérivés des scénarios existants, à relire humainement avant toute utilisation comme gate métier.",
+  "cases": [
+    { "id": "delete-todo", "input": "Après la suppression d'une tâche, que doit vérifier le test ?", "expected_output": "Le test doit vérifier que la tâche supprimée n'apparaît plus dans la liste.", "expected_sources": ["src/features/Id04_DeleteTodoTest.feature"] },
+    { "id": "login-valid", "input": "Quel résultat est attendu après une connexion avec des identifiants valides ?", "expected_output": "L'utilisateur doit être connecté et accéder au dashboard.", "expected_sources": ["src/features/Id02_LoginTest.feature", "qa-knowledge/qa-knowledge.md"] },
+    { "id": "login-password", "input": "Quel résultat est attendu si l'email est correct mais le mot de passe est incorrect ?", "expected_output": "Un message d'erreur d'authentification doit être affiché.", "expected_sources": ["src/features/Id05_LoginNegativeTest.feature"] },
+    { "id": "login-empty-email", "input": "Que doit vérifier le scénario de connexion avec un email vide ?", "expected_output": "Le test doit vérifier l'affichage d'une erreur indiquant que le champ email est obligatoire.", "expected_sources": ["src/features/Id05_LoginNegativeTest.feature"] }
+  ]
+}

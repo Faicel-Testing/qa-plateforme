@@ -1,6 +1,6 @@
 'use strict';
 // ============================================================
-// Reporting Agent — KPI, Dashboard, Notifications, Sync Jira
+// Reporting Agent — KPI, Dashboard, Notifications, Sync Plane
 // ============================================================
 // Absorbe : kpi-agent, notification-agent, status-agent, report-agent
 //
@@ -9,13 +9,12 @@
 //   node scripts/agents/reporting-agent.js dashboard       Génère docs/kpi-dashboard.html
 //   node scripts/agents/reporting-agent.js notify          Envoie résumé Slack (ou Teams)
 //   node scripts/agents/reporting-agent.js notify teams    Envoie vers Teams
-//   node scripts/agents/reporting-agent.js sync            Synchronise Allure → Jira
+//   node scripts/agents/reporting-agent.js sync            Synchronise Allure → Plane
 //   node scripts/agents/reporting-agent.js summary         Résumé console rapide
 //
 // Coût LLM : très bas — LLM uniquement pour le résumé narratif (notify)
 // ============================================================
 require('dotenv').config();
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const fs    = require('fs');
 const path  = require('path');
@@ -34,7 +33,8 @@ function fmt(template, vars) {
 }
 
 const FRAMEWORK   = path.join(__dirname, '..', '..');
-const RESULTS_DIR = path.join(FRAMEWORK, 'allure-results');
+const verifier = require('./shared/agent-verifier').createVerifier({ agent: 'reporting', root: FRAMEWORK, runtimeProcess: process });
+const RESULTS_DIR = require('./shared/pipeline-runtime').resultDirectory(FRAMEWORK);
 const DOCS_DIR    = path.join(FRAMEWORK, 'docs');
 
 fs.mkdirSync(DOCS_DIR, { recursive: true });
@@ -42,9 +42,6 @@ fs.mkdirSync(DOCS_DIR, { recursive: true });
 const DRY_RUN        = process.argv.includes('--dry-run');
 const SLACK_WEBHOOK  = process.env.SLACK_WEBHOOK_URL || '';
 const TEAMS_WEBHOOK  = process.env.TEAMS_WEBHOOK_URL || '';
-const JIRA_BASE_URL  = (process.env.JIRA_BASE_URL || '').replace(/\/$/, '');
-const JIRA_AUTH      = Buffer.from(`${process.env.JIRA_EMAIL}:${process.env.JIRA_TOKEN}`).toString('base64');
-const JIRA_PROJECT   = process.env.JIRA_PROJECT || 'SCRUM';
 
 const G = '\x1b[32m', R = '\x1b[31m', Y = '\x1b[33m', C = '\x1b[36m', B = '\x1b[1m', E = '\x1b[0m';
 
@@ -162,7 +159,6 @@ async function cmdNotify(target = 'slack') {
   const durationStr = durationMs ? `${(durationMs / 1000).toFixed(1)}s` : 'N/A';
 
   const span = new tracer.Span('notifySummary', JSON.stringify(kpi), llm.MODEL).begin();
-  let summary;
   try {
     const _tpl = promptStore.get('qa_notify') ||
       'Tu es un expert QA. Génère un résumé Slack concis (2-3 phrases) du run Playwright.\n' +
@@ -179,14 +175,17 @@ async function cmdNotify(target = 'slack') {
     });
 
     const resp = await llm.chat([{ role: 'user', content: prompt }]);
-    summary = resp.message.content || '';
+    const narrative = resp.message.content || '';
+    verifier.check('notify', narrative, { kpi, failures });
     span.end(true);
     promptStore.recordUsage('qa_notify');
   } catch (e) {
+    verifier.failure(e);
     span.error = e.message; span.end(false);
-    summary = `Run Playwright : ${kpi.pass_rate}% de réussite (${kpi.passed}/${kpi.total}).`;
   }
 
+  const summary = require('./shared/agent-verifier').factualSummary(kpi);
+  verifier.requireValidated(verifier.check('factual-summary', summary, kpi));
   const status = kpi.gate_ok ? 'PASSED' : 'FAILED';
   const emoji  = { PASSED: '✅', FAILED: '❌' }[status] || '📊';
   console.log(`\n  ${emoji} ${kpi.pass_rate}% — ${summary.slice(0,80)}`);
@@ -226,45 +225,12 @@ async function cmdNotify(target = 'slack') {
   }
 }
 
-// ── SYNC Allure → Jira ────────────────────────────────────────────────────────
+// ── SYNC Allure → Plane ────────────────────────────────────────────────────────
 async function cmdSync() {
-  console.log(`\n${B}=== REPORTING — SYNC JIRA ===${E}`);
-  const results = loadResults();
-  if (!results.length) { console.log(`  ${Y}⚠  Aucun résultat Allure${E}`); return; }
-
-  const STATUS_MAP = { passed: 'Terminé', failed: 'En cours', broken: 'En cours', skipped: 'À faire' };
-  let synced = 0, skipped = 0;
-
-  for (const r of results) {
-    const labels = (r.labels || []).map(l => l.value);
-    const jiraKey = labels.find(l => /^[A-Z]+-\d+$/.test(l));
-    if (!jiraKey) { skipped++; continue; }
-
-    const jiraStatus = STATUS_MAP[r.status] || 'À faire';
-    const icon = r.status === 'passed' ? G+'✓'+E : R+'✗'+E;
-    console.log(`  ${icon} ${r.name?.slice(0,45).padEnd(45)} → ${jiraKey}  [${jiraStatus}]`);
-
-    if (!DRY_RUN) {
-      try {
-        const comment = { body: { type:'doc', version:1, content:[{ type:'paragraph', content:[
-          { type:'text', text:`[Allure] ${r.status.toUpperCase()} — ${r.name}`, marks:[{type:'strong'}] }
-        ]}]}};
-        const data = JSON.stringify(comment);
-        await new Promise((resolve, reject) => {
-          const url = new URL(`${JIRA_BASE_URL}/rest/api/3/issue/${jiraKey}/comment`);
-          const req = https.request({ hostname:url.hostname, path:url.pathname, method:'POST',
-            headers:{Authorization:`Basic ${JIRA_AUTH}`,'Content-Type':'application/json','Content-Length':Buffer.byteLength(data)}
-          }, res => resolve(res.statusCode));
-          req.on('error', reject); req.write(data); req.end();
-        });
-        synced++;
-      } catch {}
-    }
-  }
-  console.log(`\n  ${G}✓ ${synced} synchronisés${E}  ${C}${skipped} sans clé Jira${E}`);
+  const result = await require('./shared/plane-results').syncResults(require('./plane-fetcher').client(), RESULTS_DIR, { apply: !DRY_RUN, pace: 1100 });
+  console.log('Plane results: ' + JSON.stringify(result));
 }
 
-// ── SUMMARY ───────────────────────────────────────────────────────────────────
 function cmdSummary() {
   const results = loadResults();
   const kpi     = computeKpi(results);
@@ -292,7 +258,7 @@ ${B}Reporting Agent${E} — KPI, Dashboard, Notifications, Sync
   kpi              Calcule et affiche les KPIs depuis allure-results
   dashboard        Génère docs/kpi-dashboard.html avec Chart.js
   notify [teams]   Envoie résumé Slack (ou Teams)
-  sync             Synchronise les statuts Allure → commentaires Jira
+  sync             Synchronise les statuts Allure → commentaires Plane
   summary          Résumé rapide Quality Gate en console
 
 Options:
@@ -301,9 +267,10 @@ Options:
 Variables:
   SLACK_WEBHOOK_URL     Webhook Slack
   TEAMS_WEBHOOK_URL     Webhook Teams (alternatif)
-  JIRA_PROJECT=SCRUM    Projet Jira cible
+  PLANE_PROJECT_ID    Projet Plane cible
 `);
   }
 }
 
-main().catch(e => { console.error(R + e.message + E); process.exit(1); });
+if (require.main === module) main().catch(e => { console.error(R + e.message + E); process.exitCode = 1; });
+module.exports = { cmdNotify, cmdSync };

@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "providers": {
+    "groq": {
+      "origins": [
+        "https://api.groq.com"
+      ],
+      "models": [
+        "openai/gpt-oss-120b",
+        "openai/gpt-oss-20b"
+      ],
+      "routes": [
+        "/openai/v1/chat/completions"
+      ]
+    }
+  },
+  "maxRequestBytes": 200000,
+  "maxOutputTokens": 4096,
+  "maxRequestsPerMinute": 60,
+  "maxReservedUnitsPerTask": 1000000,
+  "timeoutMs": 120000
+}

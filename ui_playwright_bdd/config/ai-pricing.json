@@ -1,0 +1,10 @@
+{
+  "currency": "USD",
+  "checkedAt": "2026-09-24",
+  "source": "https://console.groq.com/docs/models",
+  "note": "Prix catalogue par million de tokens, estimation hors taxes, remises, quotas gratuits et outils payants. Sans tarif cache, calcul au tarif entrée normal.",
+  "models": {
+    "groq/openai/gpt-oss-120b": { "input": 0.15, "output": 0.60 },
+    "groq/openai/gpt-oss-20b": { "input": 0.075, "output": 0.30 }
+  }
+}

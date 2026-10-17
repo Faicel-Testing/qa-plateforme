@@ -1,0 +1,22 @@
+@applicatio-4 @regression
+Feature: [SCRUM-6] Login — En tant qu'utilisateur inscrit, je veux me connecter à mon compte
+
+  Background:
+    Given je suis sur la page de connexion
+
+  Scenario: APPLICATIO-4_LoginPositive - connexion réussie
+    When je me connecte avec l'email "[REDACTED_EMAIL]" et le mot de passe "ValidPass123"
+    Then je suis redirigé vers le tableau de bord
+
+  Scenario Outline: APPLICATIO-4_LoginNegative - échec de connexion
+    When je me connecte avec l'email "<email>" et le mot de passe "<password>"
+    Then je vois un message d'erreur
+
+    Examples:
+      | email                     | password          | description                         |
+      | "invalidemail"            | "ValidPass123"    | email au format invalide            |
+      | "[REDACTED_EMAIL]"  | "WrongPass"       | mot de passe incorrect              |
+      | "[REDACTED_EMAIL]" | "ValidPass123"    | email inexistant                    |
+      | ""                        | "ValidPass123"    | email vide                          |
+      | "[REDACTED_EMAIL]"  | ""                | mot de passe vide                   |
+      | ""                        | ""                | email et mot de passe vides         |

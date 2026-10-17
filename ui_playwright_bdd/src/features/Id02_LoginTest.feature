@@ -1,4 +1,4 @@
-@ui @login @Id02 @smoke @regression @critical
+@ui @login @Id02 @smoke @regression @critical @applicatio-4
 Feature: Login
 
   Scenario: Id02_LoginTest - user can login successfully

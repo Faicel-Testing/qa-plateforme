@@ -1,5 +1,12 @@
 # ── Dépendances ───────────────────────────────────────────────────────────────
 node_modules/
+.qa-rag/
+.venv-deepeval/
+.venv-agents/
+.deepeval/
+.deepeval*
+__pycache__/
+!qa_agents/pipeline.py
 
 # ── Variables d'environnement (NE JAMAIS COMMITTER) ──────────────────────────
 .env
@@ -13,6 +20,8 @@ allure-results/
 allure-results-chrome/
 allure-results-firefox/
 allure-report/
+allure-runs/
+.allure-history/
 test-results/
 
 # ── Fichiers temporaires ──────────────────────────────────────────────────────
@@ -34,4 +43,5 @@ dist/
 
 # ── OS ────────────────────────────────────────────────────────────────────────
 .DS_Store
+.qa-test-db/
 Thumbs.db

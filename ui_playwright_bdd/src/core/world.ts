@@ -8,12 +8,20 @@ import {
   webkit
 } from 'playwright';
 import { TestUser } from '../support/testData';
+import { TestDataService } from '../data/TestDataService';
 
 export class CustomWorld extends World {
   browser!: Browser;
   context!: BrowserContext;
   page!: Page;
   user?: TestUser;
+  dataService?: TestDataService;
+  dataOutcome = 'unknown';
+
+  async newTestUser(): Promise<TestUser> {
+    if (!this.dataService) throw new Error('Test data service not initialized by scenario hooks');
+    return this.dataService.createUser();
+  }
   baseUrl!: string;
   browserName!: string;
 
@@ -21,6 +29,8 @@ export class CustomWorld extends World {
   traceName?: string;
   tracingEnabled: boolean = false;
   lastTodo?: string;
+  todoCountBeforeAttempt?: number;
+  deleteAttemptFoundItem?: boolean;
   apiToken?: string;
   newPassword?: string;
   newEmail?: string;
@@ -87,6 +97,9 @@ export class CustomWorld extends World {
       }
     } catch (error) {
       console.warn('⚠️ Browser close failed:', error);
+    } finally {
+      try { await this.dataService?.dispose(this.dataOutcome); }
+      catch { throw new Error('Test data reservation release failed; inspect the dedicated database'); }
     }
   }
 }

@@ -13,11 +13,11 @@
 // Coût LLM : dépend des agents invoqués (aucun LLM propre à cet agent)
 // ============================================================
 require('dotenv').config();
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const { spawnSync } = require('child_process');
 const fs   = require('fs');
 const path = require('path');
+const runtime = require('./shared/pipeline-runtime');
+const { readVerification } = require('./shared/agent-verifier');
 
 const AGENTS_DIR = __dirname;
 const FRAMEWORK  = path.join(__dirname, '..', '..');
@@ -32,38 +32,69 @@ const VERBOSE   = process.argv.includes('--verbose');
 const NO_TESTS  = process.argv.includes('--no-tests');
 
 const G = '\x1b[32m', R = '\x1b[31m', Y = '\x1b[33m', C = '\x1b[36m', B = '\x1b[1m', E = '\x1b[0m';
+const validationLabel = status => ({ PENDING_APPROVAL: 'EN ATTENTE D’APPROBATION', REJECTED: 'REJETÉ',
+  BLOCKED: 'BLOQUÉ', NOT_EVALUATED: 'NON ÉVALUÉ', PASS: 'VALIDÉ' }[status] || status);
 
 // ── Utilitaire d'exécution d'agent ────────────────────────────────────────────
-function runAgent(agentFile, args = [], label = '') {
+async function runAgent(agentFile, args = [], label = '', env = process.env, logDir = LOG_DIR) {
   const name = label || path.basename(agentFile, '.js');
   const start = Date.now();
   console.log(`\n${C}▶ ${name}${args.length ? ' ' + args.join(' ') : ''}${E}`);
 
   if (DRY_RUN) {
     console.log(`  ${Y}[DRY-RUN] skipped${E}`);
-    return { success: true, durationMs: 0, skipped: true };
+    return { success: false, durationMs: 0, skipped: true };
   }
 
-  const result = spawnSync('node', [path.join(AGENTS_DIR, agentFile), ...args], {
+  const verificationFile = path.join(logDir, `${path.basename(agentFile, '.js')}-${require('crypto').randomUUID()}.verification.jsonl`);
+  const decisionFile = verificationFile + '.decision.json';
+  const entryArgs = env.QA_AGENT_RUNTIME === 'python'
+    // Native advisor gates tests only. Preserve this legacy pipeline's human release checks.
+    ? [path.join(FRAMEWORK, 'scripts', 'python-agents.cjs'), agentFile === 'advisor-agent.js' ? 'advisor-legacy' : agentFile.replace(/-agent\.js$/, ''), ...args]
+    : [path.join(AGENTS_DIR, agentFile), ...args];
+  const result = await runtime.execute(process.execPath, entryArgs, {
     cwd: FRAMEWORK,
-    stdio: VERBOSE ? 'inherit' : ['ignore', 'pipe', 'pipe'],
-    encoding: 'utf8',
-    timeout: 5 * 60 * 1000,
+    env: { ...env, QA_VERIFICATION_FILE: verificationFile, QA_DECISION_FILE: decisionFile }, verbose: VERBOSE,
+    logFile: path.join(logDir, `${path.basename(agentFile, '.js')}-${args[0] || 'run'}.log`),
+    timeout: agentFile === 'runner-agent.js'
+      ? runtime.timeoutMs(env.RUNNER_TIMEOUT_MS, 1800000) + 30000
+      : agentFile === 'quality-agent.js' && args[0] === 'full'
+        ? runtime.timeoutMs(env.QUALITY_TIMEOUT_MS || env.AGENT_TIMEOUT_MS, 900000)
+      : agentFile === 'bug-agent.js'
+        ? runtime.timeoutMs(env.BUG_TIMEOUT_MS || env.AGENT_TIMEOUT_MS, 600000)
+      : runtime.timeoutMs(env.AGENT_TIMEOUT_MS, 300000),
   });
 
   const durationMs = Date.now() - start;
-  const success    = result.status === 0;
+  const verification = readVerification(verificationFile);
+  runtime.recordVerification?.(result.metricsTaskId, verification.status, env);
+  const success = result.success && verification.status !== 'REJECTED';
+  let decision;
+  // Consume a per-invocation record, never infer approval state from arbitrary log text.
+  if (agentFile === 'advisor-agent.js' && !result.timedOut && !result.error && verification.status !== 'REJECTED' && fs.existsSync(decisionFile)) {
+    try {
+      const record = JSON.parse(fs.readFileSync(decisionFile, 'utf8'));
+      if (record.schemaVersion === 1 && record.runId === env.QA_RUN_ID && typeof record.reason === 'string' &&
+          ((record.status === 'PENDING_APPROVAL' && result.exitCode === 2) ||
+           (['REJECTED', 'BLOCKED'].includes(record.status) && result.exitCode === 1))) decision = record;
+    } catch { /* Invalid status records remain technical failures. */ }
+  }
+  const pendingApproval = decision?.status === 'PENDING_APPROVAL';
+  const rejected = decision?.status === 'REJECTED';
+  const blocked = decision?.status === 'BLOCKED';
 
   if (success) {
     console.log(`  ${G}✓ Terminé en ${(durationMs/1000).toFixed(1)}s${E}`);
     if (VERBOSE && result.stdout) console.log(result.stdout.slice(-300));
+  } else if (decision) {
+    console.log(`  ${Y}${validationLabel(decision.status)} — ${decision.reason}${E}`);
   } else {
-    console.log(`  ${R}✗ Échec (${result.status ?? 'timeout'}) en ${(durationMs/1000).toFixed(1)}s${E}`);
-    const errOut = (result.stderr || result.stdout || '').slice(-400);
+    console.log(`  ${R}✗ Échec (${result.timedOut ? 'timeout' : result.exitCode ?? result.error}) en ${(durationMs/1000).toFixed(1)}s${E}`);
+    const errOut = [result.stdout, result.stderr].filter(Boolean).map(text => text.slice(-2200)).join('\n');
     if (errOut) console.log(`  ${R}${errOut}${E}`);
   }
 
-  return { name, success, durationMs, stdout: result.stdout || '', stderr: result.stderr || '' };
+  return { name, ...result, success, durationMs, verification, pendingApproval, rejected, blocked, reason: decision?.reason };
 }
 
 // ── Étapes de pipeline ────────────────────────────────────────────────────────
@@ -73,18 +104,21 @@ const PIPELINE_STEPS = {
     { file: 'planning-agent.js',     args: ['coverage', 'analyze'], label: 'Planning → Analyse couverture' },
     { file: 'codegen-agent.js',      args: ['spec'],                label: 'Codegen → Génération specs' },
     { file: 'runner-agent.js',       args: ['run'],                 label: 'Runner → Exécution tests',      skipIfNoTests: true },
+    { file: 'allure-agent.js', args: ['generate'], label: 'Allure → Rapport des tests' },
     { file: 'quality-agent.js',      args: ['full'],                label: 'Quality → Triage + RCA' },
     { file: 'bug-agent.js',          args: ['analyze'],             label: 'Bug → Analyse échecs' },
     { file: 'reporting-agent.js',    args: ['dashboard'],           label: 'Reporting → Dashboard KPI' },
-    { file: 'reporting-agent.js',    args: ['sync'],                label: 'Reporting → Sync Jira' },
+    { file: 'reporting-agent.js',    args: ['sync'],                label: 'Reporting → Sync Plane' },
     { file: 'advisor-agent.js',      args: ['advise'],              label: 'Advisor → Recommandation GO/NO-GO' },
     { file: 'observability-agent.js',args: ['metrics'],             label: 'Observability → Métriques' },
     { file: 'ci-agent.js',           args: ['status'],              label: 'CI → État pipeline GitHub' },
+    { file: 'advisor-agent.js', args: ['gate'], label: 'Advisor → Quality gate' },
   ],
 
   // Pipeline rapide — post-run essentiels
   quick: [
-    { file: 'runner-agent.js',    args: ['run'],         label: 'Runner → Exécution tests', skipIfNoTests: true },
+    { file: 'runner-agent.js',    args: ['smoke'],       label: 'Runner → Exécution smoke', skipIfNoTests: true },
+    { file: 'allure-agent.js', args: ['generate'], label: 'Allure → Rapport des tests' },
     { file: 'quality-agent.js',   args: ['triage'],      label: 'Quality → Triage rapide' },
     { file: 'reporting-agent.js', args: ['dashboard'],   label: 'Reporting → Dashboard KPI' },
     { file: 'advisor-agent.js',   args: ['gate'],        label: 'Advisor → Quality gate' },
@@ -92,6 +126,7 @@ const PIPELINE_STEPS = {
 
   // Rapport uniquement (sans exécution)
   report: [
+    { file: 'allure-agent.js', args: ['generate'], label: 'Allure → Rapport des tests' },
     { file: 'quality-agent.js',      args: ['full'],      label: 'Quality → Analyse complète' },
     { file: 'bug-agent.js',          args: ['report'],    label: 'Bug → Rapport bugs' },
     { file: 'reporting-agent.js',    args: ['dashboard'], label: 'Reporting → Dashboard KPI' },
@@ -104,6 +139,21 @@ async function runPipeline(mode) {
   const steps   = PIPELINE_STEPS[mode];
   const startTs = Date.now();
   const results = [];
+  const runId = `${Date.now()}-${require('crypto').randomUUID()}`;
+  const logDir = path.join(LOG_DIR, 'pipeline', runId);
+  const fresh = mode !== 'report' && !NO_TESTS;
+  const resultsDir = fresh ? path.join(FRAMEWORK, 'allure-runs', runId, 'results') : runtime.resultDirectory(FRAMEWORK);
+  const env = { ...process.env, ALLURE_RESULTS_DIR: resultsDir };
+  if (fresh) env.QA_RUN_ID = runId;
+  else delete env.QA_RUN_ID;
+  if (!DRY_RUN) {
+    fs.mkdirSync(logDir, { recursive: true });
+    if (fresh) {
+      fs.mkdirSync(resultsDir, { recursive: true });
+      fs.writeFileSync(path.join(resultsDir, 'run-manifest.json'), JSON.stringify({ runId, completed: false, startedAt: Date.now() }));
+      fs.writeFileSync(path.join(LOG_DIR, 'latest-test-run.json'), JSON.stringify({ runId }));
+    }
+  }
 
   console.log(`\n${B}${'═'.repeat(60)}${E}`);
   console.log(`${B}  PIPELINE AGENT — ${mode.toUpperCase()}${E}`);
@@ -113,34 +163,80 @@ async function runPipeline(mode) {
   for (const step of steps) {
     if (step.skipIfNoTests && NO_TESTS) {
       console.log(`  ${Y}⊘ ${step.label} — skipped (--no-tests)${E}`);
-      results.push({ name: step.label, success: true, skipped: true, durationMs: 0 });
+      results.push({ name: step.label, success: false, skipped: true, durationMs: 0 });
       continue;
     }
-    const r = runAgent(step.file, step.args, step.label);
+    if (step.file === 'reporting-agent.js' && step.args[0] === 'sync' && !process.argv.includes('--sync-plane')) {
+      results.push({ name: step.label, success: false, skipped: true, durationMs: 0, reason: 'External sync disabled; use --sync-plane' });
+      continue;
+    }
+    const decision = step.file === 'advisor-agent.js';
+    if (decision && results.some(r => ['REJECTED', 'UNVERIFIED'].includes(r.verification?.status))) {
+      results.push({ name: step.label, success: false, blocked: true,
+        reason: 'Prior AI outputs are rejected or unverified; no automated release decision.', durationMs: 0 });
+      continue;
+    }
+    const needsResults = ['quality-agent.js', 'bug-agent.js', 'reporting-agent.js'].includes(step.file);
+    if (!DRY_RUN && decision) {
+      const check = runtime.checkRun(resultsDir, fresh ? runId : undefined);
+      const previousFailure = results.some(r => !r.success && !r.skipped && !r.pendingApproval);
+      if (!fresh || !check.allowed || previousFailure) {
+        const reason = !fresh ? 'No new test execution: release validation disabled'
+          : [...check.reasons, ...(previousFailure ? ['A required pipeline step failed'] : [])].join('; ');
+        console.error(`BLOCKED: ${step.label}: ${reason}`);
+        results.push({ name: step.label, success: false, blocked: true, reason, durationMs: 0 });
+        continue;
+      }
+    }
+    if (!DRY_RUN && needsResults && !runtime.readResults(resultsDir).results.length) {
+      results.push({ name: step.label, success: false, blocked: true, reason: 'No results for this execution', durationMs: 0 });
+      continue;
+    }
+    const r = await runAgent(step.file, step.args, step.label, env, logDir);
     results.push({ name: step.label, ...r });
+    if (step.file === 'codegen-agent.js' && !DRY_RUN) {
+      console.log('Codegen produit uniquement des propositions a revoir. Le runner execute les sources existantes, pas ces propositions.');
+      if (!r.success) console.log('Generation incomplete : les tests existants peuvent etre executes, mais la validation globale restera bloquee.');
+    }
   }
 
   const totalMs = Date.now() - startTs;
-  const ok      = results.filter(r => r.success || r.skipped).length;
-  const ko      = results.filter(r => !r.success && !r.skipped).length;
+  const ok      = results.filter(r => r.success && !r.skipped).length;
+  const ko      = results.filter(r => !r.success && !r.skipped && !r.blocked && !r.pendingApproval && !r.rejected).length;
+  const blocked = results.filter(r => r.blocked).length;
+  const pendingApproval = results.filter(r => r.pendingApproval).length;
+  const rejected = results.filter(r => r.rejected).length;
+  const testData = !DRY_RUN && fresh ? runtime.readResults(resultsDir) : { results: [], errors: [] };
+  const testSummary = { total: testData.results.length, passed: testData.results.filter(r => r.status === 'passed').length,
+    complete: !DRY_RUN && fresh && runtime.checkRun(resultsDir, runId).manifest?.completed === true && !testData.errors.length };
 
   console.log(`\n${B}${'═'.repeat(60)}${E}`);
-  console.log(`${B}  RÉSULTATS${E}   ${G}${ok}/${results.length} OK${E}   ${ko ? R+ko+' KO'+E : ''}   ${(totalMs/1000).toFixed(1)}s`);
+  console.log(`TESTS BDD : ${testSummary.total ? `${testSummary.passed}/${testSummary.total} réussis` : 'NON ÉVALUÉS'}${testSummary.total && !testSummary.complete ? ' (résultats incomplets)' : ''}`);
+  console.log(`${B}  PIPELINE${E}   ${G}${ok}/${results.length} étapes terminées${E}   ${ko} ÉCHEC(S)   ${blocked} BLOQUÉ(S)   ${rejected} REJETÉ(S)   ${pendingApproval} EN ATTENTE D’APPROBATION   ${(totalMs/1000).toFixed(1)}s`);
   console.log(`${B}${'═'.repeat(60)}${E}\n`);
 
   results.forEach(r => {
-    const icon = r.skipped ? Y+'⊘'+E : r.success ? G+'✓'+E : R+'✗'+E;
+    const icon = r.pendingApproval ? Y+'EN ATTENTE D’APPROBATION'+E : r.rejected ? R+'REJETÉ'+E : r.blocked ? Y+'BLOQUÉ'+E : r.skipped ? Y+'⊘'+E : r.success ? G+'✓'+E : R+'ÉCHEC'+E;
     console.log(`  ${icon}  ${(r.name||'').slice(0,50).padEnd(52)} ${((r.durationMs||0)/1000).toFixed(1).padStart(5)}s`);
+    if (r.reason) console.log(`    Motif : ${r.reason}`);
   });
 
   // Sauvegarde du résumé
   const summary = {
-    mode, timestamp: new Date().toISOString(), totalMs,
-    ok, ko, steps: results.length,
-    results: results.map(r => ({ name: r.name, success: r.success||false, skipped: !!r.skipped, durationMs: r.durationMs||0 }))
+    mode, runId, resultsDir, logDir, timestamp: new Date().toISOString(), totalMs,
+    validation: DRY_RUN || !fresh ? 'NOT_EVALUATED' : ko ? 'BLOCKED'
+      : rejected ? 'REJECTED' : blocked ? 'BLOCKED' : pendingApproval ? 'PENDING_APPROVAL'
+      : results.some(r => r.verification?.status === 'UNVERIFIED') ? 'NOT_EVALUATED' : 'PASS',
+    ok, ko, blocked, pendingApproval, rejected, testSummary, steps: results.length,
+    skipped: results.filter(r => r.skipped).length,
+    results: results.map(({ stdout, stderr, ...r }) => r)
   };
   const summaryPath = path.join(LOG_DIR, 'pipeline-summary.json');
-  if (!DRY_RUN) fs.writeFileSync(summaryPath, JSON.stringify(summary, null, 2), 'utf8');
+  if (!DRY_RUN) {
+    fs.writeFileSync(summaryPath, JSON.stringify(summary, null, 2), 'utf8');
+    fs.writeFileSync(path.join(logDir, 'summary.json'), JSON.stringify(summary, null, 2), 'utf8');
+    console.log(`STATUT GLOBAL : ${validationLabel(summary.validation)}\nLogs: ${logDir}\nAllure: npm.cmd run allure:open`);
+  }
 
   // Rapport HTML
   const html = buildHtmlReport(summary);
@@ -150,7 +246,7 @@ async function runPipeline(mode) {
     console.log(`\n  ${G}✓ Rapport : ${htmlPath}${E}`);
   }
 
-  process.exitCode = ko > 0 ? 1 : 0;
+  process.exitCode = ko > 0 || blocked > 0 || rejected > 0 ? 1 : pendingApproval > 0 ? 2 : 0;
 }
 
 // ── STATUS — Vérification rapide des agents ───────────────────────────────────
@@ -191,9 +287,10 @@ function cmdStatus() {
 // ── Génération HTML ───────────────────────────────────────────────────────────
 function buildHtmlReport(s) {
   const rows = s.results.map(r => {
-    const cls   = r.skipped ? 'skip' : r.success ? 'ok' : 'ko';
-    const icon  = r.skipped ? '⊘' : r.success ? '✓' : '✗';
-    return `<tr class="${cls}"><td>${icon}</td><td>${r.name||''}</td><td>${((r.durationMs||0)/1000).toFixed(1)}s</td></tr>`;
+    const cls   = r.skipped || r.blocked || r.pendingApproval ? 'skip' : r.success ? 'ok' : 'ko';
+    const icon  = r.pendingApproval ? 'EN ATTENTE D’APPROBATION' : r.rejected ? 'REJETÉ' : r.blocked ? 'BLOQUÉ' : r.skipped ? 'IGNORÉ' : r.success ? 'TERMINÉ' : 'ÉCHEC';
+    const escape = value => String(value || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    return `<tr class="${cls}"><td>${icon}</td><td>${escape(r.name)}<br>${escape(r.reason || r.error || (r.timedOut ? 'Timeout' : ''))}</td><td>${((r.durationMs||0)/1000).toFixed(1)}s</td></tr>`;
   }).join('');
 
   return `<!DOCTYPE html>
@@ -212,10 +309,16 @@ tr:hover td{background:#1e293b22}
 </style></head>
 <body>
 <h1>Pipeline Dashboard</h1>
+<p>Statut global : <strong>${validationLabel(s.validation)}</strong> | ${s.skipped || 0} étape(s) ignorée(s)</p>
+<p>Tests BDD : ${s.testSummary?.total ? `${s.testSummary.passed}/${s.testSummary.total} réussis${s.testSummary.complete ? '' : ' (résultats incomplets)'}` : 'NON ÉVALUÉS'}</p>
+<p>Rapport Allure : <code>npm.cmd run allure:open</code></p>
 <p>Mode : <strong>${s.mode}</strong> &nbsp;|&nbsp; ${new Date(s.timestamp).toLocaleString('fr-FR')}</p>
 <div class="summary">
-  <div class="badge ok">✓ ${s.ok} OK</div>
-  <div class="badge ko">${s.ko > 0 ? '✗ '+s.ko+' KO' : '○ 0 KO'}</div>
+  <div class="badge">${s.blocked || 0} BLOQUÉ(S)</div>
+  <div class="badge">${s.pendingApproval || 0} EN ATTENTE D’APPROBATION</div>
+  <div class="badge">${s.rejected || 0} REJETÉ(S)</div>
+  <div class="badge ok">${s.ok} ÉTAPES TERMINÉES</div>
+  <div class="badge ko">${s.ko} ÉCHEC(S)</div>
   <div class="badge time">${(s.totalMs/1000).toFixed(1)}s</div>
 </div>
 <table>
@@ -247,6 +350,10 @@ Options:
   --dry-run       Simulation sans exécution
   --verbose       Affiche la sortie complète de chaque agent
   --no-tests      Saute l'étape d'exécution des tests (runner-agent)
+  --sync-plane     Active explicitement la synchronisation externe Plane
+
+Délais configurables : RUNNER_TIMEOUT_MS (1800000), AGENT_TIMEOUT_MS (300000).
+Allure est généré après le Runner, même en cas d'échec. Ouverture : npm run allure:open.
 
 Coût LLM : somme des agents invoqués
   full  ≈ 35k tokens/run ($0.03)
@@ -256,4 +363,5 @@ Coût LLM : somme des agents invoqués
   }
 }
 
-main().catch(e => { console.error(R + e.message + E); process.exit(1); });
+if (require.main === module) main().catch(e => { console.error(R + e.message + E); process.exitCode = 1; });
+module.exports = { runPipeline, runAgent, PIPELINE_STEPS };

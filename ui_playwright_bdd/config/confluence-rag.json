@@ -1,0 +1,8 @@
+{
+  "baseUrl": "https://faicelganem-1791143297915.atlassian.net/wiki",
+  "spaceId": "262148",
+  "rootPageId": "229480",
+  "pageIds": ["229501", "262362", "262382", "98314", "98336", "65701"],
+  "refreshMinutes": 15,
+  "maxAgeHours": 24
+}

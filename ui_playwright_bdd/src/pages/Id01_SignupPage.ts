@@ -93,7 +93,7 @@ export class SignupPage extends BasePage {
 
   async assertSignupError(expectedText?: RegExp | string): Promise<void> {
     const errorLocator = expectedText
-      ? this.page.getByText(expectedText as any)
+      ? this.page.getByText(expectedText)
       : this.page.getByText(/invalid|required|missing|weak|mismatch|already registered|email/i);
 
     await expect(errorLocator.first()).toBeVisible({ timeout: 15000 });

@@ -1,7 +1,26 @@
+> **Configuration active — 16 octobre 2026 : Groq uniquement.**
+> Les agents et DeepEval utilisent Groq ; le RAG utilise BM25 et le reranking Groq.
+> Aucun fallback, SDK ou service Ollama n’est utilisé. Une clé Groq est obligatoire
+> pour les appels IA. Les références à l’ancienne architecture ci-dessous sont
+> historiques ; consulter `docs/groq-only.md` pour les commandes actuelles.
+
+> **Agent Data PostgreSQL intégré** : jeux SQL, réservations par scénario et
+> connexion pgAdmin dédiée. Voir [le guide](docs/test-data-postgresql.md).
+
 # UI Playwright BDD — Framework de test IA
 
+Version **1.7.0** — [notes de version](CHANGELOG.md).
+
+Migration Python : [LangChain, orchestration LangGraph et commandes de démarrage](docs/python-agents.md).
+
 > **Playwright · CucumberJS · TypeScript · Groq AI**  
-> Framework BDD auto-piloté : génère, exécute, analyse, répare et documente les tests sans intervention manuelle.
+> Framework BDD assisté par IA : exécute et analyse les tests, propose du code et des correctifs soumis à revue humaine.
+
+CI et validation humaine : [commandes, contrôles et configuration GitHub restante](docs/ci-human-review.md).
+
+Qualité du code : [ESLint, TypeScript et contrôles CI obligatoires](docs/lint-typecheck.md).
+
+Rapports : [tendances et historique Allure](docs/allure-trends.md).
 
 📋 **[Stratégie de test complète →](docs/TEST_STRATEGY.md)**  
 🤖 **[Guide agents IA →](agents.md)** — conventions CLAUDE.md, commandes, sécurité
@@ -9,6 +28,10 @@
 ---
 
 ## Table des matières
+
+Évaluation IA : [intégration DeepEval, commandes et limites](docs/deepeval.md).
+
+Sécurité IA : [gateway commun, politique et certificats](docs/ai-gateway.md).
 
 1. [Vue d'ensemble](#vue-densemble)
 2. [Architecture](#architecture)
@@ -251,7 +274,7 @@ node scripts/agents/pipeline-agent.js full --no-tests   # Saute le runner
 
 ### llm.js — Client LLM universel
 
-Détecte automatiquement **Groq** (cloud, gratuit) ou **Ollama** (local, privé).  
+Utilise exclusivement **Groq** (cloud, tarification selon le compte et le modèle). Une clé manquante ou une panne produit une erreur explicite, sans changement de fournisseur.
 Expose 5 patterns avancés en plus du `chat` de base :
 
 | Fonction | Pattern | Usage |
@@ -318,52 +341,22 @@ node scripts/agents/governance-agent.js approve <id> <reviewer>
 
 ### shared/qa-workflow-engine.js — Workflow métier QA IA
 
-Formalise le cycle de validation de la génération IA de tests en étapes explicites et en gardant une approbation humaine sur les décisions critiques :
+Formalise le cycle de validation de la génération IA de tests en étapes explicites :
 
 1. `gherkin` → validation QA du scénario généré
 2. `script` → validation QA du script Playwright généré
 3. `execution` → exécution de la suite
 4. `analysis` → analyse des résultats, triage et RCA
-5. `decision` → verdict final GO/NO-GO, qui reste bloqué jusqu’à approbation humaine si le risque est critique
+5. `decision` → verdict final GO/NO-GO, avec blocage si risque critique
 
-Le moteur garde un état clair pour chaque artefact (`pending`, `approved`, `rejected`, `blocked`, `completed`) et applique la règle de gouvernance suivante : le workflow ne peut aller vers une décision finale critique sans validation humaine explicite.
-
-#### Workflow validé et testée
-
-Cette logique a été vérifiée dans le projet avec la séquence suivante :
-
-```bash
-node scripts/agents/qa-workflow-agent.js create SPEC-001
-node scripts/agents/qa-workflow-agent.js approve SPEC-001 gherkin QA-Lead
-node scripts/agents/qa-workflow-agent.js approve SPEC-001 script QA-Lead
-node scripts/agents/qa-workflow-agent.js approve SPEC-001 execution QA-Lead
-node scripts/agents/qa-workflow-agent.js approve SPEC-001 analysis QA-Lead
-node scripts/agents/qa-workflow-agent.js gate SPEC-001 critical
-node scripts/agents/qa-workflow-agent.js status SPEC-001
-```
-
-Résultat attendu du `gate` :
-
-```json
-{
-  "ok": true,
-  "blocked": true,
-  "reason": "Final decision requires human approval"
-}
-```
-
-Cela confirme que le workflow autorise l’automatisation des étapes de génération/validation, mais impose bien une validation humaine pour une décision critique.
+Ce workflow garde un état clair pour chaque artefact (`pending`, `approved`, `rejected`, `blocked`, `completed`) et permet l’approbation humaine selon le niveau de criticité.
 
 Commandes associées :
 
 ```bash
 node scripts/agents/qa-workflow-agent.js create SPEC-001
 node scripts/agents/qa-workflow-agent.js approve <id> gherkin QA-Lead
-node scripts/agents/qa-workflow-agent.js approve <id> script QA-Lead
-node scripts/agents/qa-workflow-agent.js approve <id> execution QA-Lead
-node scripts/agents/qa-workflow-agent.js approve <id> analysis QA-Lead
 node scripts/agents/qa-workflow-agent.js gate <id> critical
-node scripts/agents/qa-workflow-agent.js status <id>
 node scripts/agents/qa-workflow-agent.js list
 ```
 
@@ -467,43 +460,24 @@ Si `allure-results/` ou `allure-report/` est nettoyé manuellement (`clean`, `cl
 
 ## Analyse des coûts LLM
 
-> Modèle : **llama-3.3-70b-versatile** via Groq  
-> Tarif : **$0.59 / M tokens input** · **$0.79 / M tokens output**
+Les commandes npm des agents et de recherche enregistrent la durée réelle par
+tâche et les compteurs de tokens renvoyés par Groq/Ollama, y compris les retries.
+Les appels d'embeddings sont distingués des appels de génération.
 
-### Par commande agent
+`npm run metrics:report` produit `logs/metrics/report.html` et `report.json`.
+Le rapport affiche les coûts API estimés au tarif du modèle, les données inconnues
+et les durées du dernier pipeline historique. Les anciens coûts ne sont pas
+reconstitués à partir des caractères. Un tarif catalogue n'est pas une facture.
 
-| Agent | Commande | Tokens estimés | Coût USD | Technique |
-|-------|----------|---------------|----------|-----------|
-| codegen | `spec` (1 US) | ~2 000 | $0.0017 | chatCot |
-| codegen | `steps` (5 features) | ~8 000 | $0.0059 | chatStructured |
-| codegen | `pages` (5 features) | ~10 000 | $0.0074 | chatStructured |
-| runner | `run` | ~800 | $0.0006 | chat |
-| runner | `flaky` (3 runs) | ~2 400 | $0.0018 | chat |
-| quality | `triage` (10 TCs) | ~6 000 | $0.0044 | chatConfident |
-| quality | `triage` + adversarial | ~12 000 | $0.0088 | chatAdversarial |
-| quality | `rca` (5 groupes) | ~10 000 | $0.0074 | chatCot |
-| quality | `verify` | ~8 000 | $0.0059 | chatAdversarial |
-| ci | `pr create` | ~1 500 | $0.0011 | chat |
-| ci | `git commit` | ~500 | $0.0004 | chat |
-| planning | `coverage suggest` | ~3 000 | $0.0022 | chat |
-| reporting | `notify slack` | ~1 200 | $0.0009 | chat |
-| reporting | `dashboard` / `sync` | 0 | **$0.00** | aucun |
-| advisor | `advise` (N=3) | ~12 000 | $0.0088 | chatSelfConsistent |
-| advisor | `predict` (10 TCs) | ~8 000 | $0.0059 | chatStructured |
-| advisor | `gate` | ~2 000 | $0.0017 | chatStructured |
-| observability | toutes | 0 | **$0.00** | aucun |
-| bug | `analyze` (1 bug, 5 iter) | ~15 000 | $0.0110 | chatCot + tool use |
-| bug | `repair` (1 bug) | ~10 000 | $0.0074 | tool use |
+Les tarifs versionnés se trouvent dans `config/ai-pricing.json`. Un modèle sans
+tarif reste inconnu ; Ollama local a zéro frais API mais un coût matériel non chiffré.
 
-### Par pipeline
+Pour mesurer une commande Node directe :
 
-| Pipeline | Agents | Tokens totaux | Coût total |
-|----------|--------|--------------|------------|
-| `pipeline:quick` | runner + quality:triage + reporting:dashboard + advisor:gate | ~12 000 | **~$0.009** |
-| `pipeline:report` | quality:full + bug:report + reporting:dashboard + observability:report | ~20 000 | **~$0.015** |
-| `pipeline:full` | tous les agents | ~35 000 | **~$0.025** |
+`npm run metrics:run -- scripts/agents/quality-agent.js verify --local-only`
 
-> **Limite gratuite Groq :** 14 400 req/jour · 500 000 tokens/min → pipelines illimités en pratique.
+Voir [le guide des mesures par tâche](docs/task-metrics.md) pour le périmètre,
+les limites, les tâches imbriquées et la configuration.
 
 ---
 
@@ -551,7 +525,7 @@ cp .env.example .env
 ```env
 # LLM (obligatoire — choisir l'un ou l'autre)
 GROQ_API_KEY=gsk_...               # Gratuit sur console.groq.com
-OLLAMA_BASE_URL=http://localhost:11434   # Ollama local (fallback auto)
+RAG_MODE=bm25                          # Recherche locale sans serveur d’embeddings
 
 # Jira (pour planning, codegen, reporting)
 JIRA_BASE_URL=https://monsite.atlassian.net
@@ -747,7 +721,7 @@ ui_playwright_bdd/
 │
 ├── scripts/
 │   └── agents/                      Couche IA
-│       ├── llm.js                   Client LLM (Groq/Ollama) + 7 patterns
+│       ├── llm.js                   Client LLM Groq + 7 patterns
 │       ├── jira-fetcher.js          Client Jira REST v3
 │       ├── shared/
 │       │   ├── tracer.js            Traces JSONL de tous les appels LLM
@@ -824,7 +798,7 @@ ui_playwright_bdd/
 ├── allure-results/                  Résultats bruts Allure
 ├── allure-report/                   Rapport Allure généré
 ├── specs/                           Spécifications métier source
-├── qa-knowledge/                    Notes QA manuelles (pas un pipeline RAG)
+├── qa-knowledge/                    Notes QA consultées par le RAG hybride BM25 + embeddings
 ├── cucumber.js                      Configuration CucumberJS
 ├── tsconfig.json                    Configuration TypeScript
 └── .env.example                     Template de configuration
@@ -889,8 +863,8 @@ Workflow `.github/workflows/ci-playwright.yml` déclenché sur :
 | Tests BDD | CucumberJS | ^11.3 |
 | Browser | Playwright | ^1.59 |
 | Langage tests | TypeScript | ^6.0 |
-| LLM cloud | Groq (llama-3.3-70b-versatile) | gratuit 14 400 req/j |
-| LLM local | Ollama | fallback auto |
+| LLM cloud | Groq (modèle configurable) | Usage mesuré, tarif configurable |
+| Recherche locale | BM25 | sans serveur d’embeddings |
 | SDK LLM | groq-sdk + @anthropic-ai/sdk | dernière |
 | Reporting | Allure + Chart.js | ^2.38 |
 | Gestion projet | Jira REST API v3 + Agile API | Cloud |

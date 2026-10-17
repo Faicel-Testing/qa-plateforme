@@ -42,8 +42,8 @@ function redactSecrets(text) {
   if (text === null || text === undefined) return '';
   let value = String(text);
   const patterns = [
-    /(GROQ_API_KEY|OPENAI_API_KEY|JIRA_TOKEN|API_KEY|SECRET|PASSWORD|TOKEN)\s*[:=]\s*[^\s\"'\n]+/gi,
-    /(Bearer\s+[A-Za-z0-9._~+\-]+=*)/gi,
+    /(GROQ_API_KEY|OPENAI_API_KEY|JIRA_TOKEN|API_KEY|SECRET|PASSWORD|TOKEN)\s*[:=]\s*[^\s"'\n]+/gi,
+    /(Bearer\s+[A-Za-z0-9._~+-]+=*)/gi,
     /sk-[A-Za-z0-9]{10,}/g,
     /([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g,
   ];

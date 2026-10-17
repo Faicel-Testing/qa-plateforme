@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 export function writeExecutorFile(): void {
-  const resultsDir = path.resolve('allure-results');
+  const resultsDir = path.resolve(process.env.ALLURE_RESULTS_DIR || 'allure-results');
 
   if (!fs.existsSync(resultsDir)) {
     fs.mkdirSync(resultsDir, { recursive: true });

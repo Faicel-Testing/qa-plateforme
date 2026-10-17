@@ -1,0 +1,2 @@
+require('dotenv').config({quiet:true});
+(async()=>{try{const r=await fetch('https://api.groq.com/openai/v1/models',{headers:{Authorization:'Bearer '+process.env.GROQ_API_KEY},redirect:'error',signal:AbortSignal.timeout(15000)});console.log(JSON.stringify({status:r.status,tlsVerification:process.env.NODE_TLS_REJECT_UNAUTHORIZED!=='0',extraCAConfigured:!!process.env.NODE_EXTRA_CA_CERTS}));if(!r.ok)process.exitCode=1;}catch(e){console.log(JSON.stringify({error:e.name,causeCode:e.cause?.code||null}));process.exitCode=1;}})();

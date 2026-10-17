@@ -35,7 +35,7 @@ function cmdStatus(id) {
 }
 
 function cmdApprove(id, stage, reviewer, notes) {
-  const w = workflow.approveStage(id, stage, reviewer || 'qa-reviewer', notes || 'Approved by QA');
+  const w = workflow.approveStage(id, stage, reviewer, notes || 'Approved by QA');
   console.log(JSON.stringify(w, null, 2));
 }
 
@@ -52,6 +52,7 @@ function cmdBlock(id, reviewer, notes) {
 function cmdGate(id, risk = 'medium') {
   const result = workflow.requireHumanApprovalBeforeFinalDecision(id, risk);
   console.log(JSON.stringify(result, null, 2));
+  if (!result.ok || result.blocked) process.exitCode = 1;
 }
 
 function cmdList() {
@@ -93,4 +94,6 @@ function main() {
   }
 }
 
-main();
+if (require.main === module) {
+  try { main(); } catch (error) { console.error(error.message); process.exitCode = 1; }
+}

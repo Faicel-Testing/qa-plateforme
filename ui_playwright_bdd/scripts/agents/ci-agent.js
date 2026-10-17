@@ -21,15 +21,15 @@
 // Coût LLM : bas — uniquement pour commit message, PR description, release notes
 // ============================================================
 require('dotenv').config();
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const { execSync, spawnSync } = require('child_process');
+const { execSync } = require('child_process');
 const fs   = require('fs');
 const path = require('path');
 const llm  = require('./llm');
 const tracer = require('./shared/tracer');
 
 const FRAMEWORK      = path.join(__dirname, '..', '..');
+const verifier = require('./shared/agent-verifier').createVerifier({ agent: 'ci', root: FRAMEWORK, runtimeProcess: process });
 const WORKFLOW_FILE  = process.env.CI_WORKFLOW || 'ci-playwright.yml';
 const POLL_INTERVAL  = 10000; // 10s
 const TIMEOUT_MIN    = parseInt(process.argv.find(a=>a.startsWith('--timeout='))?.split('=')[1]||'30');
@@ -148,8 +148,12 @@ Réponds UNIQUEMENT avec ce JSON:
     const resp = await llm.chat([{ role: 'user', content: prompt }]);
     const raw  = resp.message.content || '';
     const m    = raw.match(/\{[\s\S]*\}/);
-    let title = `feat: ${branch}`, body = `Changes from \`${branch}\` to \`${base}\``;
-    if (m) { try { ({ title, body } = JSON.parse(m[0])); } catch {} }
+    let draft = {};
+    if (m) { try { draft = JSON.parse(m[0]); } catch {} }
+    const { title, body } = draft;
+    const verification = verifier.check('pr', { title, body }, { commits: diff, files });
+    console.log('[BROUILLON PR]', { title, body });
+    if (!DRY_RUN) verifier.requireValidated(verification);
     span.end(true);
 
     console.log(`  Titre : ${B}${title}${E}`);
@@ -162,6 +166,7 @@ Réponds UNIQUEMENT avec ce JSON:
     if (r.ok) console.log(`  ${G}✓ PR créée : ${r.out}${E}`);
     else console.error(`  ${R}✗ ${r.err}${E}`);
   } catch (e) {
+    verifier.failure(e);
     span.error = e.message; span.end(false);
     console.error(`  ${R}✗ ${e.message}${E}`);
   }
@@ -185,7 +190,10 @@ Format:
 ## Quoi de neuf\n- ...\n## Corrections\n- ...\n\nRéponds UNIQUEMENT avec le Markdown.`;
 
     const resp  = await llm.chat([{ role: 'user', content: prompt }]);
-    const notes = resp.message.content || `Release ${version}`;
+    const notes = resp.message.content || '';
+    const verification = verifier.check('release', notes, { version, log });
+    console.log('[BROUILLON RELEASE]', notes);
+    if (!DRY_RUN) verifier.requireValidated(verification);
     span.end(true);
 
     console.log(`  Version  : ${B}${version}${E}\n  Précédent: \x1b[2m${lastTag||'aucun'}\x1b[0m`);
@@ -200,6 +208,7 @@ Format:
     if (r.ok) console.log(`  ${G}✓ Release : ${r.out}${E}`);
     else console.error(`  ${R}✗ ${r.err}${E}`);
   } catch (e) {
+    verifier.failure(e);
     span.error = e.message; span.end(false);
     console.error(`  ${R}✗ ${e.message}${E}`);
   }
@@ -222,7 +231,10 @@ Changements:\n${diff.slice(0,800)}
 Réponds UNIQUEMENT avec le message de commit, pas de ponctuation finale.`;
 
     const resp = await llm.chat([{ role: 'user', content: prompt }]);
-    const msg  = (resp.message.content || '').trim().split('\n')[0].slice(0,72);
+    const msg = (resp.message.content || '').trim();
+    const verification = verifier.check('commit', msg, { diff });
+    console.log('[BROUILLON COMMIT]', msg);
+    if (!DRY_RUN) verifier.requireValidated(verification);
     span.end(true);
 
     console.log(`  ${C}Message : ${msg}${E}`);
@@ -233,6 +245,7 @@ Réponds UNIQUEMENT avec le message de commit, pas de ponctuation finale.`;
     if (r.ok) console.log(`  ${G}✓ Commit créé${E}`);
     else console.error(`  ${R}✗ ${r.err}${E}`);
   } catch (e) {
+    verifier.failure(e);
     span.error = e.message; span.end(false);
     console.error(`  ${R}✗ ${e.message}${E}`);
   }
@@ -322,4 +335,5 @@ Options:
   }
 }
 
-main().catch(e => { console.error(R + e.message + E); process.exit(1); });
+if (require.main === module) main().catch(e => { console.error(R + e.message + E); process.exitCode = 1; });
+module.exports = { cmdPrCreate, cmdReleaseCreate, cmdGitCommit };

@@ -1,10 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 
-const RESULTS_DIR = path.resolve('allure-results');
-const OUTPUT_TXT = path.resolve(RESULTS_DIR, 'browser-dashboard.txt');
-const OUTPUT_JSON = path.resolve(RESULTS_DIR, 'browser-dashboard.json');
-const ENV_FILE = path.resolve(RESULTS_DIR, 'environment.properties');
 
 function readJSON(file) {
   try {
@@ -14,9 +10,9 @@ function readJSON(file) {
   }
 }
 
-function readAttachment(fileName) {
+function readAttachment(resultsDir, fileName) {
   try {
-    return fs.readFileSync(path.join(RESULTS_DIR, fileName), 'utf-8');
+    return fs.readFileSync(path.join(resultsDir, fileName), 'utf-8');
   } catch {
     return '';
   }
@@ -50,7 +46,7 @@ function collectAttachments(node, acc = []) {
   return acc;
 }
 
-function extractDataFromAttachments(result, containerAttachmentsByUuid) {
+function extractDataFromAttachments(result, containerAttachmentsByUuid, resultsDir) {
   // allure-cucumberjs writes the Before-hook attachments (Browser, Attempts...) into a
   // separate *-container.json (befores[].steps[].attachments), linked via children: [uuid].
   // result.attachments is always empty; result.steps only holds the Gherkin steps' own attachments.
@@ -59,13 +55,13 @@ function extractDataFromAttachments(result, containerAttachmentsByUuid) {
     ...(containerAttachmentsByUuid.get(result.uuid) || [])
   ];
 
-  let browser = 'unknown';
+  let browser = normalizeBrowser([...(result.labels || []), ...(result.parameters || [])].find(item => item.name === 'browser')?.value);
   let attempts = 1;
 
   for (const att of attachments) {
-    if (!att.source) continue;
+    if (!att.source || (att.type && att.type !== 'text/plain')) continue;
 
-    const content = readAttachment(att.source);
+    const content = readAttachment(resultsDir, att.source);
     if (!content) continue;
 
     const browserMatch = content.match(/Browser:\s*(.+)/i);
@@ -92,19 +88,29 @@ function buildContainerAttachmentsByUuid(containers) {
     ];
 
     for (const childUuid of container.children || []) {
-      map.set(childUuid, attachments);
+      map.set(childUuid, [...(map.get(childUuid) || []), ...attachments]);
     }
   }
 
   return map;
 }
 
-function buildDashboard(results, containerAttachmentsByUuid) {
+function buildDashboard(results, containerAttachmentsByUuid, resultsDir) {
   const dashboard = {};
-
+  const groups = new Map();
   for (const result of results) {
+    const metadata = extractDataFromAttachments(result, containerAttachmentsByUuid, resultsDir);
+    const key = JSON.stringify([metadata.browser, result.historyId || result.uuid]);
+    const group = groups.get(key) || [];
+    group.push({ result, ...metadata });
+    groups.set(key, group);
+  }
+
+  for (const group of groups.values()) {
+    // Allure displays the latest attempt as the test's final outcome.
+    group.sort((a, b) => (b.result.start || 0) - (a.result.start || 0) || (b.result.stop || 0) - (a.result.stop || 0));
+    const { result, browser, attempts } = group[0];
     const status = result.status || 'unknown';
-    const { browser, attempts } = extractDataFromAttachments(result, containerAttachmentsByUuid);
 
     if (!dashboard[browser]) {
       dashboard[browser] = {
@@ -113,7 +119,13 @@ function buildDashboard(results, containerAttachmentsByUuid) {
         failed: 0,
         broken: 0,
         skipped: 0,
-        retried: 0
+        retried: 0,
+        unknown: 0,
+        flaky: 0,
+        durationTotalMs: 0,
+        timedTests: 0,
+        start: null,
+        stop: null
       };
     }
 
@@ -125,14 +137,28 @@ function buildDashboard(results, containerAttachmentsByUuid) {
     else if (status === 'failed') d.failed++;
     else if (status === 'broken') d.broken++;
     else if (status === 'skipped') d.skipped++;
+    else d.unknown++;
+    if (group.some(a => a.result.status === 'passed') && group.some(a => ['failed', 'broken'].includes(a.result.status))) d.flaky++;
+    if (Number.isFinite(result.start) && Number.isFinite(result.stop) && result.stop >= result.start) {
+      d.durationTotalMs += result.stop - result.start;
+      d.timedTests++;
+    }
 
-    if (attempts > 1) {
+    for (const { result: attempt } of group) {
+      if (Number.isFinite(attempt.start) && Number.isFinite(attempt.stop) && attempt.stop >= attempt.start) {
+        d.start = d.start === null ? attempt.start : Math.min(d.start, attempt.start);
+        d.stop = d.stop === null ? attempt.stop : Math.max(d.stop, attempt.stop);
+      }
+    }
+
+    if (attempts > 1 || group.length > 1) {
       d.retried++;
     }
   }
 
   for (const browser of Object.keys(dashboard)) {
     const d = dashboard[browser];
+    d.durationMs = d.start === null ? null : d.stop - d.start;
 
     d.passRate = d.total
       ? Number(((d.passed / d.total) * 100).toFixed(2))
@@ -172,13 +198,18 @@ function toText(dashboard) {
     lines.push(`- Pass Rate: ${d.passRate}%`);
     lines.push(`- Failure Rate: ${d.failureRate}%`);
     lines.push(`- Retry Rate: ${d.retryRate}%`);
+    lines.push(`- Execution time: ${formatDuration(d.durationMs)}`);
     lines.push('');
   }
 
   return lines.join('\n');
 }
 
-function writeEnvironment(dashboard) {
+function formatDuration(durationMs) {
+  return durationMs === null ? 'unavailable' : `${(durationMs / 1000).toFixed(3)} s`;
+}
+
+function writeEnvironment(dashboard, resultsDir) {
   const lines = [];
   const browsers = Object.keys(dashboard).sort();
 
@@ -193,6 +224,8 @@ function writeEnvironment(dashboard) {
       lines.push(`${browser}_failed=${d.failed}`);
       lines.push(`${browser}_broken=${d.broken}`);
       lines.push(`${browser}_skipped=${d.skipped}`);
+      lines.push(`${browser}_unknown=${d.unknown}`);
+      lines.push(`${browser}_execution_time=${formatDuration(d.durationMs)}`);
       lines.push(`${browser}_retried=${d.retried}`);
       lines.push(`${browser}_pass_rate=${d.passRate}%`);
       lines.push(`${browser}_failure_rate=${d.failureRate}%`);
@@ -201,10 +234,19 @@ function writeEnvironment(dashboard) {
     }
   }
 
-  fs.writeFileSync(ENV_FILE, lines.join('\n'), 'utf-8');
+  const timed = Object.values(dashboard).filter(d => d.durationMs !== null);
+  const elapsed = timed.length ? Math.max(...timed.map(d => d.stop)) - Math.min(...timed.map(d => d.start)) : null;
+  lines.push(`tests_execution_time=${formatDuration(elapsed)}`);
+  const envFile = path.join(resultsDir, 'environment.properties');
+  // Preserve user metadata; replace only entries owned by this dashboard.
+  const existing = fs.existsSync(envFile) ? fs.readFileSync(envFile, 'utf8').split(/\r?\n/) : [];
+  const owned = /^(?:browser_dashboard|tests_execution_time|\S+_(?:total|passed|failed|broken|skipped|unknown|retried|pass_rate|failure_rate|retry_rate|execution_time))\s*=/;
+  const preserved = existing.filter(line => line.trim() && !owned.test(line));
+  fs.writeFileSync(envFile, [...lines, ...preserved, ''].join('\n'), 'utf-8');
 }
 
-function main() {
+function main(resultsDir) {
+  const RESULTS_DIR = resultsDir || require('./agents/shared/pipeline-runtime').resultDirectory(path.join(__dirname, '..'));
   if (!fs.existsSync(RESULTS_DIR)) {
     console.log('No allure-results found');
     return;
@@ -223,14 +265,16 @@ function main() {
     .filter(Boolean);
 
   const containerAttachmentsByUuid = buildContainerAttachmentsByUuid(containers);
-  const dashboard = buildDashboard(results, containerAttachmentsByUuid);
+  const dashboard = buildDashboard(results, containerAttachmentsByUuid, RESULTS_DIR);
   const textReport = toText(dashboard);
 
-  fs.writeFileSync(OUTPUT_JSON, JSON.stringify(dashboard, null, 2), 'utf-8');
-  fs.writeFileSync(OUTPUT_TXT, textReport, 'utf-8');
-  writeEnvironment(dashboard);
+  fs.writeFileSync(path.join(RESULTS_DIR, 'browser-dashboard.json'), JSON.stringify(dashboard, null, 2), 'utf-8');
+  fs.writeFileSync(path.join(RESULTS_DIR, 'browser-dashboard.txt'), textReport, 'utf-8');
+  writeEnvironment(dashboard, RESULTS_DIR);
 
   console.log('\n===== BROWSER DASHBOARD =====\n');
   console.log(textReport);
+  return dashboard;
 }
-main();
+if (require.main === module) main();
+module.exports = { main };

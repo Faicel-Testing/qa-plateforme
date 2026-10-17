@@ -2,19 +2,19 @@ import { Given, When, Then } from '@cucumber/cucumber';
 import { CustomWorld } from '../core/world';
 import { QACartApiClient } from '../api/QACartApiClient';
 import { TodoPage } from '../pages/Id03_TodoPage';
-import { randomUser } from '../support/testData';
 
 Given('I have a user created via API', async function (this: CustomWorld) {
-  const user = randomUser();
-  const api = new QACartApiClient();
+  const user = await this.newTestUser();
+  const api = new QACartApiClient(event => this.attach(JSON.stringify(event), 'application/json'));
+  await this.dataService?.markAttempted();
   const token = await api.register(user);
+  await this.dataService?.markCreated();
 
   this.user = user;
   this.apiToken = token;
 
   // Proof of REST call visible in CI logs and Allure report
-  console.log(`[API Setup] User created: ${user.email}`);
-  console.log(`[API Setup] Token: ${token.substring(0, 30)}...`);
+  console.log('[API Setup] Scenario user created through the application API');
 });
 
 When('I navigate directly to the todo page', async function (this: CustomWorld) {

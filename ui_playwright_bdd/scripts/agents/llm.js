@@ -1,79 +1,25 @@
-// ============================================
-// LLM Helper — Groq (cloud) ou Ollama (local)
-// ============================================
-// Détection automatique du provider :
-//   → GROQ_API_KEY défini dans .env  → utilise Groq (cloud, gratuit)
-//   → Sinon                          → utilise Ollama (local)
-//
-// Config .env :
-//   GROQ_API_KEY=gsk_xxxx            ← clé gratuite sur console.groq.com
-//   GROQ_MODEL=qwen-2.5-coder-32b   ← défaut (excellent pour code/QA)
-//   OLLAMA_MODEL=qwen2.5-coder:7b   ← défaut si Ollama
-//   OLLAMA_HOST=http://localhost:11434
-// ============================================
-
-
-require('dotenv').config();
-// Bypass SSL certificate issues on corporate/local networks
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-const http  = require('http');
-const https = require('https');
-const cb    = require('./shared/circuit-breaker');
-
-// ── Provider detection ────────────────────────────────────────────────────────
-const USE_GROQ   = !!process.env.GROQ_API_KEY;
-const GROQ_MODEL = process.env.GROQ_MODEL  || 'openai/gpt-oss-120b';
-const OLMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5-coder:7b';
-const OLMA_HOST  = (process.env.OLLAMA_HOST || 'http://localhost:11434').replace(/\/$/, '');
-
-const MODEL    = USE_GROQ ? GROQ_MODEL : OLMA_MODEL;
-const PROVIDER = USE_GROQ ? 'groq' : 'ollama';
-
-// ── Groq client ───────────────────────────────────────────────────────────────
+// Groq-only LLM transport. No local provider or cross-provider fallback.
+require('dotenv').config({ quiet: true });
+const gateway = require('./shared/ai-gateway');
+const cb = require('./shared/circuit-breaker');
+const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
+const MODEL = GROQ_MODEL;
+const PROVIDER = 'groq';
+function requireGroq() {
+  if (process.env.AI_LOCAL_ONLY === 'true') throw new Error('AI_LOCAL_ONLY blocks Groq; no local provider is configured');
+  if (!process.env.GROQ_API_KEY) throw new Error('GROQ_API_KEY missing; Groq is the only configured provider');
+}
 function getGroq() {
+  requireGroq();
   const Groq = require('groq-sdk');
-  return new Groq({ apiKey: process.env.GROQ_API_KEY });
+  return new Groq({ apiKey: process.env.GROQ_API_KEY, maxRetries: 0, timeout: 90000,
+    fetch: gateway.gatewayFetch('groq', require('./shared/task-metrics').meteredFetch('groq')) });
 }
-
-// ── Ollama client ─────────────────────────────────────────────────────────────
-function getOllama() {
-  const { Ollama } = require('ollama');
-  return new Ollama({ host: OLMA_HOST });
-}
-
-// ── Ollama health check ───────────────────────────────────────────────────────
-function isOllamaRunning() {
-  return new Promise((resolve) => {
-    const lib = OLMA_HOST.startsWith('https') ? https : http;
-    lib.get(`${OLMA_HOST}/api/tags`, res => resolve(res.statusCode === 200))
-       .on('error', () => resolve(false));
-  });
-}
-
 async function assertRunning() {
-  if (USE_GROQ) {
-    if (!process.env.GROQ_API_KEY) {
-      console.error('\n❌  GROQ_API_KEY manquant dans .env');
-      console.error('    → Clé gratuite sur : https://console.groq.com');
-      process.exit(1);
-    }
-    console.log(`Provider : Groq ☁️   Modèle : ${MODEL}`);
-    return;
-  }
-  const ok = await isOllamaRunning();
-  if (!ok) {
-    console.error('\n❌  Ollama ne tourne pas.');
-    console.error('    → Installer : https://ollama.com/download');
-    console.error(`    → Modèle   : ollama pull ${OLMA_MODEL}`);
-    console.error('    → Démarrer : ollama serve');
-    process.exit(1);
-  }
-  console.log(`Provider : Ollama 🖥️   Modèle : ${MODEL}`);
+  requireGroq();
+  console.log(`Provider : Groq | Modele : ${MODEL}`);
 }
 
-// ── Tool format conversion ────────────────────────────────────────────────────
-// Agents définissent les tools en format Anthropic {name, description, input_schema}
-// Groq & Ollama attendent OpenAI {type:'function', function:{name, description, parameters}}
 function toOpenAITools(tools) {
   if (!tools || !tools.length) return undefined;
   return tools.map(t => ({
@@ -100,13 +46,15 @@ async function _rawGroqChat(messages, tools, temperature) {
   if (tools) req.tools = tools;
   if (temperature != null) req.temperature = temperature;
   const resp = await groq.chat.completions.create(req);
-  // Normalise vers format Ollama pour que les agents n'aient pas besoin de changer
+  // Conserve le format commun attendu par les agents
   const choice = resp.choices[0];
   return {
     message: {
       role: 'assistant',
       content: choice.message.content || '',
       tool_calls: choice.message.tool_calls?.map(tc => ({
+        id: tc.id,
+        type: tc.type,
         function: {
           name: tc.function.name,
           arguments: tc.function.arguments
@@ -117,62 +65,66 @@ async function _rawGroqChat(messages, tools, temperature) {
   };
 }
 
-async function _rawOllamaChat(messages, tools, temperature) {
-  const ollama = getOllama();
-  const req = { model: OLMA_MODEL, messages, stream: false };
-  if (tools) req.tools = tools;
-  if (temperature != null) req.options = { temperature };
-  return ollama.chat(req);
+function providerError(provider, error) {
+  // Ne pas journaliser le corps HTTP : il peut contenir le prompt ou des secrets.
+  const status = error?.status || error?.status_code;
+  const code = error?.code || error?.cause?.code || error?.error?.type;
+  const details = [];
+  if (Number.isInteger(status)) details.push(`HTTP ${status}`);
+  if (typeof code === 'string' && /^[a-zA-Z0-9_.-]{1,80}$/.test(code)) details.push(code);
+  return `${provider} : ${details.join(' / ') || 'échec de la requête'}`;
 }
 
-// ── Chat (non-streaming) — protégé par Circuit Breaker + fallback Ollama ──────
-// Chaîne de résilience : Groq (CB-gated) → Ollama → cache → réponse par défaut
+// Chat through the existing circuit breaker/cache, without provider fallback.
 async function chat(messages, opts = {}) {
-  const tools       = opts.tools ? toOpenAITools(opts.tools) : undefined;
+  requireGroq();
+  messages = gateway.preflight(messages);
+  if (process.env.RAG_ENABLED !== 'false' && opts.rag !== false) {
+    const path = require('node:path');
+    messages = await require('./shared/hybrid-rag').augmentMessages(messages, {
+      root: path.join(__dirname, '..', '..'),
+      agent: path.basename(process.argv[1] || '', '.js'),
+      env: process.env,
+    });
+  }
+  let tools       = opts.tools ? toOpenAITools(opts.tools) : undefined;
+  ({ messages, tools } = gateway.preflight({ messages, tools }));
   const fnName      = opts._fnName || 'chat';
   const temperature = opts.temperature;
 
-  if (!USE_GROQ) return _rawOllamaChat(messages, tools, temperature);
 
+  // Évite de réutiliser les anciennes réponses sans id, ou celles d'autres outils.
+  const cacheVariant = tools?.length
+    ? { protocol: 'tool-calls-v2', model: GROQ_MODEL, tools, temperature }
+    : temperature;
+  let groqFailure;
   try {
     const { value, fallback } = await cb.execute(
-      () => _rawGroqChat(messages, tools, temperature), messages, fnName, temperature
+      async () => gateway.preflight(await _rawGroqChat(messages, tools, temperature)), messages, fnName, cacheVariant
     );
-    if (fallback) {
-      // Circuit OPEN — tenter Ollama en secours avant d'accepter la reponse par defaut
-      try { return await _rawOllamaChat(messages, tools, temperature); }
-      catch { return { message: { role: 'assistant', content: value }, done: true }; }
-    }
-    return JSON.parse(value);
+    if (!fallback) return gateway.preflight(JSON.parse(value));
+    groqFailure = 'Groq : circuit ouvert';
   } catch (err) {
-    // Echec Groq (CB laisse passer mais l'appel a echoue) — fallback Ollama
-    try { return await _rawOllamaChat(messages, tools, temperature); }
-    catch { return { message: { role: 'assistant', content: cb.getDefaultResponse(fnName) }, done: true }; }
+    if (gateway.isGatewayError(err)) throw err;
+    groqFailure = providerError('Groq', err);
   }
+
+  const error = new Error(`Appel Groq impossible (${groqFailure}). Aucune reponse IA disponible.`);
+  error.code = tools?.length ? 'LLM_TOOL_CALL_FAILED' : 'LLM_UNAVAILABLE';
+  throw error;
 }
 
 // ── Chat (streaming) ──────────────────────────────────────────────────────────
 async function chatStream(messages) {
-  if (USE_GROQ) {
-    const groq = getGroq();
-    const stream = await groq.chat.completions.create({
-      model: GROQ_MODEL,
-      messages,
-      stream: true
-    });
-    // Adapte le stream Groq au format Ollama {message:{content}, done}
-    return (async function* () {
-      for await (const chunk of stream) {
-        const text = chunk.choices[0]?.delta?.content || '';
-        const done = chunk.choices[0]?.finish_reason === 'stop';
-        yield { message: { content: text }, done };
-      }
-    })();
-  }
-
-  // Ollama
-  const ollama = getOllama();
-  return ollama.chat({ model: OLMA_MODEL, messages, stream: true });
+  requireGroq();
+  messages = gateway.preflight(messages);
+  const stream = await getGroq().chat.completions.create({ model: GROQ_MODEL, messages, stream: true });
+  return (async function* () {
+    for await (const chunk of stream) {
+      yield { message: { content: chunk.choices[0]?.delta?.content || '' },
+        done: chunk.choices[0]?.finish_reason === 'stop' };
+    }
+  })();
 }
 
 // ── chatCot — Chain of Thought (deux étapes) ──────────────────────────────────

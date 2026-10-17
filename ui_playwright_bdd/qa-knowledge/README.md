@@ -6,6 +6,6 @@ Fichiers :
 - `qa-knowledge.md` — notes d'analyse de couverture (User Stories Jira ↔ fichiers `.feature`), accumulées manuellement.
 - `QA_ANALYSIS.md` — copie de `../docs/QA_ANALYSIS.md`.
 
-**Statut réel** : documentation de référence humaine, non branchée au code. Aucun agent de `scripts/agents/` ne lit ce dossier (vérifié par grep).
+**Statut actuel** : ces notes sont consultées par le RAG hybride partagé (`scripts/agents/shared/hybrid-rag.js`). Elles restent des références non approuvées, pas des preuves automatiques.
 
-Si un vrai RAG est souhaité un jour (recherche sémantique sur l'historique des bugs, par exemple), la prochaine étape logique serait d'indexer `memory/episodes.jsonl` avec des embeddings plutôt que de repartir de ces notes manuelles.
+Le RAG combine BM25 et embeddings Ollama, puis fusionne les classements avec RRF. Il recherche dans les notes, les spécifications, les scénarios et les champs sélectionnés de `memory/episodes.jsonl`. Voir [les commandes et limites](../docs/rag.md).

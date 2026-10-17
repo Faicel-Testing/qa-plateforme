@@ -16,7 +16,6 @@
 // Coût LLM : élevé (boucle agentique) — contrôlé par AGENT_MAX_ITER
 // ============================================================
 require('dotenv').config();
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const fs   = require('fs');
 const path = require('path');
@@ -34,9 +33,8 @@ function fmt(template, vars) {
 }
 
 const FRAMEWORK    = path.join(__dirname, '..', '..');
-const RESULTS_DIR  = path.join(FRAMEWORK, 'allure-results');
-const STEPS_DIR    = path.join(FRAMEWORK, 'src', 'steps');
-const FEATURES_DIR = path.join(FRAMEWORK, 'src', 'features');
+const verifier = require('./shared/agent-verifier').createVerifier({ agent: 'bug', root: FRAMEWORK, runtimeProcess: process });
+const RESULTS_DIR = require('./shared/pipeline-runtime').resultDirectory(FRAMEWORK);
 const DOCS_DIR     = path.join(FRAMEWORK, 'docs');
 
 fs.mkdirSync(DOCS_DIR, { recursive: true });
@@ -59,8 +57,8 @@ function loadFailures() {
     .map(r => ({
       name:    r.name || r.fullName || 'unknown',
       status:  r.status,
-      message: (r.statusDetails?.message || '').slice(0, 500),
-      trace:   (r.statusDetails?.trace   || '').slice(0, 300),
+      message: r.statusDetails?.message || '',
+      trace: r.statusDetails?.trace || '',
       labels:  (r.labels || []).map(l => l.value),
     }));
 }
@@ -73,14 +71,16 @@ const TOOLS = [
     input_schema: {
       type: 'object',
       properties: {
-        file_path: { type: 'string', description: 'Chemin relatif depuis la racine du projet' }
+        file_path: { type: 'string', description: 'Chemin relatif depuis la racine du projet' },
+        line_start: { type: 'integer', description: 'Première ligne, inclusive, défaut 1' },
+        line_end: { type: 'integer', description: 'Dernière ligne inclusive, maximum 400 lignes par lecture. EOF indique la fin.' }
       },
       required: ['file_path']
     }
   },
   {
     name: 'apply_fix',
-    description: 'Applique un correctif à un fichier existant (remplace old_str par new_str)',
+    description: 'Propose un correctif pour revue humaine; ne modifie jamais le fichier source (fix_applied=false)',
     input_schema: {
       type: 'object',
       properties: {
@@ -110,23 +110,23 @@ const TOOLS = [
 // ── Exécution des outils ───────────────────────────────────────────────────────
 function executeTool(name, args) {
   if (name === 'read_file') {
-    const fp = path.join(FRAMEWORK, args.file_path.replace(/^\/+/, ''));
-    if (!fs.existsSync(fp)) return `Fichier introuvable : ${fp}`;
-    return fs.readFileSync(fp, 'utf8').slice(0, 3000);
+    return require('./shared/analysis-evidence').readSource(FRAMEWORK, args);
   }
 
   if (name === 'apply_fix') {
     if (DRY_RUN) return `[DRY-RUN] Correctif non appliqué : ${args.file_path}`;
-    const fp = path.join(FRAMEWORK, args.file_path.replace(/^\/+/, ''));
+    const proposals = require('./shared/change-proposals');
+    const fp = proposals.target(FRAMEWORK, args.file_path);
     if (!fs.existsSync(fp)) return `Fichier introuvable : ${fp}`;
     const content = fs.readFileSync(fp, 'utf8');
     if (!content.includes(args.old_str)) return `Texte à remplacer non trouvé dans ${args.file_path}`;
-    fs.writeFileSync(fp, content.replace(args.old_str, args.new_str), 'utf8');
-    return `✓ Correctif appliqué dans ${args.file_path}`;
+    if (!args.old_str || content.split(args.old_str).length !== 2) throw new Error('Repair requires one unambiguous match');
+    const proposal = proposals.propose(FRAMEWORK, fp, content.replace(args.old_str, args.new_str), 'bug-repair');
+    return `REVIEW REQUIRED: ${proposal.id}; proposed only, fix_applied=false`;
   }
 
   if (name === 'report_analysis') {
-    return `ANALYSIS_DONE:${JSON.stringify(args)}`;
+    return `ANALYSIS_DONE:${JSON.stringify({ ...args, fix_applied: false })}`;
   }
 
   return `Outil inconnu : ${name}`;
@@ -152,15 +152,20 @@ Statut       : ${failure.status}
 Message      : ${failure.message}
 Stack trace  : ${failure.trace}
 Historique   : ${context}
+${require('./shared/analysis-evidence').sourceContext(FRAMEWORK, failure)}
 
 Tu as accès à ces outils :
 - read_file   : lire les fichiers du projet (src/steps/, src/features/, src/pages/)
-- apply_fix   : appliquer un correctif si tu trouves le bug
 - report_analysis : terminer l'analyse avec ton verdict
 
-Commence par lire les fichiers pertinents, puis analyse et propose/applique un correctif.`;
+Mode analyse en lecture seule : ne modifie aucun fichier ni assertion.
+Lis les fichiers pertinents puis appelle report_analysis. EOF signifie fin du fichier : ne redemande pas de lignes au-delà.
+Tu as ${MAX_ITER} appels au maximum, le dernier est réservé à la conclusion.
+Distingue preuve et hypothèse. Le comportement attendu doit être confirmé par les exigences.
+Si la correction relève de l'application testée, indique-le sans contourner le test.`;
 
-    const messages = [{ role: 'user', content: systemPrompt }];
+    const reads = new Map();
+    const modelContext = require('./shared/analysis-evidence').sourceContext(FRAMEWORK, failure) + '\nHistory:\n' + context;
     const span     = new tracer.Span('bugAnalyze', systemPrompt, llm.MODEL).begin();
     let analysis   = null;
     let iter       = 0;
@@ -170,36 +175,20 @@ Commence par lire les fichiers pertinents, puis analyse et propose/applique un c
       console.log(`  ${C}  Itération ${iter}/${MAX_ITER}${E}`);
 
       try {
-        const resp = await llm.chat(messages, { tools: TOOLS });
-        const msg  = resp.message;
-        messages.push({ role: 'assistant', content: msg.content || '', tool_calls: msg.tool_calls });
-
-        if (!msg.tool_calls?.length) {
-          // Réponse textuelle finale
-          console.log(`  ${G}  → ${(msg.content || '').slice(0,80)}${E}`);
-          analysis = { name: failure.name, fix_applied: false, root_cause: msg.content?.slice(0,200) || '', confidence: 0.5 };
+        const { analysisPrompt, requestAnalysis } = require('./shared/llm-analysis');
+        const decision = await requestAnalysis(llm,
+          limit => analysisPrompt(failure, modelContext, reads, limit, iter === MAX_ITER), iter === MAX_ITER);
+        if (decision.action === 'report_analysis') {
+          const candidate = { name: failure.name, ...decision, fix_applied: false, status: 'HYPOTHESIS' };
+          const verification = verifier.check('analyze', candidate, { failure, sourceReads: [...reads.values()] });
+          analysis = { ...candidate, verification };
+          console.log(`  Hypothèse non vérifiée: ${decision.root_cause.slice(0, 160)}`);
           break;
         }
-
-        // Exécuter les outils
-        for (const tc of msg.tool_calls) {
-          const toolName = tc.function.name;
-          const toolArgs = llm.parseArgs(tc.function.arguments);
-          console.log(`  ${Y}  → ${toolName}(${JSON.stringify(toolArgs).slice(0,60)})${E}`);
-
-          const result = executeTool(toolName, toolArgs);
-
-          if (toolName === 'report_analysis' && result.startsWith('ANALYSIS_DONE:')) {
-            const data = JSON.parse(result.replace('ANALYSIS_DONE:', ''));
-            analysis   = { name: failure.name, ...data };
-            span.confidence = data.confidence || 0;
-            console.log(`  ${data.fix_applied ? G+'✓ Fix appliqué' : Y+'⚠ Pas de fix'} | ${data.root_cause?.slice(0,60)}${E}`);
-            iter = MAX_ITER; // Sortir de la boucle
-            break;
-          }
-
-          messages.push({ role: 'tool', content: result });
-        }
+        const key = JSON.stringify([decision.file_path, decision.line_start || 1, decision.line_end || null]);
+        if (!reads.has(key)) reads.set(key, executeTool('read_file', decision));
+        else reads.set(key, reads.get(key) + '\nAlready read: request another range or conclude.');
+        console.log(`  Read: ${decision.file_path}`);
       } catch (e) {
         span.error = e.message;
         console.error(`  ${R}  ✗ Erreur itération ${iter}: ${e.message}${E}`);
@@ -208,6 +197,7 @@ Commence par lire les fichiers pertinents, puis analyse et propose/applique un c
     }
 
     span.end(!!analysis);
+    if (!analysis) process.exitCode = 1;
     if (analysis) {
       analyses.push(analysis);
       memory.recordEpisode('bug-agent', [{ tc: failure.name, fix_applied: analysis.fix_applied, confidence: analysis.confidence }],
@@ -215,6 +205,12 @@ Commence par lire les fichiers pertinents, puis analyse et propose/applique un c
     }
     if (iter >= MAX_ITER && !analysis) {
       console.log(`  ${Y}⚠  Max itérations atteint sans conclusion${E}`);
+    }
+    if (!analysis) analyses.push({ name: failure.name, status: 'NOT_EVALUATED', fix_applied: false, root_cause: '', error: span.error || 'Iteration budget exhausted without a conclusion' });
+    if (!DRY_RUN) {
+      const report = JSON.stringify({ ts: new Date().toISOString(), resultsDir: RESULTS_DIR, analyses }, null, 2);
+      fs.writeFileSync(path.join(DOCS_DIR, 'bug-analysis.json'), report);
+      fs.writeFileSync(path.join(RESULTS_DIR, 'bug-analysis.json'), report);
     }
     console.log();
   }
@@ -241,7 +237,7 @@ async function cmdRepair() {
       'IMPORTANT :\n' +
       '1. Lis d\'abord le fichier de steps correspondant (src/steps/)\n' +
       '2. Identifie la ligne problématique\n' +
-      '3. Applique le correctif minimal avec apply_fix\n' +
+      '3. Propose le correctif minimal avec apply_fix; il sera soumis à revue, jamais appliqué automatiquement\n' +
       '4. Utilise report_analysis pour terminer\n\n' +
       'Sois conservateur : ne modifie que ce qui est nécessaire pour corriger l\'erreur.';
     const prompt = fmt(_repairTpl, {
@@ -250,9 +246,10 @@ async function cmdRepair() {
       source_context: 'Utilisez les outils read_file pour lire les fichiers sources.',
     });
 
-    const messages = [{ role: 'user', content: prompt }];
+    const messages = require('./shared/skill-store').messages('proposition-correction', prompt);
     const span     = new tracer.Span('bugRepair', prompt, llm.MODEL).begin();
     let fixed      = false;
+    let repairError = false;
 
     for (let i = 0; i < MAX_ITER; i++) {
       try {
@@ -266,20 +263,27 @@ async function cmdRepair() {
           const result = executeTool(tc.function.name, llm.parseArgs(tc.function.arguments));
           if (tc.function.name === 'apply_fix' && result.includes('✓')) { fixed = true; console.log(`  ${G}  ✓ Fix appliqué${E}`); }
           if (tc.function.name === 'report_analysis') { i = MAX_ITER; break; }
-          messages.push({ role: 'tool', content: result });
+          messages.push({ role: 'tool', content: result, tool_call_id: tc.id });
         }
       } catch (e) {
-        span.error = e.message; break;
+        span.error = e.message;
+        repairError = true;
+        console.error(`  ${R}  ✗ Erreur itération ${i + 1}: ${e.message}${E}`);
+        break;
       }
     }
 
-    span.end(fixed);
+    let verification;
+    try { verification = verifier.check('repair', { applied: fixed, error: repairError }, { failure }); }
+    catch (error) { verification = error.verification; repairError = true; }
+    span.end(verification?.status === 'VALIDATED');
     promptStore.recordUsage('repair_patch');
-    if (fixed) { repaired++; console.log(`  ${G}✓ Réparé${E}\n`); }
-    else { failed++; console.log(`  ${Y}⚠  Non réparé${E}\n`); }
+    if (verification?.status === 'VALIDATED' && !repairError) { repaired++; console.log(`  ${G}✓ Réparé${E}\n`); }
+    else { failed++; console.log(fixed ? 'Correctif appliqué mais NON VÉRIFIÉ : aucune réussite de réparation déclarée.' : 'Non réparé'); }
   }
 
   console.log(`  ${B}Bilan repair :${E} ${G}${repaired} réparés${E}  ${Y}${failed} non réparés${E}`);
+  if (failed) process.exitCode = 1;
 }
 
 // ── REPORT ────────────────────────────────────────────────────────────────────
@@ -300,7 +304,7 @@ th{color:#64748b;text-align:left}pre{background:#0f172a;padding:12px;border-radi
 <h1>🐛 Bug Report — Playwright BDD</h1>
 <p style="color:#64748b">Généré le ${new Date().toLocaleString('fr-FR')} | max-iter=${MAX_ITER}</p>
 <div class="card">
-  <p><strong style="color:#f87171">${failures.length}</strong> échec(s) analysés |
+  <p><strong style="color:#f87171">${analyses.length}/${failures.length}</strong> échec(s) analysés |
      <strong style="color:#4ade80">${analyses.filter(a=>a.fix_applied).length}</strong> réparés</p>
 </div>
 <div class="card"><h2>Analyses</h2>
@@ -350,4 +354,5 @@ ${Y}⚠  repair modifie les fichiers TypeScript — vérifier avec git diff avan
   }
 }
 
-main().catch(e => { console.error(R + e.message + E); process.exit(1); });
+if (require.main === module) main().catch(e => { console.error(R + e.message + E); process.exitCode = 1; });
+module.exports = { executeTool, cmdAnalyze, cmdRepair, loadFailures };

@@ -14,7 +14,8 @@ When('I enter an invalid email format', async function (this: CustomWorld) {
   const signup = new SignupPage(this.page);
   const user = randomUser();
 
-  await signup.signup(user.firstName, user.lastName, 'invalid-email', user.password);
+  const invalidEmail = await this.dataService!.negativeValue('invalid-email', 'email');
+  await signup.signup(user.firstName, user.lastName, invalidEmail, user.password);
 });
 
 When('I signup without first name', async function (this: CustomWorld) {
@@ -35,7 +36,8 @@ When('I signup without email', async function (this: CustomWorld) {
   const signup = new SignupPage(this.page);
   const user = randomUser();
 
-  await signup.signup(user.firstName, user.lastName, '', user.password);
+  const emptyEmail = await this.dataService!.negativeValue('empty-email', 'email');
+  await signup.signup(user.firstName, user.lastName, emptyEmail, user.password);
 });
 
 When('I signup without password', async function (this: CustomWorld) {
@@ -49,7 +51,8 @@ When('I enter a weak password', async function (this: CustomWorld) {
   const signup = new SignupPage(this.page);
   const user = randomUser();
 
-  await signup.signup(user.firstName, user.lastName, user.email, '123', '123');
+  const weakPassword = await this.dataService!.negativeValue('weak-password', 'password');
+  await signup.signup(user.firstName, user.lastName, user.email, weakPassword, weakPassword);
 });
 
 Then('I should see a password mismatch error', async function (this: CustomWorld) {

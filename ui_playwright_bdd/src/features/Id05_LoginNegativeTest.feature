@@ -1,4 +1,4 @@
-@ui @login @Id05 @negative @regression
+@ui @login @Id05 @negative @regression @applicatio-4
 Feature: Login Validation
 
   Scenario: Id05_LoginNegativeTest - invalid credentials show an error

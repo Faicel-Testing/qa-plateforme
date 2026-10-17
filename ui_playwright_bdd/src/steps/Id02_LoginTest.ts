@@ -2,7 +2,6 @@ import { Given, When, Then } from '@cucumber/cucumber';
 import { CustomWorld } from '../core/world';
 import { LoginPage } from '../pages/Id02_LoginPage';
 import { QACartApiClient } from '../api/QACartApiClient';
-import { randomUser } from '../support/testData';
 
 // Créé via API (pas de cache disque partagé) — isolé par scénario, parallel-safe
 async function ensureValidFixtureUser(world: CustomWorld): Promise<void> {
@@ -10,9 +9,11 @@ async function ensureValidFixtureUser(world: CustomWorld): Promise<void> {
     return;
   }
 
-  const newUser = randomUser();
-  const api = new QACartApiClient();
+  const newUser = await world.newTestUser();
+  const api = new QACartApiClient(event => world.attach(JSON.stringify(event), 'application/json'));
+  await world.dataService?.markAttempted();
   world.apiToken = await api.register(newUser);
+  await world.dataService?.markCreated();
   world.user = newUser;
 }
 

@@ -11,7 +11,7 @@ async function ensureValidUser(world: CustomWorld): Promise<void> {
   }
 
   const user = randomUser();
-  const api = new QACartApiClient();
+  const api = new QACartApiClient(event => world.attach(JSON.stringify(event), 'application/json'));
   world.apiToken = await api.register(user);
   world.user = user;
 }

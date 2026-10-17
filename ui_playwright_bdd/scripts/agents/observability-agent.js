@@ -7,7 +7,7 @@
 // Usage:
 //   node scripts/agents/observability-agent.js metrics       Métriques appels LLM
 //   node scripts/agents/observability-agent.js anomalies     Détecte appels lents/erreurs
-//   node scripts/agents/observability-agent.js cost          Estimation coût tokens
+//   node scripts/agents/observability-agent.js cost          Coût API et durée par tâche
 //   node scripts/agents/observability-agent.js cb status     État du Circuit Breaker
 //   node scripts/agents/observability-agent.js cb reset      Réinitialise le CB
 //   node scripts/agents/observability-agent.js cb cache      Affiche stats cache LLM
@@ -31,9 +31,6 @@ const ps     = require('./shared/prompt-store');
 const FRAMEWORK = path.join(__dirname, '..', '..');
 const DOCS_DIR  = path.join(FRAMEWORK, 'docs');
 fs.mkdirSync(DOCS_DIR, { recursive: true });
-
-// Groq pricing (llama-3.3-70b-versatile) en $ / 1M tokens
-const PRICING = { input: 0.59, output: 0.79 };
 
 // Seuils anomalies
 const SLOW_MS      = 8000;
@@ -100,43 +97,8 @@ function cmdAnomalies() {
 }
 
 // ── COST ──────────────────────────────────────────────────────────────────────
-function cmdCost() {
-  console.log(`\n${B}=== OBSERVABILITY — COÛT TOKENS ===${E}`);
-  const traces = tracer.loadTraces();
-  if (!traces.length) { console.log(`  ${Y}⚠  Aucune trace${E}`); return; }
+function cmdCost() { require('./shared/metrics-report').generate(); }
 
-  let totalInput = 0, totalOutput = 0;
-  const byAgent  = {};
-
-  for (const t of traces) {
-    const inp = t.prompt_len  / 4; // ~4 chars/token
-    const out = t.response_len / 4;
-    totalInput  += inp; totalOutput += out;
-    if (!byAgent[t.agent]) byAgent[t.agent] = { input: 0, output: 0, calls: 0 };
-    byAgent[t.agent].input  += inp;
-    byAgent[t.agent].output += out;
-    byAgent[t.agent].calls++;
-  }
-
-  const costInput  = totalInput  / 1_000_000 * PRICING.input;
-  const costOutput = totalOutput / 1_000_000 * PRICING.output;
-  const total      = costInput + costOutput;
-
-  console.log(`\n  ${B}Total estimé (Groq llama-3.3-70b) :${E} $${total.toFixed(4)}`);
-  console.log(`  Input : ~${Math.round(totalInput).toLocaleString()} tokens  ($${costInput.toFixed(4)})`);
-  console.log(`  Output: ~${Math.round(totalOutput).toLocaleString()} tokens ($${costOutput.toFixed(4)})\n`);
-
-  console.log(`  ${'Agent'.padEnd(30)} ${'Calls'.padEnd(7)} ${'Tokens'.padEnd(12)} Coût estimé`);
-  console.log(`  ${'─'.repeat(65)}`);
-  for (const [agent, s] of Object.entries(byAgent).sort((a,b) => (b[1].input+b[1].output)-(a[1].input+a[1].output))) {
-    const tokens = Math.round(s.input + s.output);
-    const cost   = (s.input / 1_000_000 * PRICING.input + s.output / 1_000_000 * PRICING.output);
-    console.log(`  ${agent.padEnd(30)} ${String(s.calls).padEnd(7)} ${String(tokens).padEnd(12)} $${cost.toFixed(4)}`);
-  }
-  console.log(`\n  ${C}💡 Ollama local → $0.00 (toutes les traces)${E}`);
-}
-
-// ── CIRCUIT BREAKER ───────────────────────────────────────────────────────────
 function cmdCb(action) {
   if (action === 'reset') {
     cb.reset(); console.log(`  ${G}✓ Circuit Breaker réinitialisé → CLOSED${E}`);
@@ -260,7 +222,7 @@ ${B}Observability Agent${E} — Monitoring LLM + Résilience + Prompts
 
   metrics             Métriques des appels LLM (appels, ms, P95, erreurs)
   anomalies           Détecte appels lents (>${SLOW_MS}ms) et bursts d'erreurs
-  cost                Estimation coût tokens (Groq pricing)
+  cost                Rapport coût API et durée par tâche (usage mesuré)
   cb status           État du Circuit Breaker (CLOSED/OPEN/HALF_OPEN)
   cb reset            Réinitialise le Circuit Breaker
   cb cache            Statistiques du cache LLM

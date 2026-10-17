@@ -32,10 +32,8 @@ export class LoginPage extends BasePage {
   async open(): Promise<void> {
     await this.goto('/login');
 
-    await Promise.race([
-      this.emailInput.waitFor({ state: 'visible', timeout: 10000 }),
-      this.page.waitForURL(/todo|tasks|home|dashboard/i, { timeout: 10000 })
-    ]);
+    await expect(this.emailInput.or(this.page.locator('button:has(svg[data-testid="add"])')).first())
+      .toBeVisible({ timeout: 10000 });
   }
 
   async login(email: string, password: string): Promise<void> {
@@ -45,9 +43,8 @@ export class LoginPage extends BasePage {
     await this.passwordInput.fill(password);
     await this.loginBtn.waitFor({ state: 'visible', timeout: 5000 });
     await this.loginBtn.click();
-    // Attend soit la navigation réussie, soit la stabilisation réseau (erreur de validation)
-    // waitForNavigation peut se résoudre prématurément sur SPA React → remplacé par networkidle
-    await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+    // The caller asserts the expected outcome (dashboard or validation error).
+    // Background requests must not delay a ready UI or swallow a timeout.
   }
 
   async assertLoggedIn(): Promise<void> {

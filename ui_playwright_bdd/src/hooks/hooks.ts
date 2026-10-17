@@ -4,10 +4,12 @@ import { CustomWorld } from '../core/world';
 import { writeExecutorFile } from '../utils/allure-executor';
 import { SmartRetry } from '../utils/smart-retry';
 import { ExecutionMetrics } from '../utils/execution-metrics';
+import { TestDataService } from '../data/TestDataService';
 
 setDefaultTimeout(60 * 1000);
 
 Before(async function (this: CustomWorld, scenario) {
+  this.dataService = new TestDataService(scenario.pickle.id);
   writeExecutorFile();
 
   const scenarioName = scenario.pickle.name;
@@ -22,7 +24,7 @@ Before(async function (this: CustomWorld, scenario) {
   this.traceName = `${scenarioName.replace(/[^a-zA-Z0-9-_]/g, '_')}-trace.zip`;
 
   const attempts = ExecutionMetrics.getScenario(scenarioName)?.attempts || 1;
-  this.tracingEnabled = attempts > 1;
+  this.tracingEnabled = attempts > 1 || process.env.TEST_TRACE === 'true';
 
   if (this.tracingEnabled) {
     await this.context.tracing.start({
@@ -32,11 +34,11 @@ Before(async function (this: CustomWorld, scenario) {
     });
   }
 
-  await this.attach(`Browser: ${this.browserName}`, 'text/plain');
-  await this.attach(`Scenario Name: ${scenarioName}`, 'text/plain');
-  await this.attach(`Base URL: ${this.baseUrl}`, 'text/plain');
-  await this.attach(`Environment: ${this.browserName}`, 'text/plain');
-  await this.attach(
+  this.attach(`Browser: ${this.browserName}`, 'text/plain');
+  this.attach(`Scenario Name: ${scenarioName}`, 'text/plain');
+  this.attach(`Base URL: ${this.baseUrl}`, 'text/plain');
+  this.attach(`Environment: ${this.browserName}`, 'text/plain');
+  this.attach(
     `Execution: ${this.browserName} | ${process.env.NODE_ENV}`,
     'text/plain'
   );
@@ -68,6 +70,7 @@ Before(async function (this: CustomWorld, scenario) {
 });
 
 After(async function (this: CustomWorld, scenario) {
+  this.dataOutcome = scenario.result?.status || 'unknown';
   const scenarioName = this.scenarioName || 'Unknown scenario';
   let traceStopped = false;
 
@@ -80,7 +83,7 @@ After(async function (this: CustomWorld, scenario) {
 
     const attempts = ExecutionMetrics.getScenario(scenarioName)?.attempts || 1;
 
-    await this.attach(
+    this.attach(
       [
         `Browser: ${this.browserName}`,
         `Scenario Name: ${scenarioName}`,
@@ -93,7 +96,7 @@ After(async function (this: CustomWorld, scenario) {
     if (scenario.result?.status === Status.PASSED) {
       ExecutionMetrics.markFinalStatus(scenarioName, 'passed');
 
-      await this.attach(
+      this.attach(
         `Recovered after retry: ${attempts > 1 ? 'YES' : 'NO'}`,
         'text/plain'
       );
@@ -102,8 +105,8 @@ After(async function (this: CustomWorld, scenario) {
     if (scenario.result?.status === Status.FAILED) {
       ExecutionMetrics.markFinalStatus(scenarioName, 'failed');
 
-      await this.attach(`Retryable Error: ${isRetryable}`, 'text/plain');
-      await this.attach(`Retry Decision Reason: ${retryReason}`, 'text/plain');
+      this.attach(`Retryable Error: ${isRetryable}`, 'text/plain');
+      this.attach(`Retry Decision Reason: ${retryReason}`, 'text/plain');
 
       if (isRetryable) {
         ExecutionMetrics.markRetried(scenarioName, retryReason);
@@ -111,27 +114,27 @@ After(async function (this: CustomWorld, scenario) {
 
       if (this.page) {
         const screenshot = await this.page.screenshot({ fullPage: true });
-        await this.attach(screenshot, 'image/png');
+        this.attach(screenshot, 'image/png');
 
-        await this.attach(`Current URL: ${this.page.url()}`, 'text/plain');
+        this.attach(`Current URL: ${this.page.url()}`, 'text/plain');
 
         const pageSource = await this.page.content();
-        await this.attach(pageSource, 'text/html');
+        this.attach(pageSource, 'text/html');
 
         const consoleLogs = this.consoleLogs.join('\n');
-        await this.attach(
+        this.attach(
           consoleLogs || 'No console logs captured.',
           'text/plain'
         );
 
         const pageErrors = this.pageErrors.join('\n\n');
-        await this.attach(
+        this.attach(
           pageErrors || 'No page errors captured.',
           'text/plain'
         );
 
         const failedRequests = this.failedRequests.join('\n');
-        await this.attach(
+        this.attach(
           failedRequests || 'No failed requests captured.',
           'text/plain'
         );
@@ -142,7 +145,7 @@ After(async function (this: CustomWorld, scenario) {
         await this.context.tracing.stop({ path: tracePath });
         traceStopped = true;
         const traceBuffer = fs.readFileSync(tracePath);
-        await this.attach(traceBuffer, 'application/zip');
+        this.attach(traceBuffer, 'application/zip');
       } else {
         traceStopped = true;
       }

@@ -39,7 +39,7 @@ function record({ fn, durationMs, promptLen, responseLen, success, model = '', c
     retries,
   };
   if (confidence !== null) entry.confidence = Math.round(confidence * 1000) / 1000;
-  if (error)               entry.error = String(error).slice(0, 200);
+  if (error)               entry.error = 'AGENT_OPERATION_FAILED';
   try { fs.appendFileSync(TRACE_FILE, JSON.stringify(entry) + '\n', 'utf8'); } catch {}
 }
 

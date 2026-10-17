@@ -16,7 +16,6 @@
 // Guards: Self-consistency N votes (défaut 3, configurable)
 // ============================================================
 require('dotenv').config();
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const fs     = require('fs');
 const path   = require('path');
@@ -35,7 +34,9 @@ function fmt(template, vars) {
 }
 
 const FRAMEWORK   = path.join(__dirname, '..', '..');
-const RESULTS_DIR = path.join(FRAMEWORK, 'allure-results');
+const verifier = require('./shared/agent-verifier').createVerifier({ agent: 'advisor', root: FRAMEWORK, runtimeProcess: process });
+const runtime = require('./shared/pipeline-runtime');
+const RESULTS_DIR = runtime.resultDirectory(FRAMEWORK);
 const DOCS_DIR    = path.join(FRAMEWORK, 'docs');
 
 fs.mkdirSync(DOCS_DIR, { recursive: true });
@@ -46,6 +47,27 @@ const N_VOTES = parseInt(process.argv.find(a => /^\d+$/.test(a)) || '3');
 const G = '\x1b[32m', R = '\x1b[31m', Y = '\x1b[33m', C = '\x1b[36m', B = '\x1b[1m', E = '\x1b[0m';
 
 // ── Contexte release ───────────────────────────────────────────────────────────
+function checkExecution() {
+  if (DRY_RUN) { console.log('[DRY-RUN] Decision not evaluated'); return false; }
+  const check = runtime.checkRun(RESULTS_DIR, process.env.QA_RUN_ID);
+  if (check.allowed) {
+    const review = require('./shared/qa-workflow-engine').requireHumanApprovalBeforeFinalDecision(process.env.QA_WORKFLOW_ID);
+    if (review.ok && !review.blocked) return true;
+    const pending = review.status === 'PENDING_APPROVAL';
+    const status = pending ? 'PENDING_APPROVAL' : review.status === 'REJECTED' ? 'REJECTED' : 'BLOCKED';
+    if (process.env.QA_DECISION_FILE) fs.writeFileSync(process.env.QA_DECISION_FILE, JSON.stringify({
+      schemaVersion: 1, runId: process.env.QA_RUN_ID, status, reason: review.reason,
+    }));
+    console.error((pending ? 'EN ATTENTE D’APPROBATION' : status === 'REJECTED' ? 'REJETÉ' : 'BLOQUÉ') + ': ' + review.reason);
+    // A pending review never authorizes downstream release steps.
+    process.exitCode = pending ? 2 : 1;
+    return false;
+  }
+  console.error('BLOCKED: ' + check.reasons.join('; '));
+  process.exitCode = 1;
+  return false;
+}
+
 function collectContext() {
   if (!fs.existsSync(RESULTS_DIR)) return { total: 0, passed: 0, failed: 0, pass_rate: 0, failures: [] };
   const results = fs.readdirSync(RESULTS_DIR)
@@ -73,6 +95,7 @@ const VOTE_SCHEMA = {
 };
 
 async function cmdAdvise(nVotes = N_VOTES) {
+  if (!checkExecution()) return;
   console.log(`\n${B}=== ADVISOR — RELEASE ADVISE (${nVotes} votes) [${llm.MODEL}] ===${E}`);
   const ctx    = collectContext();
   const agentSummary = memory.getAgentSummary('quality-agent', 3);
@@ -100,7 +123,7 @@ async function cmdAdvise(nVotes = N_VOTES) {
     flaky_count: 'N/A', critical_bugs: 'N/A', high_bugs: 'N/A', medium_bugs: 'N/A',
   });
 
-  const messages = [{ role: 'user', content: prompt }];
+  const messages = require('./shared/skill-store').messages('recommandation-release', prompt);
   const span     = new tracer.Span('adviseSelfConsistent', prompt, llm.MODEL).begin();
 
   try {
@@ -114,6 +137,9 @@ async function cmdAdvise(nVotes = N_VOTES) {
       console.log(`  Vote ${i+1}: ${icon}  risque=${r.risk}  ${r.reasoning?.slice(0,60)||''}`);
     });
 
+    const verification = verifier.check('advise', winner, { metrics: ctx, run: runtime.checkRun(RESULTS_DIR, process.env.QA_RUN_ID) });
+    console.log('[AVIS IA CONSULTATIF]', winner);
+    verifier.requireValidated(verification);
     if (winner) {
       const gate = governance.checkDecisionGate({
         decision: { ...winner, confidence: 0.82, critical: winner.risk === 'critical' || winner.verdict === 'NO-GO' },
@@ -132,6 +158,8 @@ async function cmdAdvise(nVotes = N_VOTES) {
         gate.blockers.forEach(b => console.log(`    • ${b}`));
       }
 
+      if (winner.blockers?.length) winner.verdict = 'NO-GO';
+      process.exitCode = winner.verdict === 'GO' ? 0 : 1;
       const verdictIcon = winner.verdict === 'GO' ? G + '✅ GO — RELEASE AUTORISÉE' + E : R + '❌ NO-GO — BLOCAGE RELEASE' + E;
       console.log(`\n  ${B}Décision finale :${E} ${verdictIcon}`);
       console.log(`  Risque : ${winner.risk?.toUpperCase()}`);
@@ -142,6 +170,7 @@ async function cmdAdvise(nVotes = N_VOTES) {
       memory.recordEpisode('advisor-agent', [{ verdict: winner.verdict, risk: winner.risk, votes: vote_counts, governanceBlocked: gate.blocked }], `Release: ${winner.verdict} (risque ${winner.risk})`, 'advise');
     }
   } catch (e) {
+    process.exitCode = 1;
     span.error = e.message; span.end(false);
     console.error(`  ${R}✗ ${e.message}${E}`);
   }
@@ -183,7 +212,8 @@ async function cmdPredict() {
         failures_count: stats.count, broken: 0, history_summary: context,
       });
 
-      const pred = await llm.chatStructured([{ role: 'user', content: prompt }], PREDICT_SCHEMA);
+      const pred = await llm.chatStructured(require('./shared/skill-store').messages('recommandation-release', prompt), PREDICT_SCHEMA);
+      verifier.check('predict', pred, { tc, stats });
       span.end(true);
       promptStore.recordUsage('predict_gate', pred.failure_risk);
 
@@ -191,6 +221,7 @@ async function cmdPredict() {
       const riskIcon = riskPct >= 70 ? R+'⚠ HIGH'+E : riskPct >= 40 ? Y+'~ MED'+E : G+'✓ LOW'+E;
       console.log(`  ${riskIcon}  ${tc.slice(0,45).padEnd(45)}  ${riskPct}%  ${pred.trend||'?'}  ${pred.recommendation?.slice(0,40)||''}`);
     } catch (e) {
+      verifier.failure(e);
       span.error = e.message; span.end(false);
       console.error(`  ${R}✗ ${tc}: ${e.message}${E}`);
     }
@@ -199,6 +230,7 @@ async function cmdPredict() {
 
 // ── GATE — Quality Gate LLM ───────────────────────────────────────────────────
 async function cmdGate() {
+  if (!checkExecution()) return;
   console.log(`\n${B}=== ADVISOR — GATE [${llm.MODEL}] ===${E}`);
   const ctx  = collectContext();
   const span = new tracer.Span('gateStructured', JSON.stringify(ctx), llm.MODEL).begin();
@@ -215,9 +247,12 @@ async function cmdGate() {
 
 Pass rate: ${ctx.pass_rate}% | Échecs: ${ctx.failures.length} | Total: ${ctx.total}
 
-Critères: pass_rate≥90% PASS, ≥80% WARNING, <80% FAIL`;
+Critères: PASS uniquement si tous les tests de cette exécution complète sont passés et aucun bloquant concret n'est identifié. Sinon FAIL. Ne pas inventer de bloquant.`;
 
-    const gate = await llm.chatStructured([{ role: 'user', content: prompt }], GATE_SCHEMA);
+    const gate = await llm.chatStructured(require('./shared/skill-store').messages('recommandation-release', prompt), GATE_SCHEMA);
+    const verification = verifier.check('gate', gate, { metrics: ctx, run: runtime.checkRun(RESULTS_DIR, process.env.QA_RUN_ID) });
+    console.log('[AVIS IA CONSULTATIF]', gate);
+    verifier.requireValidated(verification);
     span.end(true);
 
     const gov = governance.checkDecisionGate({
@@ -229,7 +264,9 @@ Critères: pass_rate≥90% PASS, ≥80% WARNING, <80% FAIL`;
       actor: 'advisor-agent',
     });
 
-    const finalVerdict = gov.blocked ? 'FAIL' : gate.verdict;
+    if (!['PASS', 'FAIL'].includes(gate.verdict) || !Number.isFinite(gate.score) || gate.score < 0 || gate.score > 100) throw new Error('Invalid quality gate verdict');
+    const finalVerdict = gov.blocked || gate.blockers?.length ? 'FAIL' : gate.verdict;
+    process.exitCode = finalVerdict === 'PASS' ? 0 : 1;
     const icon = finalVerdict === 'PASS' ? G+'✅ PASS'+E : R+'❌ FAIL'+E;
     console.log(`\n  ${icon}  Score : ${gate.score}/100`);
     const blockers = [...(gate.blockers || []), ...(gov.blocked ? gov.blockers : [])];
@@ -240,6 +277,7 @@ Critères: pass_rate≥90% PASS, ≥80% WARNING, <80% FAIL`;
       console.log(`  ${R}🚫 Quality gate blocked by AI governance requirements.${E}`);
     }
   } catch (e) {
+    process.exitCode = 1;
     span.error = e.message; span.end(false);
     console.error(`  ${R}✗ ${e.message}${E}`);
   }
@@ -324,6 +362,7 @@ ${episodes.slice(-20).reverse().map(ep=>`<tr><td>${ep.ts.slice(0,10)}</td><td>${
 async function main() {
   const args = process.argv.slice(2).filter(a => !a.startsWith('--') && !/^\d+$/.test(a));
   const [cmd, sub] = args;
+  if (['gate', 'advise'].includes(cmd) && !checkExecution()) return;
   await llm.assertRunning();
 
   switch (cmd) {
@@ -353,4 +392,5 @@ Options:
   }
 }
 
-main().catch(e => { console.error(R + e.message + E); process.exit(1); });
+if (require.main === module) main().catch(e => { console.error(R + e.message + E); process.exitCode = 1; });
+module.exports = { cmdGate, cmdAdvise, main };

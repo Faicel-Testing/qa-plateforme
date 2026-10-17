@@ -8,8 +8,9 @@ export class BasePage {
     const url = `${baseUrl}${path}`;
 
     await this.page.goto(url, {
-      waitUntil: 'domcontentloaded',
-      timeout: 30000
+      // Use the navigation deadline configured by CustomWorld (30 seconds).
+      // A 180-second override outlives Cucumber's 60-second step deadline.
+      waitUntil: 'domcontentloaded'
     });
   }
 
@@ -55,10 +56,15 @@ export class BasePage {
       .waitFor({ state: 'visible', timeout: 5000 })
       .then(() => true)
       .catch(() => false);
-    if (hasMuiError) return;
+    if (hasMuiError) {
+      if (expectedText) {
+        await expect(muiError.filter({ hasText: expectedText }).first()).toBeVisible({ timeout: 15000 });
+      }
+      return;
+    }
 
     const errorLocator = expectedText
-      ? this.page.getByText(expectedText as any)
+      ? this.page.getByText(expectedText)
       : this.page.getByText(/invalid|required|missing|weak|mismatch|already registered|not found|unable|cannot delete|error|duplicate|limit|character|please insert/i);
 
     // Timeout étendu à 15s pour couvrir les cold starts Heroku

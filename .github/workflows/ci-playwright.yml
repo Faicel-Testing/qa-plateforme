@@ -10,14 +10,20 @@ on:
     branches: [ main ]
     paths:
       - 'ui_playwright_bdd/**'
+      - '.github/workflows/ci-playwright.yml'
   workflow_dispatch:
   schedule:
     - cron: '0 8 * * 0'
+
+permissions:
+  contents: read
 
 jobs:
   test:
     name: Playwright BDD — Chromium headless
     runs-on: ubuntu-latest
+    outputs:
+      quality_checks: ${{ steps.typecheck.outcome }}
     defaults:
       run:
         working-directory: ui_playwright_bdd
@@ -26,40 +32,62 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: ui_playwright_bdd/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
+      - name: ESLint (zero warnings)
+        run: npm run lint
+
+      - name: TypeScript type check
+        id: typecheck
+        run: npm run typecheck
+
+      - name: Verify human review and AI orchestration controls
+        run: npm run test:review
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
       - name: Run @regression tests (headless)
+        id: bdd
         env:
           BASE_URL:      https://qacart-todo.herokuapp.com
           TEST_HEADLESS: 'true'
           BROWSER:       chromium
-          GROQ_API_KEY:  ${{ secrets.GROQ_API_KEY }}
-        run: |
-          npx cucumber-js \
-            --require-module ts-node/register \
-            --require 'src/core/world.ts' \
-            --require 'src/hooks/**/*.ts' \
-            --require 'src/steps/**/*.ts' \
-            --format progress \
-            --format allure-cucumberjs/reporter \
-            --format-options '{"resultsDir":"allure-results"}' \
-            --tags '@regression and not @wip'
+          QA_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+          ALLURE_RESULTS_DIR: allure-results
+        run: node scripts/ci-ai.js test
         timeout-minutes: 20
 
-      - name: Generate Allure report
-        if: always()
-        run: npx allure generate allure-results -o allure-report --clean
+      - name: Restore Allure trend history
+        if: ${{ always() && steps.bdd.outcome != 'skipped' }}
+        uses: actions/cache/restore@v4
+        with:
+          path: ui_playwright_bdd/.allure-history
+          key: allure-history-v1-${{ github.ref }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            allure-history-v1-${{ github.ref }}-
+
+      - name: Generate Allure report with trends
+        id: allure
+        if: ${{ always() && steps.bdd.outcome != 'skipped' }}
+        env:
+          ALLURE_RESULTS_DIR: allure-results
+        run: node scripts/agents/allure-agent.js generate
+
+      - name: Save Allure trend history
+        if: ${{ always() && steps.allure.outcome == 'success' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ui_playwright_bdd/.allure-history
+          key: allure-history-v1-${{ github.ref }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Upload Allure report
         if: always()
@@ -77,6 +105,15 @@ jobs:
           path: ui_playwright_bdd/test-results
           retention-days: 7
 
+      - name: Upload execution evidence for AI analysis
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: execution-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ui_playwright_bdd/allure-results
+          retention-days: 7
+          if-no-files-found: error
+
       - name: Post result summary
         if: always()
         run: |
@@ -93,3 +130,42 @@ jobs:
             RATE=$(( PASSED * 100 / TOTAL ))
             echo "| Pass Rate | $RATE% |" >> $GITHUB_STEP_SUMMARY
           fi
+
+  ai-analysis:
+    name: AI analysis (advisory)
+    needs: test
+    # Analyze failures too; never expose provider secrets to pull-request code.
+    if: ${{ always() && !cancelled() && needs.test.outputs.quality_checks == 'success' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: ui_playwright_bdd
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: ui_playwright_bdd/package-lock.json
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: execution-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ui_playwright_bdd/allure-results
+      - name: Analyze this execution (including failed tests)
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          QA_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+          ALLURE_RESULTS_DIR: allure-results
+        run: node scripts/ci-ai.js analyze
+      - name: Upload analysis and verification records
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-analysis-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ui_playwright_bdd/logs/ci-ai
+            ui_playwright_bdd/allure-results/*analysis*.json
+            ui_playwright_bdd/allure-results/*triage*.json
+          retention-days: 7

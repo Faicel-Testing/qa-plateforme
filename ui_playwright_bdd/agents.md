@@ -82,14 +82,16 @@ node scripts/agents/pipeline-agent.js gate        # Gate CI/CD (exit 0 ou 1)
 node scripts/agents/pipeline-agent.js status      # État du pipeline
 ```
 
-### CI/CD et Jira
+### CI/CD et Plane
 
 ```bash
 node scripts/agents/ci-agent.js commit            # Commit (ne stage jamais .env)
 node scripts/agents/ci-agent.js push              # Push avec SSL bypass
 node scripts/agents/ci-agent.js pr create         # Crée une PR GitHub
-node scripts/agents/planning-agent.js stories     # Crée les US dans Jira
-node scripts/agents/planning-agent.js tickets     # Crée les bugs Jira depuis Allure
+node scripts/agents/planning-agent.js check       # Vérifie la connexion Plane
+node scripts/agents/planning-agent.js stories     # Liste les US Plane
+node scripts/agents/planning-agent.js testcases   # Liste les cas enfants Plane
+node scripts/agents/planning-agent.js cycles list # Consulte les cycles Plane
 ```
 
 ---
@@ -104,7 +106,7 @@ scripts/agents/              ← 10 agents JS (point d'entrée)
     memory-store.js          ← mémoire épisodique JSONL
     prompt-store.js          ← versioning des prompts
     tracer.js                ← traçabilité des appels LLM
-  jira-fetcher.js            ← client Jira
+  plane-fetcher.js           ← client Plane (unique fournisseur du backlog)
 src/
   features/                  ← fichiers .feature Gherkin (source de vérité)
   steps/                     ← step definitions Cucumber
@@ -134,9 +136,9 @@ docs/                        ← rapports HTML, specs, traceability matrix
 
 ```env
 GROQ_API_KEY=...          # LLM Groq LLaMA 3.3 70B (obligatoire)
-JIRA_URL=...              # URL Jira Cloud
-JIRA_EMAIL=...            # Email compte Jira
-JIRA_TOKEN=...            # Token API Jira
+PLANE_WORKSPACE=...       # Workspace Plane
+PLANE_PROJECT_ID=...      # Projet Plane
+PLANE_API_KEY=...         # Token Plane, uniquement dans .env
 SLACK_WEBHOOK_URL=...     # Webhook Slack (optionnel)
 TEAMS_WEBHOOK_URL=...     # Webhook Teams (optionnel)
 AGENT_MAX_ITER=5          # Max itérations boucle agentique (hard cap: 20)
@@ -175,7 +177,7 @@ await llm.chatSelfConsistent(messages, schema,   // Vote majoritaire N fois
 - **App** : QACart Todo — qacart-todo.herokuapp.com
 - **Utilisateurs de test** : créés dynamiquement via API Setup (POST register), pas de compte statique
 - **Features** : Signup, Login, Todo, Delete Todo, API Setup (Id01, Id02, Id03, Id04, Id05, Id09)
-- **Projet Jira** : SCRUM
+- **Projet Plane** : Application_Test (APPLICATIO) ; références SCRUM historiques conservées
 
 ---
 

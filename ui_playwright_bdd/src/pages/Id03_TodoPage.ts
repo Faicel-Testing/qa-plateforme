@@ -74,7 +74,7 @@ export class TodoPage extends BasePage {
 
   async assertTodoValidationError(expectedText?: RegExp | string): Promise<void> {
     const errorLocator = expectedText
-      ? this.page.getByText(expectedText as any)
+      ? this.page.getByText(expectedText)
       : this.page.getByText(/required|cannot be empty|empty|duplicate|limit|character|invalid/i);
 
     await expect(errorLocator.first()).toBeVisible({ timeout: 10000 });
@@ -82,7 +82,7 @@ export class TodoPage extends BasePage {
 
   async assertDeleteError(expectedText?: RegExp | string): Promise<void> {
     const errorLocator = expectedText
-      ? this.page.getByText(expectedText as any)
+      ? this.page.getByText(expectedText)
       : this.page.getByText(/not found|unable|cannot delete|error|already deleted/i);
 
     await expect(errorLocator.first()).toBeVisible({ timeout: 10000 });

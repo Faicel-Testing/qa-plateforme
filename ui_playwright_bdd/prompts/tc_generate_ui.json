@@ -10,11 +10,11 @@
     "cucumber"
   ],
   "_status": "RÉÉCRIT (v2.0.0), CÂBLÉ ET VALIDÉ le 2026-08-24 — remplace les prompts en dur dupliqués et incohérents (3-5 vs minimum 5 scénarios) de cmdSpec()/cmdGherkin() dans codegen-agent.js par ce template unique versionné. Testé en isolation avec une story Jira simulée (Jira non configuré en local) : .feature français généré correctement, 6 scénarios, tags @scrum-42 @regression corrects. Point à vérifier séparément : le prompt demande des steps 'en français' et le LLM a traduit jusqu'aux mots-clés Gherkin (Étant donné/Quand/Alors), alors que les .feature existants du repo (ex. Id03_TodoTest.feature) utilisent Given/When/Then en anglais — à clarifier si on veut une convention uniforme.",
-  "current_version": "2.0.0",
+  "current_version": "2.1.0",
   "metrics": {
-    "calls": 1,
+    "calls": 32,
     "avg_confidence": null,
-    "last_used": "2026-08-24T17:40:45Z"
+    "last_used": "2026-10-15T19:55:59Z"
   },
   "history": [
     {
@@ -28,6 +28,12 @@
       "content": "Tu es un expert QA BDD. Génère un fichier .feature Gherkin complet et professionnel pour cette User Story.\n\nClé Jira     : {us_key}\nTitre        : {us_title}\nDescription  : {us_description}\nStatut       : {us_status}\n\nExigences :\n- Feature avec description claire\n- Background avec préconditions si nécessaire\n- Minimum 5 Scenarios : 2 positifs, 2 négatifs, 1 cas limite\n- Tags : @{us_key_lower} @regression\n- Steps en français, style BDD (Given/When/Then)\n\nRéponds UNIQUEMENT avec le contenu .feature brut (pas de bloc markdown, pas de JSON).",
       "created_at": "2026-08-24T17:37:54Z",
       "note": "Fix 2026-08-24 : contenu précédent en anglais, format SwagLabs (standard_user/locked_out_user), demandait un JSON {scenarios:[...]} — incompatible avec codegen-agent.js qui génère du Gherkin français en texte brut. Nouveau contenu aligné sur les prompts réellement utilisés par cmdSpec()/cmdGherkin() (unifiés en un seul template au passage — ils étaient dupliqués avec une légère incohérence : 3-5 scénarios vs minimum 5)."
+    },
+    {
+      "version": "2.1.0",
+      "content": "Tu es un expert QA BDD. Génère un fichier .feature à partir des exigences documentées de la story Plane.\nClé Plane : {us_key}\nTitre : {us_title}\nDescription : {us_description}\nStatut : {us_status}\nGénère uniquement les comportements justifiés par ces exigences. Les propositions et décisions ouvertes ne sont pas des exigences approuvées. Ne force pas un minimum de scénarios et n'invente ni limites ni messages d'erreur.\nUtilise EXCLUSIVEMENT les mots-clés Gherkin ANGLAIS (Feature, Background, Scenario, Given, When, Then, And) avec des titres et descriptions en français.\nLes tags @{us_key_lower} @regression précèdent Feature:. Background ne peut avoir AUCUN tag.\nRéponds uniquement avec le fichier .feature brut, sans Markdown ni JSON.",
+      "created_at": "2026-10-06T22:34:29Z",
+      "note": "Fix dialecte Gherkin anglais, tags Feature et interdiction des tags Background ; source Plane et absence de quota artificiel de scénarios."
     }
   ]
 }
