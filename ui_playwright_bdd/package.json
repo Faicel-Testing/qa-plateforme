@@ -1,6 +1,6 @@
 {
   "name": "ui_playwright_bdd",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "private": true,
   "scripts": {
     "agents:data": "node scripts/python-agents.cjs data",

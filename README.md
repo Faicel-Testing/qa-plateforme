@@ -2,7 +2,7 @@
 
 Plateforme de tests automatisés UI, API, performance et mobile, avec rapports Allure, intégration GitHub Actions et agents IA d'assistance QA.
 
-**Version publiée : [v1.7.0](https://github.com/Faicel-Testing/qa-plateforme/releases/tag/v1.7.0)** — [évolutions du framework Playwright BDD](ui_playwright_bdd/CHANGELOG.md).
+**Version publiée : [v1.7.1](https://github.com/Faicel-Testing/qa-plateforme/releases/tag/v1.7.1)** — [évolutions du framework Playwright BDD](ui_playwright_bdd/CHANGELOG.md).
 
 ## Objectif
 

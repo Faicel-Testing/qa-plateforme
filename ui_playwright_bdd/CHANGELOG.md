@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.1 — 2026-10-18
+
+- README global et README Playwright BDD actualisés : architecture, agents Python LangChain / LangGraph, harness LLM, agent Data PostgreSQL et pgAdmin.
+- Commandes d'installation, de pipeline, d'analyse, d'Allure et de DeepEval alignées sur les scripts du projet ; intégrations Plane et Confluence documentées.
+- Documentation des contrôles CI, de la revue humaine et des limites connues ; versions npm et liens de release synchronisés.
+
+Validation documentaire : 39 liens locaux et 33 commandes npm vérifiés. Aucun changement du comportement des tests ; les limites connues de la version 1.7.0 restent applicables.
+
 ## 1.7.0 — 2026-10-18
 
 - Agents Python avec LangChain / LangGraph : pipeline, analyse, qualité, génération et agent Data.

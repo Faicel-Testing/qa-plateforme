@@ -1,6 +1,6 @@
 # Playwright BDD — Framework QA avec agents IA
 
-**Version 1.7.0** · [Notes de version](CHANGELOG.md) · [Plateforme QA](../README.md)
+**Version 1.7.1** · [Notes de version](CHANGELOG.md) · [Plateforme QA](../README.md)
 
 Tests BDD en **Playwright, CucumberJS et TypeScript**, assistés par des agents Python **LangChain / LangGraph**. Le framework exécute les scénarios, conserve les preuves Allure, analyse les échecs et prépare des propositions de code soumises à revue humaine.
 
