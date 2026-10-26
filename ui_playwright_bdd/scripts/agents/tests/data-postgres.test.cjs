@@ -49,8 +49,31 @@ test('scenario service supplies PostgreSQL profiles without storing application 
   } finally {
     await service.dispose('offline-verification');
     const repo = new PostgresDataRepository();
-    try { await repo.complete(process.env.QA_RUN_ID); } finally { await repo.close(); }
+    try { await repo.complete(service.runId); } finally { await repo.close(); }
     if (saved.provider === undefined) delete process.env.TEST_DATA_PROVIDER; else process.env.TEST_DATA_PROVIDER = saved.provider;
     if (saved.run === undefined) delete process.env.QA_RUN_ID; else process.env.QA_RUN_ID = saved.run;
+  }
+});
+
+test('completed ID inherited from a previous shell run cannot poison a new scenario', async () => {
+  const saved = { run: process.env.QA_RUN_ID, managed: process.env.QA_EXECUTION_MANAGED, provider: process.env.TEST_DATA_PROVIDER };
+  const repo = new PostgresDataRepository();
+  const previous = 'completed-check-' + randomUUID();
+  let service;
+  try {
+    await repo.prepare(previous); await repo.complete(previous);
+    process.env.QA_RUN_ID = previous;
+    process.env.QA_EXECUTION_MANAGED = 'false';
+    process.env.TEST_DATA_PROVIDER = 'postgres';
+    service = new TestDataService('new-scenario');
+    assert.notEqual(service.runId, previous);
+    const user = await service.createUser();
+    assert.match(user.email, /^qa[a-f0-9]+@mail.com$/);
+  } finally {
+    if (service) { await service.dispose('regression-check'); await repo.complete(service.runId); }
+    await repo.close();
+    for (const [key, value] of Object.entries({ QA_RUN_ID: saved.run, QA_EXECUTION_MANAGED: saved.managed, TEST_DATA_PROVIDER: saved.provider })) {
+      if (value === undefined) delete process.env[key]; else process.env[key] = value;
+    }
   }
 });

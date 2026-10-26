@@ -71,16 +71,22 @@ function meteredFetch(provider, fetcher = globalThis.fetch, options = {}) {
       agent: path.basename(process.argv[1] || 'unknown', '.js'), taskId: env.QA_METRICS_TASK_ID || null,
       callId: randomUUID() };
     const started = performance.now();
+    const observation = require('./langfuse-observability').start('groq.request', { 'gen_ai.request.model': options.simulated ? 'synthetic-installation-model' : request.model,
+      'langfuse.observation.type': kind === 'embedding' ? 'embedding' : 'generation', 'qa.simulated': options.simulated === true });
     emit({ type: 'call_start', ...meta });
     let finished = false;
     function finish(data, success, status) {
       if (finished) return;
       finished = true;
       const tokens = usage(data, provider, kind);
+      const estimate = cost({ ...meta, model: data?.model || meta.model, serviceTier: data?.service_tier || meta.serviceTier }, tokens, options.catalog || prices(env));
+      observation.setAttributes({ 'gen_ai.usage.input_tokens': tokens.inputTokens, 'gen_ai.usage.output_tokens': tokens.outputTokens,
+        'http.response.status_code': status, 'qa.success': success, 'qa.estimated_cost_usd': options.simulated ? undefined : estimate.usd });
+      observation.end(success);
       emit({ type: 'call_end', ...meta, model: data?.model || meta.model,
         durationMs: performance.now() - started, success, httpStatus: status,
         ...tokens, usageStatus: tokens.inputTokens !== null && tokens.outputTokens !== null ? 'MEASURED' : 'UNKNOWN',
-        cost: cost({ ...meta, model: data?.model || meta.model, serviceTier: data?.service_tier || meta.serviceTier }, tokens, options.catalog || prices(env)) });
+        cost: estimate });
     }
     let response;
     try { response = await fetcher(url, init); }

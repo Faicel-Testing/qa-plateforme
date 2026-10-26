@@ -29,7 +29,7 @@ test('real Groq SDK paths for agent, streaming and judge traverse the gateway', 
     for await (const chunk of stream) assert.equal(typeof chunk.message.content, 'string');
     await require('../../deepeval-judge').generate({ prompt: 'Return ok' });
     const embeddings = require('../shared/embedding-client');
-    assert.throws(() => embeddings.createClient(embeddings.config({})), /Groq-only/);
+    assert.match(embeddings.createClient(embeddings.config({})).key, /^local-onnx:/);
     assert.equal(calls.length, 3);
     assert.doesNotMatch(JSON.stringify(calls.map(c => c.init.body)), /private\.local|person@example\.com/);
     for (const call of calls) { assert.equal(call.init.redirect, 'error'); assert.ok(call.init.signal); }

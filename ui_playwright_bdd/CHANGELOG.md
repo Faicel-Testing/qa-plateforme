@@ -1,5 +1,17 @@
 # Changelog
 
+## Changements depuis 1.7.1 — 2026-10-26
+
+- CucumberJS comme moteur BDD unique ; suppression de la configuration et de la dépendance `playwright-bdd`.
+- Sélecteurs des formulaires stabilisés, assertion de connexion dédupliquée et contrôle conjoint du message de validation et de l'absence d'insertion des tâches invalides.
+- Métriques de retry isolées par pickle et fondées sur les tentatives démarrées ; classification SmartRetry conservée comme diagnostic.
+- Résultats multibrowser isolés par run, manifestes et fusion des exécutions terminées ; diagnostics des erreurs de données et de fournisseur IA.
+- Embeddings E5 locaux, worker dédié et stockage RAG PostgreSQL/pgvector optionnel.
+- Instrumentation Python/Node OpenTelemetry et stack Langfuse locale optionnelle.
+- README global, README Playwright et instructions des agents harmonisés.
+
+Validation ciblée : TypeScript et lint réussis ; 56 tests Node ciblés, 70 contrôles de revue/orchestration et 62 tests Python réussis ; résolution des 29 scénarios Gherkin ; inscription et connexion réussies dans Chromium en mode de données mémoire. La régression UI complète et le mode PostgreSQL ne sont pas validés par ces contrôles.
+
 ## 1.7.1 — 2026-10-18
 
 - README global et README Playwright BDD actualisés : architecture, agents Python LangChain / LangGraph, harness LLM, agent Data PostgreSQL et pgAdmin.

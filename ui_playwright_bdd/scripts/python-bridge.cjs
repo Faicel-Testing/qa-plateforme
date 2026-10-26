@@ -106,9 +106,15 @@ async function main() {
     if (Buffer.byteLength(input) > 8 * 1024 * 1024) throw Error('RPC_INPUT_TOO_LARGE');
   }
   try {
-    const value = await dispatch(JSON.parse(input));
+    const request = JSON.parse(input);
+    const observation = require('./agents/shared/langfuse-observability');
+    const operations = new Set('chat sources coverage read_source source_context source_bundle skill prompt gherkin_contract verify propose repair_proposal stories story plane_check cycles testcases import_stories results allure_verify audit_prepare audit_validate analysis_prompt'.split(' '));
+    const operation = operations.has(request.operation) ? request.operation : 'unsupported';
+    const value = await observation.span('bridge.' + operation, { 'qa.agent': AGENTS.includes(request.agent) ? request.agent : 'unknown' }, () => dispatch(request));
+    await observation.flush();
     process.stdout.write(JSON.stringify({ ok: true, value }));
   } catch (error) {
+    await require('./agents/shared/langfuse-observability').flush();
     // Never echo arbitrary provider errors (they can contain request bodies).
     const code = error.verification ? 'VERIFICATION_REJECTED' : error.message === 'LLM_UNAVAILABLE' ? error.message : 'FRAMEWORK_SERVICE_FAILED';
     process.stdout.write(JSON.stringify({ ok: false, error: code, verification: error.verification }));

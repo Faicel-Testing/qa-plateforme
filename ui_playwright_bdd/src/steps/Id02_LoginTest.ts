@@ -35,7 +35,6 @@ When('I login using fixture user', async function (this: CustomWorld) {
 
   const login = new LoginPage(this.page);
   await login.login(user.email, user.password);
-  await login.assertLoggedIn();
 });
 
 Then('I should be logged in', async function (this: CustomWorld) {

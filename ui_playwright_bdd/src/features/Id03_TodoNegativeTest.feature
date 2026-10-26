@@ -6,14 +6,14 @@ Feature: Todo Validation
     And I open the login page
     When I login using fixture user
     And I try to add an empty todo item
-    Then I should see a validation error or the todo should not be added
+    Then I should see a validation error and the todo should not be added
 
   Scenario: Id03_TodoNegative - adding todo with only whitespace should fail
     Given I have a user in fixture
     And I open the login page
     When I login using fixture user
     And I try to add a todo with only whitespace
-    Then I should see a validation error or the todo should not be added
+    Then I should see a validation error and the todo should not be added
 
   Scenario: Id03_TodoNegative - adding todo exceeding character limit should fail
     Given I have a user in fixture

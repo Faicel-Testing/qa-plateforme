@@ -88,32 +88,32 @@ function createScenario(relativePath, options = {}) {
 
 const addSteps = 'src/steps/Id03_TodoNegativeTest.ts';
 const deleteSteps = 'src/steps/Id04_DeleteTodoNegativeTest.ts';
-const addVerdict = 'I should see a validation error or the todo should not be added';
+const addVerdict = 'I should see a validation error and the todo should not be added';
 const deleteVerdict = 'I should see an error or the deletion should be prevented';
 
 for (const action of ['I try to add an empty todo item', 'I try to add a todo with only whitespace']) {
   test(`${action}: accepting invalid input must fail the scenario`, async () => {
-    const scenario = createScenario(addSteps, { acceptAdd: true });
+    const scenario = createScenario(addSteps, { acceptAdd: true, errors: ['Todo is required'] });
     await scenario.run(action);
     await assert.rejects(scenario.run(addVerdict), /Unexpected todo count/);
     assert.equal(scenario.state.opens, 1);
   });
 
-  test(`${action}: silent rejection preserves existing todos`, async () => {
+  test(`${action}: silent rejection without validation must fail`, async () => {
     const scenario = createScenario(addSteps, { items: ['Existing task'] });
     await scenario.run(action);
-    await scenario.run(addVerdict);
+    await assert.rejects(scenario.run(addVerdict), /Expected a visible element/);
     assert.deepEqual(scenario.state.items, ['Existing task']);
-    assert.equal(scenario.state.opens, 1);
+    assert.equal(scenario.state.opens, 0);
   });
 }
 
-test('visible validation errors satisfy the error-or-no-add scenario', async () => {
+test('visible validation and no insertion satisfy the rejection contract', async () => {
   const scenario = createScenario(addSteps);
   await scenario.run('I try to add an empty todo item');
   scenario.state.errors.push('Todo is required');
   await scenario.run(addVerdict);
-  assert.equal(scenario.state.opens, 0);
+  assert.equal(scenario.state.opens, 1);
 });
 
 test('missing creation context cannot produce a passing verdict', async () => {
@@ -129,7 +129,26 @@ test('a long todo accepted without a length error must fail the scenario', async
 
 test('a visible length error satisfies the length scenario', async () => {
   const scenario = createScenario(addSteps, { errors: ['Maximum length exceeded'] });
+  await scenario.run('I try to add a todo exceeding the character limit');
   await scenario.run('I should see a length validation error');
+});
+
+test('a length error cannot hide an inserted invalid todo', async () => {
+  const scenario = createScenario(addSteps, { acceptAdd: true, errors: ['Maximum length exceeded'] });
+  await scenario.run('I try to add a todo exceeding the character limit');
+  await assert.rejects(scenario.run('I should see a length validation error'), /Unexpected todo count/);
+});
+
+test('retry metrics count started attempts and isolate scenario identifiers', () => {
+  const { ExecutionMetrics } = loadSource('src/utils/execution-metrics.ts', {});
+  ExecutionMetrics.incrementAttempt('pickle-A');
+  assert.equal(ExecutionMetrics.getScenario('pickle-A').retried, false);
+  ExecutionMetrics.incrementAttempt('pickle-B');
+  ExecutionMetrics.incrementAttempt('pickle-A');
+  assert.equal(ExecutionMetrics.getScenario('pickle-A').attempts, 2);
+  assert.equal(ExecutionMetrics.getScenario('pickle-A').retried, true);
+  assert.equal(ExecutionMetrics.getScenario('pickle-B').attempts, 1);
+  assert.equal(ExecutionMetrics.getScenario('pickle-B').retried, false);
 });
 
 test('an absent todo is checked without repeating the deletion action', async () => {

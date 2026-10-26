@@ -1,0 +1,8 @@
+<clickhouse>
+  <listen_host replace="replace">0.0.0.0</listen_host>
+  <max_server_memory_usage>805306368</max_server_memory_usage>
+  <background_schedule_pool_size>8</background_schedule_pool_size>
+  <background_buffer_flush_schedule_pool_size>4</background_buffer_flush_schedule_pool_size>
+  <background_message_broker_schedule_pool_size>4</background_message_broker_schedule_pool_size>
+  <background_distributed_schedule_pool_size>4</background_distributed_schedule_pool_size>
+</clickhouse>

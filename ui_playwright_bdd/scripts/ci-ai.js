@@ -47,6 +47,7 @@ async function analyze(root = ROOT, env = process.env, execute = runtime.execute
 }
 async function main() {
   if (process.argv[2] === 'test') {
+    process.env.QA_EXECUTION_MANAGED = 'true';
     const code = await require('./agents/runner-agent').runCucumber('@regression and not @wip');
     process.exitCode = code;
   } else if (process.argv[2] === 'analyze') {

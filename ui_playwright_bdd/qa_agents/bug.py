@@ -9,6 +9,7 @@ from langgraph.graph import StateGraph, START, END
 from .bridge import Bridge
 from .model import GatewayChatModel
 from .chains import typed_structured
+from .observability import callbacks
 from .reports import now, save
 from .schemas import InvestigationAction
 from .prompts import SYSTEM, VERSION
@@ -130,7 +131,7 @@ def run(args):
             bundle = bridge.call("source_bundle", failure=failure)
             state = graph.invoke({"failure": failure, "context": bundle["inventory"], "reads": bundle["reads"],
                                   "recorded_api": bundle["recorded_api"], "iteration": 0, "proposals": []},
-                                 {"recursion_limit": 2 * limit + 3})
+                                 {"recursion_limit": 2 * limit + 3, "callbacks": callbacks()})
             analyses.append(state["analysis"])
         except Exception as error:
             analyses.append({"name": failure["name"], "status": "NOT_EVALUATED", "fix_applied": False, "error": type(error).__name__})

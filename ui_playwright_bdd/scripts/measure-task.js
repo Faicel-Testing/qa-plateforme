@@ -12,10 +12,12 @@ async function main() {
   if (relative.startsWith('..') || path.isAbsolute(relative) || !/\.[cm]?js$/.test(file)) throw new Error('Expected a JavaScript entry point inside the framework');
   const env = { ...process.env };
   if (env.NODE_EXTRA_CA_CERTS) env.NODE_EXTRA_CA_CERTS = fs.realpathSync(path.resolve(ROOT, env.NODE_EXTRA_CA_CERTS));
-  const result = await runtime.execute(process.execPath, [file, ...args], {
+  const observation = require('./agents/shared/langfuse-observability');
+  const result = await observation.span('task.node', {}, () => runtime.execute(process.execPath, [file, ...args], {
     env,
     cwd: ROOT, verbose: true, timeout: runtime.timeoutMs(process.env.QA_TASK_TIMEOUT_MS, 7200000),
-  });
+  }));
+  await observation.flush();
   console.log(`[Metrics] ${result.metricsTaskId} — ${(result.durationMs / 1000).toFixed(2)} s — ${result.success ? 'PROCESS_OK' : 'FAILED'}`);
   process.exitCode = result.exitCode === 0 && result.success ? 0 : result.exitCode || 1;
 }

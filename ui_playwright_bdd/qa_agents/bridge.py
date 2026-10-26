@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import subprocess
 from dotenv import load_dotenv
+from .observability import child_environment, traced
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -29,9 +30,11 @@ class Bridge:
         if set(self.execution_env) - {"ALLURE_RESULTS_DIR", "QA_RUN_ID"}:
             raise ValueError("Only execution-scoped environment overrides are allowed")
 
+    @traced("bridge.service")
     def call(self, operation, **payload):
         request = {"operation": operation, "agent": self.agent, "dryRun": self.dry_run, **payload}
         env = environment()
+        env.update(child_environment())
         env.update(self.execution_env)
         # The gateway worker must not route back into Python (recursive transport).
         env["QA_PYTHON_BRIDGE"] = "1"

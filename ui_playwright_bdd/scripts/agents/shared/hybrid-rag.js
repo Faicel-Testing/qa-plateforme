@@ -5,6 +5,8 @@ const { createHash, randomUUID } = require('node:crypto');
 const rag = require('./rag');
 const embeddings = require('./embedding-client');
 const reranker = require('./reranker');
+const vectorStore = require('./pgvector-store');
+const observations = require('./langfuse-observability');
 const hash = value => createHash('sha256').update(value).digest('hex');
 const cooldowns = new Map();
 const queries = new Map();
@@ -26,14 +28,18 @@ function fuse(lexical, semantic, limit = 40) {
 function cacheFile(root, providerKey, identity) {
   return path.join(root, '.qa-rag', `vectors-${hash(providerKey + identity).slice(0, 24)}.json`);
 }
-async function vectorsFor(root, index, provider, settings, signal) {
+async function vectorsFor(root, index, provider, settings, signal, env = process.env) {
   const identity = await provider.identity(signal);
   const file = cacheFile(root, provider.key, identity);
+  const store = vectorStore.storage(env) === 'pgvector' ? vectorStore.create(root, provider.key, identity, env) : null;
+  try {
   let saved;
-  try { saved = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { saved = null; }
+  saved = store ? await store.load() : null;
+  const fromDatabase = Boolean(saved);
+  if (!saved) try { saved = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { saved = null; }
   if (saved?.version !== 1 || saved.identity !== identity || saved.providerKey !== provider.key) saved = null;
   const vectors = {}, pending = [];
-  let dimension = null, cacheHits = 0;
+  let dimension = store ? 384 : null, cacheHits = 0;
   for (const chunk of index.chunks) {
     const entry = saved?.vectors?.[chunk.id];
     try {
@@ -44,7 +50,7 @@ async function vectorsFor(root, index, provider, settings, signal) {
   }
   for (let offset = 0; offset < pending.length; offset += settings.batchSize) {
     const batch = pending.slice(offset, offset + settings.batchSize);
-    const values = await provider.embed(batch.map(c => c.text), 'document', signal);
+    const values = await observations.span('rag.embeddings.documents', { 'langfuse.observation.type': 'embedding', 'qa.chunks': batch.length }, () => provider.embed(batch.map(c => c.text), 'document', signal));
     if (!Array.isArray(values) || values.length !== batch.length) throw new Error('Incomplete embedding batch');
     batch.forEach((chunk, i) => {
       const vector = embeddings.normalize(values[i], dimension);
@@ -52,42 +58,49 @@ async function vectorsFor(root, index, provider, settings, signal) {
     });
   }
   if (rag.currentIndex(root).fingerprint !== index.fingerprint) throw new Error('Sources changed during embedding; retry retrieval');
-  if (pending.length || !saved || saved.fingerprint !== index.fingerprint) {
+  if (store && (!fromDatabase || pending.length || saved.fingerprint !== index.fingerprint)) await store.save(index, vectors);
+  if (!store && (pending.length || !saved || saved.fingerprint !== index.fingerprint)) {
     fs.mkdirSync(path.dirname(file), { recursive: true });
     const temporary = file + '.' + randomUUID() + '.tmp';
     fs.writeFileSync(temporary, JSON.stringify({ version: 1, providerKey: provider.key, identity,
       fingerprint: index.fingerprint, dimension, vectors }));
     fs.renameSync(temporary, file);
   }
-  return { vectors, identity, dimension, cacheHits, generated: pending.length, file };
+  return { vectors, identity, dimension, cacheHits, generated: pending.length, file, storage: store ? 'pgvector' : 'file' };
+  } finally { if (store) await store.close(); }
 }
-async function search(root, query, options = {}) {
+async function searchImpl(root, query, options = {}) {
   await require('./confluence-rag').ensureFresh(root, options.env || process.env);
   const settings = embeddings.config(options.env);
   const index = rag.currentIndex(root);
-  const lexical = rag.lexicalRank(index, query);
+  const lexical = await observations.span('rag.bm25', { 'qa.chunks': index.chunks.length }, () => rag.lexicalRank(index, query));
   const limits = { topK: options.topK ?? 4, maxChars: options.maxChars ?? 4500 };
   rag.selectHits(index, lexical, limits); // Validate limits before any network call.
   async function finish(snapshot, ranked, metadata) {
-    const result = await reranker.rerank(query, ranked, { env: { ...(options.env || process.env), ...(options.strict ? { RAG_RERANK_STRICT: 'true' } : {}) }, scorer: options.rerankScorer, topK: limits.topK });
+    const result = await observations.span('rag.rerank', {}, () => reranker.rerank(query, ranked, { env: { ...(options.env || process.env), ...(options.strict ? { RAG_RERANK_STRICT: 'true' } : {}) }, scorer: options.rerankScorer, topK: limits.topK }));
     if (result.reranking.status !== 'DISABLED' && rag.currentIndex(root).fingerprint !== snapshot.fingerprint) throw new Error('Sources changed during reranking; retry retrieval');
     return { ...rag.selectHits(snapshot, result.ranked, limits), ...metadata, reranking: result.reranking };
   }
   if (settings.mode === 'bm25' || !index.chunks.length || !String(query).trim()) {
+    if (settings.mode === 'hybrid' && !index.chunks.length && vectorStore.storage(options.env || process.env) === 'pgvector') {
+      await vectorsFor(root, index, options.provider || embeddings.createClient(settings), settings, AbortSignal.timeout(settings.timeoutMs), options.env || process.env);
+    }
     return finish(index, lexical, { mode: 'bm25', requestedMode: settings.mode, semantic: { status: settings.mode === 'bm25' ? 'DISABLED' : 'EMPTY' } });
   }
-  const provider = options.provider || embeddings.createClient(settings);
+  let provider;
   try {
+    provider = options.provider || embeddings.createClient(settings);
     if (!options.strict && (cooldowns.get(provider.key) || 0) > Date.now()) throw new Error('Embedding service cooling down after failure');
     const signal = AbortSignal.timeout(options.indexing ? 120000 : settings.timeoutMs);
-    const data = await vectorsFor(root, index, provider, settings, signal);
+    const data = await vectorsFor(root, index, provider, settings, signal, options.env || process.env);
+    observations.setAttributes({ 'qa.storage': data.storage, 'qa.cache_hits': data.cacheHits, 'qa.generated': data.generated, 'qa.dimension': data.dimension, 'qa.sources': index.sources.length });
     // Bound model input explicitly; no silent provider truncation.
     const sanitizedQuery = rag.redact(String(query));
     const queryText = sanitizedQuery.slice(0, 4000);
     const queryKey = hash(provider.key + data.identity + queryText);
     let vector = queries.get(queryKey);
     if (!vector) {
-      const values = await provider.embed([queryText], 'query', signal);
+      const values = await observations.span('rag.embeddings.query', { 'langfuse.observation.type': 'embedding' }, () => provider.embed([queryText], 'query', signal));
       if (!Array.isArray(values) || values.length !== 1) throw new Error('Missing query embedding');
       vector = embeddings.normalize(values[0], data.dimension);
       queries.set(queryKey, vector);
@@ -95,15 +108,21 @@ async function search(root, query, options = {}) {
     }
     vector = embeddings.normalize(vector, data.dimension);
     if (rag.currentIndex(root).fingerprint !== index.fingerprint) throw new Error('Sources changed during query embedding');
-    const semantic = index.chunks.map(chunk => ({ ...chunk,
+    let semantic;
+    if (data.storage === 'pgvector') {
+      const store = vectorStore.create(root, provider.key, data.identity, options.env || process.env);
+      try { semantic = await observations.span('rag.pgvector', { 'qa.storage': 'pgvector' }, () => store.search(index, vector, settings.minSimilarity)); }
+      finally { await store.close(); }
+      if (rag.currentIndex(root).fingerprint !== index.fingerprint) throw new Error('Sources changed during vector search');
+    } else semantic = index.chunks.map(chunk => ({ ...chunk,
       score: data.vectors[chunk.id].vector.reduce((sum, value, i) => sum + value * vector[i], 0),
     })).filter(hit => hit.score >= settings.minSimilarity).sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
     cooldowns.delete(provider.key);
     return finish(index, fuse(lexical, semantic), { mode: 'hybrid', requestedMode: settings.mode,
-      semantic: { status: 'READY', model: settings.model, identity: data.identity, dimension: data.dimension,
+      semantic: { status: 'READY', storage: data.storage, model: settings.model, identity: data.identity, dimension: data.dimension,
         matched: semantic.length, cacheHits: data.cacheHits, generated: data.generated, queryTruncated: sanitizedQuery.length > 4000 } });
   } catch (error) {
-    cooldowns.set(provider.key, Date.now() + 15000);
+    if (provider) cooldowns.set(provider.key, Date.now() + 15000);
     if (options.strict) throw error;
     // Refresh lexical evidence too if files changed during embedding requests.
     if (require('./ai-gateway').isGatewayError(error)) throw error;
@@ -112,13 +131,16 @@ async function search(root, query, options = {}) {
       semantic: { status: 'UNAVAILABLE', reason: error.message } });
   }
 }
+async function search(root, query, options = {}) {
+  return observations.span('rag.search', { 'langfuse.observation.type': 'retriever' }, () => searchImpl(root, query, options));
+}
 async function buildIndex(root, options = {}) {
   await require('./confluence-rag').ensureFresh(root, options.env || process.env);
   const index = rag.buildIndex(root), settings = embeddings.config(options.env);
-  if (settings.mode === 'bm25' || !index.chunks.length) return { index, mode: 'bm25' };
+  if (settings.mode === 'bm25' || !index.chunks.length && vectorStore.storage(options.env || process.env) === 'file') return { index, mode: 'bm25' };
   const provider = options.provider || embeddings.createClient(settings);
-  const data = await vectorsFor(root, index, provider, settings, AbortSignal.timeout(120000));
-  return { index, mode: 'hybrid', model: settings.model, dimension: data.dimension, cacheHits: data.cacheHits, generated: data.generated };
+  const data = await vectorsFor(root, index, provider, settings, AbortSignal.timeout(900000), options.env || process.env);
+  return { index, mode: 'hybrid', storage: data.storage, model: settings.model, dimension: data.dimension, cacheHits: data.cacheHits, generated: data.generated };
 }
 async function augmentMessages(messages, { root, agent, env = process.env, provider, logger = console, maxChars = 4500 } = {}) {
   if (env.RAG_ENABLED === 'false' || !rag.ELIGIBLE.has(agent)

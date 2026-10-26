@@ -7,6 +7,7 @@ from langchain_core.messages import AIMessage, convert_to_openai_messages
 from langchain_core.outputs import ChatGeneration, ChatResult
 from langchain_core.utils.function_calling import convert_to_openai_tool
 from .bridge import Bridge, BridgeError
+from .observability import traced
 
 
 class GatewayChatModel(BaseChatModel):
@@ -23,6 +24,7 @@ class GatewayChatModel(BaseChatModel):
         return self.bind(tools=[{"name": tool["name"], "description": tool.get("description", ""),
                                  "input_schema": tool["parameters"]} for tool in converted], **kwargs)
 
+    @traced("llm.gateway")
     def _generate(self, messages, stop=None, run_manager=None, **kwargs):
         if stop:
             raise ValueError("Stop sequences are not supported by the guarded transport")

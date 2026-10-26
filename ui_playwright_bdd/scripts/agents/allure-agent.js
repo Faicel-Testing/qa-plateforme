@@ -8,6 +8,11 @@ async function main() {
   const output = path.join(path.dirname(input), path.basename(input) === 'results' ? 'report' : 'allure-report');
   const command = process.argv[2] || 'generate';
   if (!['generate', 'open'].includes(command)) throw new Error('Use generate or open');
+  const manifestFile = path.join(input, 'run-manifest.json');
+  if (fs.existsSync(manifestFile)) {
+    const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8'));
+    if (manifest.completed !== true) console.warn('[Allure] PARTIAL REPORT: execution has not completed; counts do not represent the full selected suite.');
+  }
   if (command === 'generate' || !fs.existsSync(path.join(output, 'index.html'))) {
     if (!readResults(input).results.length) {
       const count = await require('./shared/recover-allure').recoverAllure(input);

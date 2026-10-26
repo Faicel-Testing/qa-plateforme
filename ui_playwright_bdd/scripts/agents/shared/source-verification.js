@@ -166,7 +166,7 @@ async function verifySources(root, llm, { localOnly = false, maxChars = 24000, o
         attempts++;
         try {
           const prompt = (attempts > 1 ? 'Retry: return complete valid JSON, concise findings, all required lists.\n' : '') + batch.prompt;
-          const response = await llm.chat([{ role: 'user', content: prompt }], { temperature: 0, _fnName: 'verifySources' });
+          const response = await llm.chat([{ role: 'user', content: prompt }], { temperature: 0, rag: false, _fnName: 'verifySources' });
           review = validateReview(response?.message?.content || '', batch.files, local);
           if (cacheFile && review.status === 'COMPLETE' && review.reviewStatus === 'COMPLETE') {
             try {
@@ -174,8 +174,10 @@ async function verifySources(root, llm, { localOnly = false, maxChars = 24000, o
               fs.writeFileSync(cacheFile, JSON.stringify({ key, savedAt: Date.now(), raw: response.message.content }));
             } catch { onProgress('Cache non enregistrable ; verdict courant conservé.'); }
           }
-        } catch {
-          review = { status: 'UNAVAILABLE', reason: 'Appel LLM impossible ; aucun verdict qualité.' };
+        } catch (error) {
+          const status = error?.status || error?.status_code;
+          review = { status: 'UNAVAILABLE', reason: `Appel LLM impossible${Number.isInteger(status) ? ` (HTTP ${status})` : ''} ; aucun verdict qualité.` };
+          if (require('./provider-errors').unavailable(error)) break;
         }
         if (!['UNAVAILABLE', 'INCOMPLETE'].includes(review.status) || attempts === 2) break;
         const delay = review.status === 'UNAVAILABLE' ? retryDelayMs : 0;

@@ -1,12 +1,15 @@
-# RAG BM25 du framework Playwright
+# RAG hybride local : BM25 et embeddings
 
-Sources locales → découpage par lignes → classement BM25 → reranking Groq
-→ top-k et budget de contexte → Groq → vérification existante.
-Depuis le 16 octobre 2026, aucun service local d’embeddings n’est utilisé.
-La recherche lexicale ne nécessite ni clé ni serveur ; le reranking et les réponses
-IA nécessitent Groq. `npm run rag:setup` construit seulement l’index local.
-Les utilitaires vectoriels conservés sont testés avec des fournisseurs simulés ;
-aucun transport réseau d’embeddings n’est configuré.
+Sources locales → découpage → BM25 + embeddings multilingues → fusion RRF
+→ reranking Groq optionnel → contexte → réponse Groq → vérification.
+
+Depuis le 22 octobre 2026, les embeddings sont opérationnels sur CPU avec
+`@huggingface/transformers` et `Xenova/multilingual-e5-small` quantifié q8 (384 dimensions).
+Le fournisseur de génération reste Groq. Aucun serveur Ollama, Chroma ou service
+d’embeddings payant n’est requis. Les vecteurs sont stockés dans PostgreSQL + pgvector
+sur ce poste (`RAG_VECTOR_STORE=pgvector`, base dédiée `qa_rag`). Le cache JSON local
+reste un mode portable alternatif. Voir [la connexion pgvector](rag-pgvector.md).
+Le mode portable reste BM25 par défaut ; le poste est configuré en `RAG_MODE=hybrid`.
 
 ## Reranking intégré
 
@@ -83,21 +86,14 @@ npm run rag:check
 npm run rag:search -- "Pourquoi la connexion est refusée ?" --strict
 ```
 
-Sous Windows, `rag:setup` réutilise Ollama s'il est disponible. Sinon il récupère
-uniquement les composants CPU de la distribution officielle épinglée v0.34.3 par
-requêtes HTTPS partielles. Chaque entrée ZIP est contrôlée par son CRC32 avant
-écriture dans `.qa-rag/runtime` (contrôle de corruption, pas signature cryptographique).
-La vérification TLS reste activée. L'option PowerShell `-FullRuntime` télécharge
-le ZIP GPU complet et contrôle son SHA-256 publié. Le script démarre un processus
-caché, limité à `127.0.0.1:11434`, puis télécharge `embeddinggemma:300m-qat-q4_0`
-(environ 239 Mo). Les modèles du nouveau service vont dans
-`.qa-rag/models`. Ollama peut aussi créer sa configuration habituelle dans le profil
-utilisateur. Aucun démarrage automatique Windows ni changement du PATH n'est ajouté.
-Si un service existe déjà, son stockage de modèles existant est utilisé.
-
-Avec Ollama déjà installé, `ollama serve` puis `ollama pull embeddinggemma:300m-qat-q4_0` peuvent
-remplacer cette commande. Le modèle sert uniquement aux embeddings, pas à générer
-les réponses des agents.
+`rag:setup` télécharge uniquement les cinq fichiers nécessaires du modèle, depuis
+la révision épinglée `761b726dd34fb83930e26aab4e9ac3899aa1fa78` de Hugging Face,
+puis construit l’index hybride. Il ne modifie pas `.env` : y choisir `RAG_MODE=hybrid`
+pour les commandes suivantes. Les fichiers sont stockés dans `.qa-rag/local-models/`,
+ignoré par Git. TLS reste activé. Le manifeste SHA-256 détecte les modifications
+locales des fichiers ; il ne constitue pas une signature indépendante de l’éditeur.
+Le téléchargement ne reçoit aucun texte du corpus. L’inférence interdit les
+chargements distants et les requêtes réseau dans son worker.
 
 `rag:index` écrit un instantané dans `.qa-rag/index.json`, ignoré par Git.
 La recherche utilise les sources actuelles et un cache en mémoire : l'instantané
@@ -105,11 +101,15 @@ disque n'est jamais accepté comme preuve sans les sources. Une modification ou
 suppression invalide le cache. Aucune réindexation manuelle n'est nécessaire pour
 que les agents voient les changements.
 
-Le cache `.qa-rag/vectors-*.json` associe chaque vecteur au modèle, à son digest,
+En mode fichier, le cache `.qa-rag/vectors-*.json` associe chaque vecteur au modèle, à son digest,
 aux préfixes de requête/document et au contenu du fragment. Les documents inchangés
 ne sont pas recalculés. Un changement de modèle ou de source invalide les entrées
 concernées ; les documents supprimés disparaissent des recherches. Les requêtes
 identiques sont mises en cache en mémoire (64 entrées maximum).
+En mode pgvector, les documents sont persistés dans `qa_rag.chunks` et la similarité
+cosinus est calculée par SQL. Les 40 meilleurs candidats sémantiques au maximum
+sont fusionnés avec BM25 ; `semantic.matched` compte ces candidats retournés,
+pas tous les passages au-dessus du seuil dans l’ensemble de la base.
 
 RRF combine les 40 premiers résultats de chaque classement avec `1 / (60 + rang)`.
 Un document trouvé par les deux méthodes reçoit les deux contributions. Les doublons
@@ -120,25 +120,17 @@ Configuration dans `.env` :
 
 ```dotenv
 RAG_MODE=hybrid
-RAG_EMBEDDING_MODEL=embeddinggemma:300m-qat-q4_0
-RAG_EMBEDDING_HOST=http://127.0.0.1:11434
-RAG_EMBEDDING_TIMEOUT_MS=30000
+RAG_EMBEDDING_MODEL=Xenova/multilingual-e5-small
+RAG_EMBEDDING_TIMEOUT_MS=120000
 RAG_EMBEDDING_BATCH_SIZE=8
 RAG_MIN_SIMILARITY=0.35
 ```
 
-Le service installé écoute sur IPv4 (`127.0.0.1`). Sur une machine CPU peu dotée
-en mémoire, le chargement à froid et l'actualisation du corpus peuvent dépasser
-le budget de recherche par défaut de 30 secondes. Dans ce cas, définir
-`RAG_EMBEDDING_TIMEOUT_MS=120000`, puis lancer `npm run rag:index` avant les agents.
-Ce délai est une limite maximale, pas une attente imposée à chaque recherche.
-
-Validation locale du 24 septembre 2026 : modèle installé, 13 sources et 84 passages
-indexés avec des vecteurs de dimension 768. Une recherche stricte sur la suppression
-d'une tâche a utilisé le mode `hybrid`, avec 84 passages en cache et aucun vecteur
-document recalculé. Le contrôle multilingue vérifie séparément deux questions en
-français sur des documents anglais ; son rapport est `.qa-rag/hybrid-live-check.json`.
-Ces contrôles valident le fonctionnement, pas une mesure exhaustive de pertinence.
+Les préfixes `query: ` et `passage: ` sont ajoutés selon le type d’entrée. Le worker
+utilise le CPU avec deux threads. Les entrées longues sont traitées par fenêtres
+de 400 tokens et leurs vecteurs moyennés, sans troncature silencieuse. Le worker
+est interrompu à l’annulation ou au délai maximal. Préindexer avec `rag:index`
+évite de recalculer les passages inchangés à chaque commande.
 
 `RAG_MODE=bm25` désactive tous les appels d'embeddings. Le seuil de similarité est
 un paramètre de recherche, pas une probabilité de vérité ; il doit être évalué avec
@@ -155,9 +147,9 @@ L'enrichissement est actif par défaut dans `llm.chat` pour `codegen`, `planning
 Désactivation : `RAG_ENABLED=false` ou `chat(messages, { rag: false })`.
 Les fonctions streaming ne sont pas enrichies dans cette version.
 
-Les embeddings sont calculés via l'endpoint Ollama configuré (local par défaut).
-Les extraits retenus sont ensuite envoyés au fournisseur de génération déjà
-configuré pour l'agent : Groq ou Ollama. Les motifs de secrets usuels sont masqués ;
+Les embeddings sont calculés localement dans un worker Node/ONNX sans transport HTTP.
+Le masquage existant reste appliqué. Les extraits retenus sont ensuite envoyés à Groq
+si le reranking ou la génération est demandé, via le gateway existant. Les motifs de secrets usuels sont masqués ;
 ce filtre ne garantit pas la suppression de toute donnée sensible.
 
 ## Limites et traçabilité
@@ -173,10 +165,10 @@ de JSON, auquel s'ajoutent les règles fixes. Sans correspondance, aucun context
 n'est ajouté. Limites : 1 Mio par fichier, 10 Mio pour le corpus et 1 800 caractères
 par extrait. Les fichiers ignorés et lignes trop longues sont signalés.
 
-EmbeddingGemma apporte la recherche sémantique multilingue ; elle ne garantit pas
+Multilingual E5 apporte la recherche sémantique multilingue ; elle ne garantit pas
 la pertinence de chaque extrait. La qualité dépend aussi des documents, des questions
 et du seuil. Les requêtes sémantiques sont limitées explicitement à 4 000 caractères
-et le résultat signale une limitation éventuelle. Le fournisseur reçoit `truncate:false`.
+et le résultat signale une limitation éventuelle. Le worker traite les entrées par fenêtres au lieu de les tronquer.
 
 ## Tests sans fournisseur externe
 
@@ -188,12 +180,18 @@ Pertinence sur petits corpus, fraîcheur, budget, historique, exclusions, masqua
 index altéré et injection dans le vrai client LLM avec fournisseur simulé.
 Les tests hybrides vérifient aussi la recherche sans mots communs avec vecteurs simulés,
 RRF, l'invalidation du cache, les dimensions, les pannes et la fraîcheur pendant les appels.
-`rag:check` est séparé : il utilise le vrai modèle installé pour deux questions en
-français et des documents anglais temporaires. Son rapport est enregistré dans
-`.qa-rag/hybrid-live-check.json`. C'est un contrôle d'intégration limité, pas un
-benchmark général de la pertinence.
+`rag:check` vérifie le corpus réel sans reranking et exige le succès sémantique
+si le mode hybride est sélectionné. Le contrôle réel multilingue séparé est :
 
-Références d'implémentation : [API Ollama embed](https://docs.ollama.com/api/embed),
-[modèle EmbeddingGemma](https://ollama.com/library/embeddinggemma),
-[préfixes de recherche Google](https://ai.google.dev/gemma/docs/embeddinggemma/inference-embeddinggemma-with-sentence-transformers),
-[distribution Windows](https://docs.ollama.com/windows).
+```powershell
+node scripts/check-local-embeddings.cjs
+```
+
+Il utilise deux questions françaises et trois documents anglais synthétiques,
+vérifie le résultat attendu, les 384 dimensions, le cache et l’annulation avant
+appel. Rapport : `.qa-rag/local-embedding-check.json`. Ce contrôle d’intégration
+limité ne démontre pas un gain global de pertinence ; comparer le même dataset
+revu en BM25 et hybride avec DeepEval et une revue métier.
+
+Références : [Transformers.js, modèles locaux](https://huggingface.co/docs/transformers.js/custom_usage),
+[modèle E5 multilingue](https://huggingface.co/Xenova/multilingual-e5-small).

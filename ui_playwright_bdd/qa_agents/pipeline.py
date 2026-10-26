@@ -14,6 +14,7 @@ from .prompts import VERSION
 from .reports import now, save
 from .data import command as data_command
 import os
+from .observability import callbacks, set_run_id, traced
 
 
 class PipelineState(TypedDict, total=False):
@@ -132,7 +133,7 @@ def build_graph(*, model=None, runner=run_tests, reader=read_execution, checkpoi
 
     graph = StateGraph(PipelineState)
     for name, node in [("prepare_data", prepare_data), ("execute", execute), ("validate", validate), ("triage", triage), ("diagnose", diagnose), ("report", report)]:
-        graph.add_node(name, node)
+        graph.add_node(name, traced("pipeline." + name)(node))
     graph.add_conditional_edges(START, lambda s: "validate" if s["mode"] == "report" else "prepare_data", ["validate", "prepare_data"])
     graph.add_conditional_edges("prepare_data", lambda s: "validate" if s.get("runner_error") else "execute", ["validate", "execute"])
     graph.add_edge("execute", "validate")
@@ -174,12 +175,13 @@ def run(args):
         print("NOT_EVALUATED: no test execution, model call or release approval")
         return 0
     run_id = options.run_id or f"python-{uuid4().hex}"
+    set_run_id(run_id)
     directory = options.results_dir.resolve() if options.results_dir else ROOT / "allure-runs" / run_id / "results"
     print(f"[Pipeline] Mode: {options.mode} | Run: {run_id}", flush=True)
     print(f"[Pipeline] Resultats: {directory}", flush=True)
     state = graph.invoke({"run_id": run_id, "results_dir": str(directory), "mode": options.mode,
                           "local_only": options.local_only, "max_failures": options.max_failures,
-                          "runner_timeout": options.runner_timeout, "events": [], "analyses": []})
+                          "runner_timeout": options.runner_timeout, "events": [], "analyses": []}, {"callbacks": callbacks()})
     summary = state["summary"]
     # Reports are separate from imported evidence; IDs from manifests are never used as paths.
     report_dir = ROOT / "logs" / "python-pipeline" / uuid4().hex

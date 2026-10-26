@@ -144,7 +144,7 @@ async function runPipeline(mode) {
   const fresh = mode !== 'report' && !NO_TESTS;
   const resultsDir = fresh ? path.join(FRAMEWORK, 'allure-runs', runId, 'results') : runtime.resultDirectory(FRAMEWORK);
   const env = { ...process.env, ALLURE_RESULTS_DIR: resultsDir };
-  if (fresh) env.QA_RUN_ID = runId;
+  if (fresh) { env.QA_RUN_ID = runId; env.QA_EXECUTION_MANAGED = 'true'; }
   else delete env.QA_RUN_ID;
   if (!DRY_RUN) {
     fs.mkdirSync(logDir, { recursive: true });

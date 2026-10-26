@@ -18,7 +18,7 @@ def adapter(agent, args):
     return result.returncode if result.returncode >= 0 else 1
 
 
-def main(argv=None):
+def _main(argv=None):
     environment()
     args = list(argv if argv is not None else sys.argv[1:])
     if not args or args[0] in {"--help", "help"}:
@@ -56,6 +56,22 @@ def main(argv=None):
         print(f"Python / LangChain: {agent} (framework adapter)", flush=True)
         return adapter(agent, options)
     raise ValueError("Unknown agent")
+
+
+def main(argv=None):
+    environment()
+    args = list(argv if argv is not None else sys.argv[1:])
+    if not args or args[0] not in {"pipeline", "planning", "codegen", "quality", "bug", "advisor", "data", *ADAPTERS} or "--dry-run" in args:
+        return _main(args)
+    from .observability import observation, flush
+    try:
+        with observation("agent." + args[0], {"qa.agent": args[0], "langfuse.observation.type": "agent"}) as span:
+            result = _main(args)
+            if span is not None:
+                span.set_attributes({"qa.exit_code": result if isinstance(result, int) else 0, "qa.success": result in (None, 0)})
+            return result
+    finally:
+        flush()
 
 
 if __name__ == "__main__":

@@ -12,45 +12,12 @@ export class SignupPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.firstNameInput = page
-      .getByTestId('first-name')
-      .or(page.locator('input[name="firstName"]'))
-      .or(page.getByPlaceholder(/first name/i))
-      .or(page.getByLabel(/first name/i))
-      .first();
-
-    this.lastNameInput = page
-      .getByTestId('last-name')
-      .or(page.locator('input[name="lastName"]'))
-      .or(page.getByPlaceholder(/last name/i))
-      .or(page.getByLabel(/last name/i))
-      .first();
-
-    this.emailInput = page
-      .getByTestId('email')
-      .or(page.locator('input[name="email"]'))
-      .or(page.getByPlaceholder(/email/i))
-      .or(page.getByLabel(/email/i))
-      .first();
-
-    this.passwordInput = page
-      .getByTestId('password')
-      .or(page.locator('input[name="password"]'))
-      .or(page.getByPlaceholder(/^password$/i))
-      .or(page.getByLabel(/^password$/i))
-      .first();
-
-    this.confirmPasswordInput = page
-      .getByTestId('confirm-password')
-      .or(page.locator('input[name="confirmPassword"]'))
-      .or(page.getByPlaceholder(/confirm password/i))
-      .or(page.getByLabel(/confirm password/i))
-      .first();
-
-    this.signupBtn = page
-      .getByTestId('submit')
-      .or(page.getByRole('button', { name: /sign up|signup|register|create account/i }))
-      .first();
+    this.firstNameInput = page.getByTestId('first-name');
+    this.lastNameInput = page.getByTestId('last-name');
+    this.emailInput = page.getByTestId('email');
+    this.passwordInput = page.getByTestId('password');
+    this.confirmPasswordInput = page.getByTestId('confirm-password');
+    this.signupBtn = page.getByTestId('submit');
   }
 
   async open(): Promise<void> {

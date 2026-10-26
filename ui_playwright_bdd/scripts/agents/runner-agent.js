@@ -90,9 +90,9 @@ async function runCucumber(tags = '', storyFiles = null, storyReference = null) 
   console.log(`  ${C}→ node ${args.join(' ')}${E}`);
   if (DRY_RUN) { console.log(`  ${Y}[DRY-RUN] Tests non exécutés${E}`); return 0; }
 
-  const runId = process.env.QA_RUN_ID || `${Date.now()}-${require('crypto').randomUUID()}`;
-  RESULTS_DIR = process.env.QA_RUN_ID ? path.resolve(process.env.ALLURE_RESULTS_DIR)
-    : path.join(FRAMEWORK, 'allure-runs', runId, 'results');
+  const execution = require('./shared/run-context').newExecution(FRAMEWORK, process.env);
+  const { runId } = execution;
+  RESULTS_DIR = execution.resultsDir;
   fs.mkdirSync(RESULTS_DIR, { recursive: true });
   if (fs.readdirSync(RESULTS_DIR).some(name => name.endsWith('-result.json'))) throw new Error('Refusing to mix existing results with a new run');
   const manifestPath = path.join(RESULTS_DIR, 'run-manifest.json');
@@ -109,7 +109,7 @@ async function runCucumber(tags = '', storyFiles = null, storyReference = null) 
   args.push('--format', `"allure-cucumberjs/reporter":"${path.join(RESULTS_DIR, 'allure-formatter.log')}"`);
   args.push('--format-options', JSON.stringify({ resultsDir: RESULTS_DIR }), '--format', `"message":"${messages}"`);
   const result = await runtime.execute(process.execPath, args, {
-    cwd: FRAMEWORK, env: { ...process.env, ALLURE_RESULTS_DIR: RESULTS_DIR }, verbose: true,
+    cwd: FRAMEWORK, env: execution.env, verbose: true,
     timeout: runtime.timeoutMs(process.env.RUNNER_TIMEOUT_MS, 30 * 60 * 1000),
   });
   const data = runtime.readResults(RESULTS_DIR);

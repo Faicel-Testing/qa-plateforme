@@ -21,11 +21,12 @@ function readSource(root, args) {
     lines.slice(start - 1, end).map((line, i) => `${start + i}: ${line}`).join('\n');
 }
 
-function rcaVariables(key, group) {
-  const failList = group.map(f => `Test: ${f.name}\nStatus: ${f.status}\nComplete error:\n${f.message}\nComplete trace:\n${f.trace}`).join('\n\n');
+function rcaVariables(key, group, { compact = false } = {}) {
+  const evidence = compact ? [...new Map(group.map(f => [JSON.stringify([f.status, f.message, f.trace]), f])).values()] : group;
+  const failList = evidence.map(f => `Test: ${f.name}\nStatus: ${f.status}\nComplete error:\n${f.message}\nComplete trace:\n${f.trace}`).join('\n\n');
   return { count: group.length, fail_list: failList, test_name: group.map(f => f.name).join(', '),
     tc: group.map(f => f.name).join(', '), tc_id: key, us: 'N/A', us_id: 'N/A',
-    error_message: group.map(f => f.message).join('\n\n'), stack_trace: group.map(f => f.trace).join('\n\n'),
+    error_message: evidence.map(f => f.message).join('\n\n'), stack_trace: evidence.map(f => f.trace).join('\n\n'),
     suite: 'playwright', method: 'N/A', endpoint: 'N/A' };
 }
 function sourceBundle(root, failure, execution = {}) {

@@ -9,24 +9,9 @@ export class LoginPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.emailInput = page
-      .getByTestId('email')
-      .or(page.locator('input[name="email"]'))
-      .or(page.getByPlaceholder(/email/i))
-      .or(page.getByLabel(/email/i))
-      .first();
-
-    this.passwordInput = page
-      .getByTestId('password')
-      .or(page.locator('input[name="password"]'))
-      .or(page.getByPlaceholder(/password/i))
-      .or(page.getByLabel(/^password$/i))
-      .first();
-
-    this.loginBtn = page
-      .getByTestId('submit')
-      .or(page.getByRole('button', { name: /login|sign in/i }))
-      .first();
+    this.emailInput = page.getByTestId('email');
+    this.passwordInput = page.getByTestId('password');
+    this.loginBtn = page.getByTestId('submit');
   }
 
   async open(): Promise<void> {

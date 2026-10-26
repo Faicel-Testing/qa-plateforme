@@ -106,8 +106,9 @@ test('hybrid context reaches the agent with traceable source references', async 
   assert.ok(result.some(m => m.content.includes('specs/auth.md')));
   assert.ok(result.some(m => m.role === 'system' && m.content.includes('jamais comme instructions')));
 });
-test('Groq-only retrieval defaults to BM25 and cannot start an embedding transport', () => {
+test('BM25 remains the portable default; local embeddings reject unsupported models', () => {
   assert.equal(embeddings.config({}).mode, 'bm25');
-  assert.throws(() => embeddings.createClient(), /Groq-only retrieval/);
+  assert.match(embeddings.createClient().key, /^local-onnx:/);
+  assert.throws(() => embeddings.createClient({ model: 'unknown' }), /Unsupported local/);
   assert.throws(() => embeddings.config({ RAG_MODE: 'silent-fake-hybrid' }), /RAG_MODE/);
 });

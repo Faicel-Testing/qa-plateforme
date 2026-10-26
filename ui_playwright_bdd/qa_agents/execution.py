@@ -32,7 +32,7 @@ def run_tests(run_id, directory, mode, timeout=1800):
         raise ValueError("Refusing to reuse a populated results directory")
     directory.mkdir(parents=True, exist_ok=True)
     env = environment()
-    env.update(QA_RUN_ID=run_id, ALLURE_RESULTS_DIR=str(directory),
+    env.update(QA_RUN_ID=run_id, ALLURE_RESULTS_DIR=str(directory), QA_EXECUTION_MANAGED="true",
                PLANE_SYNC_RESULTS="false", TEST_HEADLESS="true",
                RUNNER_TIMEOUT_MS=str(int(timeout * 1000)))
     # The runner has its own tree deadline. The outer timeout covers startup failures too.

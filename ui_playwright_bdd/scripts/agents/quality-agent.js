@@ -158,13 +158,14 @@ async function cmdRca() {
       'Tu es un expert QA Playwright. Analyse la cause racine de ces échecs.\n\n' +
       'Groupe d\'échecs ({count} tests):\n{fail_list}\n\n' +
       'Raisonne étape par étape (ÉTAPE 1, ÉTAPE 2, CONCLUSION) avant de conclure.';
-    const prompt = fmt(_rcaTpl, require('./shared/analysis-evidence').rcaVariables(key, group)) +
+    const prompt = fmt(_rcaTpl, require('./shared/analysis-evidence').rcaVariables(key, group, { compact: true })) +
       '\nDistingue les observations des hypothèses. Un timeout ne prouve pas un sélecteur incorrect. Ne propose pas de modifier une assertion pour masquer une divergence applicative. Sans inspection du code et des exigences, une cause racine reste une hypothèse.';
 
     try {
       const { reasoning, structured } = await llm.chatCot(
         require('./shared/skill-store').messages('triage-rca', prompt),
-        `Maintenant extrais la cause racine en JSON selon ce schéma:\n${JSON.stringify(RCA_SCHEMA, null, 2)}\n\nRéponds UNIQUEMENT avec le JSON.`
+        `Maintenant extrais la cause racine en JSON selon ce schéma:\n${JSON.stringify(RCA_SCHEMA, null, 2)}\n\nRéponds UNIQUEMENT avec le JSON.`,
+        { rag: false }
       );
 
       if (/service\s+LLM[^\n]*(indisponible|hors ligne)/i.test(reasoning || '')) throw new Error('RCA reasoning unavailable');

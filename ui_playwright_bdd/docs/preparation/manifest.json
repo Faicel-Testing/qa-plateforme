@@ -1,0 +1,23 @@
+{
+  "pages": 16,
+  "titles": [
+    "Playwright BDD & IA",
+    "Deux chaînes complémentaires",
+    "Du langage métier à la preuve",
+    "Où retrouver chaque responsabilité ?",
+    "13 points d’entrée, des rôles différents",
+    "L’environnement autour du modèle",
+    "Rechercher avant de répondre",
+    "Un document devient des extraits traçables",
+    "Combien de chunks envoyer au modèle ?",
+    "Trois questions à séparer",
+    "Ce que fait réellement le mode full",
+    "Mesurer les tests et mesurer l’IA",
+    "Deux chemins d’exécution",
+    "Les questions probables du client",
+    "Un pitch de 60 secondes",
+    "Retrouver, vérifier, expliquer"
+  ],
+  "scope": "ui_playwright_bdd",
+  "source_date": "2026-09-29"
+}

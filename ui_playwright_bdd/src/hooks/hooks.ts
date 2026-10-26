@@ -15,15 +15,15 @@ Before(async function (this: CustomWorld, scenario) {
   const scenarioName = scenario.pickle.name;
   this.scenarioName = scenarioName;
 
-  ExecutionMetrics.incrementAttempt(scenarioName);
+  ExecutionMetrics.incrementAttempt(scenario.pickle.id);
 
   await this.init();
 
   fs.mkdirSync('test-results', { recursive: true });
 
-  this.traceName = `${scenarioName.replace(/[^a-zA-Z0-9-_]/g, '_')}-trace.zip`;
+  this.traceName = `${this.browserName}-${scenario.pickle.id}-${process.pid}-${Date.now()}-trace.zip`;
 
-  const attempts = ExecutionMetrics.getScenario(scenarioName)?.attempts || 1;
+  const attempts = ExecutionMetrics.getScenario(scenario.pickle.id)?.attempts || 1;
   this.tracingEnabled = attempts > 1 || process.env.TEST_TRACE === 'true';
 
   if (this.tracingEnabled) {
@@ -81,20 +81,21 @@ After(async function (this: CustomWorld, scenario) {
     const isRetryable = SmartRetry.isRetryable(errorMessage);
     const retryReason = SmartRetry.getDecisionReason(errorMessage);
 
-    const attempts = ExecutionMetrics.getScenario(scenarioName)?.attempts || 1;
+    const attempts = ExecutionMetrics.getScenario(scenario.pickle.id)?.attempts || 1;
 
     this.attach(
       [
         `Browser: ${this.browserName}`,
         `Scenario Name: ${scenarioName}`,
         `Attempts: ${attempts}`,
-        `Final Status: ${scenario.result?.status || 'unknown'}`
+        `Attempt Status: ${scenario.result?.status || 'unknown'}`,
+        `Retry scheduled by Cucumber: ${scenario.willBeRetried === true}`
       ].join('\n'),
       'text/plain'
     );
 
     if (scenario.result?.status === Status.PASSED) {
-      ExecutionMetrics.markFinalStatus(scenarioName, 'passed');
+      ExecutionMetrics.markFinalStatus(scenario.pickle.id, 'passed');
 
       this.attach(
         `Recovered after retry: ${attempts > 1 ? 'YES' : 'NO'}`,
@@ -103,14 +104,10 @@ After(async function (this: CustomWorld, scenario) {
     }
 
     if (scenario.result?.status === Status.FAILED) {
-      ExecutionMetrics.markFinalStatus(scenarioName, 'failed');
+      ExecutionMetrics.markFinalStatus(scenario.pickle.id, scenario.willBeRetried ? 'unknown' : 'failed');
 
       this.attach(`Retryable Error: ${isRetryable}`, 'text/plain');
-      this.attach(`Retry Decision Reason: ${retryReason}`, 'text/plain');
-
-      if (isRetryable) {
-        ExecutionMetrics.markRetried(scenarioName, retryReason);
-      }
+      this.attach(`Retry classification (diagnostic only): ${retryReason}`, 'text/plain');
 
       if (this.page) {
         const screenshot = await this.page.screenshot({ fullPage: true });

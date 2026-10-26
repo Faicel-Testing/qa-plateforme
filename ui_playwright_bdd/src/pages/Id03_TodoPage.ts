@@ -11,11 +11,11 @@ export class TodoPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.addTodoButton = page.locator('button:has(svg[data-testid="add"])').first();
-    this.newTodoInput = page.locator('input[data-testid="new-todo"]').first();
-    this.submitNewTodoButton = page.locator('button[data-testid="submit-newTask"]').first();
+    this.addTodoButton = page.locator('button:has(svg[data-testid="add"])');
+    this.newTodoInput = page.getByTestId('new-todo');
+    this.submitNewTodoButton = page.getByTestId('submit-newTask');
     this.todoItems = page.locator('[data-testid="todo-item"]');
-    this.noTodosMessage = page.locator('[data-testid="no-todos"]').first();
+    this.noTodosMessage = page.getByTestId('no-todos');
   }
 
   async open(): Promise<void> {
@@ -104,7 +104,7 @@ export class TodoPage extends BasePage {
   }
 
   async assertEmptyList(): Promise<void> {
-    await this.page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
+    await expect(this.noTodosMessage).toBeVisible({ timeout: 10_000 });
     await expect(this.todoItems).toHaveCount(0, { timeout: 8_000 });
   }
 }

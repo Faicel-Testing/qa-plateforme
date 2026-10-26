@@ -29,7 +29,7 @@ async function requestAnalysis(llm, buildPrompt, final = false) {
       const schema = final ? { root_cause: ACTION_SCHEMA.root_cause, fix_summary: ACTION_SCHEMA.fix_summary, confidence: ACTION_SCHEMA.confidence } : ACTION_SCHEMA;
       // Keep the raw response: chatStructured otherwise turns every failure into {}.
       const response = await llm.chat([{ role: 'user', content: prompt + '\nReturn ONLY valid JSON following this schema:\n' + JSON.stringify(schema) }],
-        { temperature: 0, _fnName: 'bugAnalysisJson' });
+        { temperature: 0, rag: false, _fnName: 'bugAnalysisJson' });
       const raw = response?.message?.content?.trim() || '';
       if (!raw || /service\s+LLM[^\n]*(indisponible|hors ligne)/i.test(raw)) throw new Error('LLM unavailable: no analysis returned');
       let data;
@@ -41,7 +41,7 @@ async function requestAnalysis(llm, buildPrompt, final = false) {
       if (!final && data?.action === 'read_file' && typeof data.file_path === 'string' && data.file_path.trim()) return data;
       throw new Error(`LLM analysis response incomplete or invalid (fields: ${Object.keys(data || {}).join(', ') || 'none'})`);
     } catch (error) {
-      if (attempt) throw error;
+      if (attempt || require('./provider-errors').unavailable(error)) throw error;
     }
   }
 }

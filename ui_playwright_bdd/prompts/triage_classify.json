@@ -11,9 +11,9 @@
   "_status": "CÂBLÉ — quality-agent.js:80 (promptStore.get('triage_classify'), commande `quality-agent triage`). Attention : le schéma JSON demandé en fin de ce prompt (category/confidence/reason/suggested_action) est en pratique écrasé — le code appelle ensuite llm.chatConfident(), qui ajoute SA PROPRE instruction de schéma générique {result, confidence, reasoning}. Le champ réellement lu par le code est `result` (qui contient la catégorie), pas `category`. Les deux instructions JSON coexistent dans le prompt final envoyé au LLM, ce qui est redondant/source de confusion pour le modèle.",
   "current_version": "1.0.0",
   "metrics": {
-    "calls": 35,
-    "avg_confidence": 0.718,
-    "last_used": "2026-10-05T22:10:33Z"
+    "calls": 36,
+    "avg_confidence": 0.722,
+    "last_used": "2026-10-18T18:42:01Z"
   },
   "history": [
     {

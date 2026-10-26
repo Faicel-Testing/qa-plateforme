@@ -74,11 +74,12 @@ test('API evidence is scoped to test UUID/run and rejects external attachment pa
   assert.equal(evidence.recordedApi(root, { uuid: 'test-one' }, { directory, runId: 'other' }).status, 'NOT_RECORDED');
 });
 
-for (const unavailable of [false, true]) test(`bug analysis persists ${unavailable ? 'unavailable' : 'final'} conclusion without editing source`, async t => {
+for (const unavailable of [false, true, 'rate-limited']) test(`bug analysis persists ${unavailable || 'final'} conclusion without editing source`, async t => {
   const root = temp(t), dir = path.join(root, 'results');
   fs.mkdirSync(dir);
   fs.writeFileSync(path.join(root, 'page.ts'), 'UNCHANGED');
   fs.writeFileSync(path.join(dir, 'test-result.json'), JSON.stringify({ name: 'failed test', status: 'failed', statusDetails: { message: 'error'.repeat(200), trace: 'trace'.repeat(200) } }));
+  if (unavailable === 'rate-limited') for (let i = 0; i < 10; i++) fs.writeFileSync(path.join(dir, `${i}-result.json`), JSON.stringify({ name: `failure-${i}`, status: 'broken' }));
   const fakeProcess = { argv: ['node', 'bug-agent.js', 'analyze', '--max-iter=2'], env: {}, exitCode: 0 };
   let calls = 0;
   const dependencies = {
@@ -87,6 +88,7 @@ for (const unavailable of [false, true]) test(`bug analysis persists ${unavailab
     './shared/pipeline-runtime': { resultDirectory: () => dir },
     './shared/analysis-evidence': evidence,
     './shared/llm-analysis': require('../shared/llm-analysis'),
+    './shared/provider-errors': require('../shared/provider-errors'),
     './shared/tracer': { Span: class { begin() { return this; } end() {} } },
     './shared/memory-store': { getContextFor() { return ''; }, recordEpisode() {} },
     './shared/prompt-store': {},
@@ -94,6 +96,7 @@ for (const unavailable of [false, true]) test(`bug analysis persists ${unavailab
       chat: async (messages, options) => {
         assert.equal(options.tools, undefined);
         calls++;
+        if (unavailable === 'rate-limited') throw Object.assign(new Error('HTTP 429'), { status: 429 });
         if (unavailable) return { message: { content: 'Service LLM temporairement indisponible.' } };
         if (calls === 1) return { message: { content: '{"action":"read_file","file_path":"page.ts"}' } };
         assert.ok(messages[0].content.includes('EOF'));
@@ -106,10 +109,11 @@ for (const unavailable of [false, true]) test(`bug analysis persists ${unavailab
     __dirname: path.join(root, 'scripts/agents'), module, process: fakeProcess, console: { log() {}, error() {} },
     require: name => Object.hasOwn(dependencies, name) ? dependencies[name] : require(name),
   });
-  assert.equal(module.exports.loadFailures()[0].message.length, 1000);
+  assert.equal(module.exports.loadFailures().find(f => f.name === 'failed test').message.length, 1000);
   await module.exports.cmdAnalyze();
   const report = JSON.parse(fs.readFileSync(path.join(dir, 'bug-analysis.json')));
   assert.equal(report.analyses[0].status, unavailable ? 'NOT_EVALUATED' : 'HYPOTHESIS');
+  if (unavailable === 'rate-limited') { assert.equal(calls, 1); assert.equal(report.analyses.length, 11); }
   if (!unavailable) assert.equal(report.analyses[0].verification.status, 'UNVERIFIED');
   assert.equal(fakeProcess.exitCode, unavailable ? 1 : 0);
   assert.equal(fs.readFileSync(path.join(root, 'page.ts'), 'utf8'), 'UNCHANGED');

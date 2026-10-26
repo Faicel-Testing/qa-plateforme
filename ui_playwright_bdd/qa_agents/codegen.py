@@ -172,7 +172,8 @@ def run(args, bridge=None, model=None):
     for candidate in candidates:
         print("Generate:", candidate["file"], flush=True)
         try:
-            result = graph.invoke(candidate)
+            from .observability import callbacks
+            result = graph.invoke(candidate, {"callbacks": callbacks()})
             proposal = result["proposal"]
             print("PREVIEW" if dry else "REVIEW REQUIRED", proposal.get("id", ""), proposal.get("digest", ""), flush=True)
         except Exception as error:

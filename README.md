@@ -45,12 +45,22 @@ flowchart TD
     DATA --> TESTS
 ```
 
-## Playwright BDD — nouveautés de la version 1.7.0
+## Playwright BDD — évolutions depuis la version 1.7.1
+
+- **Moteur BDD unique** : CucumberJS pilote les scénarios ; Playwright fournit les navigateurs et assertions. Les formulaires utilisent des sélecteurs stables et les tests de tâches invalides vérifient le message de validation et l'absence d'insertion.
+- **Retries et runs isolés** : tentatives comptées par scénario, distinction entre diagnostic et retry réellement démarré, résultats multibrowser identifiés par manifeste et fusion limitée aux runs terminés.
+- **RAG hybride local** : BM25 et embeddings multilingues E5, stockage fichier ou PostgreSQL avec pgvector, puis reranking Groq optionnel. La base documentaire reste distincte des jeux de données de test.
+- **Observabilité optionnelle** : Langfuse auto-hébergé et OpenTelemetry relient les étapes Python et Node, avec durées, statuts et compteurs disponibles. Les secrets et contenus bruts des preuves restent hors des traces.
+- **Diagnostics explicites** : erreurs de données, de quota Groq et exécutions incomplètes restent visibles ; une analyse IA indisponible ne devient pas un succès de test.
+
+Ces changements concernent le code courant ; le lien de release ci-dessus reste celui de la dernière version publiée.
+
+## Capacités du framework Playwright BDD
 
 - **Orchestration Python** : LangGraph pilote l'exécution, la validation des résultats, le triage et le diagnostic ; LangChain et Pydantic structurent les échanges IA.
 - **Harness LLM** : outils autorisés, propositions de modifications à revoir, gateway Groq, budgets, cache, circuit breaker et métriques.
 - **Données de test PostgreSQL** : profils synthétiques générés en SQL, réservations par scénario et consultation avec pgAdmin. La base de jeux de test est distincte de celle de l'application.
-- **RAG et évaluation** : recherche BM25, reranking Groq configurable et évaluations DeepEval à la demande.
+- **RAG et évaluation** : recherche BM25 ou hybride avec embeddings locaux, stockage pgvector optionnel, reranking Groq configurable et évaluations DeepEval à la demande.
 - **Traçabilité** : résultats Allure isolés par run, environnement, historique et tendances ; captures et traces pour investiguer les échecs.
 - **Intégrations** : backlog Plane et contexte documentaire Confluence, selon configuration et autorisations.
 
@@ -82,6 +92,10 @@ npm.cmd run allure:open
 
 Voir le [README Playwright](ui_playwright_bdd/README.md) pour l'agent Data, PostgreSQL, l'analyse d'un run et DeepEval.
 
+Le mode de données par défaut est `memory`. Le mode `postgres` nécessite une base accessible et échoue explicitement si elle est arrêtée. Pour le contexte documentaire et les traces IA, consulter les guides [RAG pgvector](ui_playwright_bdd/docs/rag-pgvector.md) et [Langfuse](ui_playwright_bdd/docs/observability-langfuse.md).
+
+Validation ciblée du 26 octobre 2026 : TypeScript et ESLint passent, ainsi que 56 tests Node ciblés, 70 contrôles de revue/orchestration et 62 tests Python. Le dry-run résout 29 scénarios Gherkin. L'inscription et la connexion passent dans Chromium avec les données en mémoire. Cela ne constitue pas une validation de la régression UI complète ni du mode PostgreSQL.
+
 ## CI/CD et qualité
 
 Les workflows sont versionnés dans [.github/workflows](.github/workflows/). Leurs déclencheurs et contrôles diffèrent selon le framework.
@@ -94,7 +108,7 @@ Un rapport disponible ou une réponse IA ne suffit pas à autoriser une livraiso
 
 Les clés, fichiers `.env`, bases locales et journaux d'exécution restent locaux ou dans les mécanismes de secrets du CI. Chaque intégration nécessite ses propres droits d'accès. Groq est soumis aux quotas du compte ; Confluence peut être exclu du contexte lorsque l'accès est indisponible.
 
-La version 1.7.0 documente un échec connu sur la longueur des tâches : l'application testée accepte 201 caractères, alors que le scénario attend un rejet au-delà de la limite proposée de 200. La règle métier reste à confirmer. Consulter les [notes de version](ui_playwright_bdd/CHANGELOG.md) et le [diagnostic](ui_playwright_bdd/docs/framework-login-fixes.md).
+Les tâches suivent une règle cible de 1 à 200 caractères après suppression des espaces en début et fin. Les divergences connues de l'application de démonstration restent signalées par les tests ; un message de validation seul ne suffit pas si une tâche invalide est enregistrée. Consulter la [règle cible et les constats](ui_playwright_bdd/docs/todo-validation.md) et les [notes de version](ui_playwright_bdd/CHANGELOG.md).
 
 ## Auteur
 

@@ -12,10 +12,12 @@ async function main() {
   const env = { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUNBUFFERED: '1', QA_AGENT_RUNTIME: 'python' };
   if (env.NODE_EXTRA_CA_CERTS) env.NODE_EXTRA_CA_CERTS = fs.realpathSync(path.resolve(root, env.NODE_EXTRA_CA_CERTS));
   console.log('[Python] Lancement de qa_agents (le premier chargement peut prendre quelques secondes)...');
-  const result = await runtime.execute(python, ['-m', 'qa_agents', ...process.argv.slice(2)], {
+  const observation = require('./agents/shared/langfuse-observability');
+  const result = await observation.span('task.python', {}, () => runtime.execute(python, ['-m', 'qa_agents', ...process.argv.slice(2)], {
     cwd: root, env, verbose: true, taskLabel: 'python ' + process.argv.slice(2, 4).join(' '),
     timeout: runtime.timeoutMs(env.QA_TASK_TIMEOUT_MS, 7200000),
-  });
+  }));
+  await observation.flush();
   process.exitCode = result.success ? 0 : result.exitCode || 1;
 }
 if (require.main === module) main().catch(error => { console.error(error.message); process.exitCode = 1; });

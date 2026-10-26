@@ -140,8 +140,14 @@ async function cmdAnalyze() {
   console.log(`  ${C}${failures.length} échec(s) à analyser${E}\n`);
 
   const analyses = [];
+  let providerUnavailable = false;
 
   for (const failure of failures) {
+    if (providerUnavailable) {
+      analyses.push({ name: failure.name, status: 'NOT_EVALUATED', fix_applied: false, root_cause: '',
+        error: 'Provider unavailable or rate limited earlier in this batch; no additional request sent.' });
+      continue;
+    }
     console.log(`  ${B}[${failure.name.slice(0,55)}]${E}`);
     const context = memory.getContextFor(failure.name);
 
@@ -191,6 +197,7 @@ Si la correction relève de l'application testée, indique-le sans contourner le
         console.log(`  Read: ${decision.file_path}`);
       } catch (e) {
         span.error = e.message;
+        providerUnavailable = require('./shared/provider-errors').unavailable(e);
         console.error(`  ${R}  ✗ Erreur itération ${iter}: ${e.message}${E}`);
         break;
       }
@@ -215,13 +222,18 @@ Si la correction relève de l'application testée, indique-le sans contourner le
     console.log();
   }
 
+  if (!DRY_RUN) {
+    const report = JSON.stringify({ ts: new Date().toISOString(), resultsDir: RESULTS_DIR, analyses }, null, 2);
+    fs.writeFileSync(path.join(DOCS_DIR, 'bug-analysis.json'), report);
+    fs.writeFileSync(path.join(RESULTS_DIR, 'bug-analysis.json'), report);
+  }
   return analyses;
 }
 
 // ── REPAIR — Mode réparation avec vérification ────────────────────────────────
 async function cmdRepair() {
   console.log(`\n${B}=== BUG AGENT — REPAIR [max-iter=${MAX_ITER}] ===${E}`);
-  console.log(`  ${Y}⚠  Mode repair : les fichiers TypeScript peuvent être modifiés${E}\n`);
+  console.log(`  ${Y}Mode repair : propositions de correctifs soumises à revue, sources inchangées${E}\n`);
 
   const failures = loadFailures();
   if (!failures.length) { console.log(`  ${G}✓ Aucun échec à réparer${E}`); return; }
@@ -268,6 +280,12 @@ async function cmdRepair() {
       } catch (e) {
         span.error = e.message;
         repairError = true;
+        if (require('./shared/provider-errors').unavailable(e)) {
+          console.error('Provider unavailable or rate limited: remaining repairs not evaluated.');
+          span.end(false);
+          process.exitCode = 1;
+          return;
+        }
         console.error(`  ${R}  ✗ Erreur itération ${i + 1}: ${e.message}${E}`);
         break;
       }

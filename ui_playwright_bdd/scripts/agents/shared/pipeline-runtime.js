@@ -24,7 +24,7 @@ function execute(command, args, options = {}) {
     const started = Date.now();
     let timedOut = false, error = null, stdout = '', stderr = '';
     const child = spawn(command, args, {
-      cwd: options.cwd, env: { ...baseEnv, QA_METRICS_TASK_ID: task.taskId,
+      cwd: options.cwd, env: { ...baseEnv, ...require('./langfuse-observability').childEnvironment(), QA_METRICS_TASK_ID: task.taskId,
         QA_GATEWAY_BUDGET_ID: baseEnv.QA_GATEWAY_BUDGET_ID || task.taskId }, windowsHide: true,
       detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'],
     });

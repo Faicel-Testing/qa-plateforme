@@ -58,6 +58,7 @@ function metrics(directory, dashboard, generated = new Date().toISOString()) {
   }
   return {
     'Quality.Gate': !m ? NA : gate.allowed && criteria.every(([, ok]) => ok) ? 'PASS' : 'FAIL',
+    'Execution.Status': !m ? 'NOT_RECORDED' : m.completed === true ? 'COMPLETED' : 'INCOMPLETE - partial report',
     'Gate.Criteria.Passed': `${criteria.filter(([, ok]) => ok).length}/${criteria.length}`,
     'Gate.Blockers': blockers.length ? blockers.join(' | ') : 'None',
     'Pass.Rate': pct(sum('passed')), 'Fail.Rate': pct(sum('failed')), 'Broken.Rate': pct(sum('broken')),

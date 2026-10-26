@@ -44,8 +44,8 @@ test('passing run, coverage scoped to run, and environment metadata are rendered
   assert.equal(properties.match(/^Pass.Rate=/gm).length, 1); assert.match(properties, /team=QA/);
   assert.doesNotMatch(properties, /secret|token=private/);
   assert.doesNotMatch(properties, /^(?:tests_execution_time|chromium_(?:total|passed|failed|pass_rate|failure_rate|execution_time))=/m);
-  assert.match(properties, /^chromium_skipped=0$/m);
-  assert.match(properties, /^chromium_broken=0$/m);
+  assert.doesNotMatch(properties, /^chromium_(?:skipped|broken|unknown|retried|retry_rate)=/m);
+  assert.match(properties, /^Execution.Status=COMPLETED$/m);
   // Re-generating the browser dashboard must not reintroduce the duplicates.
   writeEnvironment(f.dir, main(f.dir));
   assert.equal(fs.readFileSync(path.join(f.dir, 'environment.properties'), 'utf8').replace(/^Report.Generated=.*$/m, ''), properties.replace(/^Report.Generated=.*$/m, ''));

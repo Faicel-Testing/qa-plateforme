@@ -115,6 +115,8 @@ async function execute(fn, messages, fnName = 'chat', variant) {
     return { value, fromCache: false, fallback: false };
 
   } catch (err) {
+    // A rejected payload is not a provider outage; let callers reduce it.
+    if ([400, 413, 422].includes(err?.status || err?.status_code)) throw err;
     s.failures = (s.failures || 0) + 1;
     if (s.failures >= CONFIG.failureThreshold) { s.state = STATE.OPEN; s.openedAt = now; }
     saveCbState(s);

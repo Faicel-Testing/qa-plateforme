@@ -7,7 +7,8 @@ import { negativeCases } from './negativeCases';
 export class TestDataService {
   private repository?: PostgresDataRepository;
   private allocations: string[] = [];
-  readonly runId = process.env.QA_RUN_ID || `local-${randomUUID()}`;
+  readonly runId = process.env.QA_EXECUTION_MANAGED === 'true' && process.env.QA_RUN_ID
+    ? process.env.QA_RUN_ID : `local-${randomUUID()}`;
   constructor(readonly scenarioId: string) {
     if (dataProvider() === 'postgres') this.repository = new PostgresDataRepository();
   }

@@ -3,7 +3,6 @@ type ScenarioExecution = {
   attempts: number;
   retried: boolean;
   finalStatus: 'passed' | 'failed' | 'unknown';
-  retryReason?: string;
 };
 
 export class ExecutionMetrics {
@@ -23,12 +22,7 @@ export class ExecutionMetrics {
   static incrementAttempt(scenarioName: string): void {
     this.initScenario(scenarioName);
     this.data[scenarioName].attempts += 1;
-  }
-
-  static markRetried(scenarioName: string, reason: string): void {
-    this.initScenario(scenarioName);
-    this.data[scenarioName].retried = true;
-    this.data[scenarioName].retryReason = reason;
+    this.data[scenarioName].retried = this.data[scenarioName].attempts > 1;
   }
 
   static markFinalStatus(

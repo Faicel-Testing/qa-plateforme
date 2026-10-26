@@ -1,6 +1,7 @@
 """Offline regressions: real LangGraph + fake model, no browser/network/credentials."""
 import copy
 import json
+import os
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
@@ -129,6 +130,12 @@ class StructuredTests(unittest.TestCase):
 
 
 class GraphTests(unittest.TestCase):
+    def setUp(self):
+        # Offline graph tests must not inherit the workstation's real database.
+        env_patch = patch.dict(os.environ, {"TEST_DATA_PROVIDER": "memory"})
+        env_patch.start()
+        self.addCleanup(env_patch.stop)
+
     def invoke(self, data, mode="full", model=None, **state):
         self.runner_calls = []
         def runner(*args):

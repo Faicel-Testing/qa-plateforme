@@ -18,7 +18,7 @@ Embeddings : embedding-client.js
 
 - Origines, routes et modèles explicitement autorisés dans la politique. Seul Groq est autorisé, avec HTTPS. Identifiants dans l'URL, query strings, redirections, en-têtes Host/proxy et transports TLS personnalisés sont refusés.
 - Blocage avant envoi des valeurs de secrets connues dans les variables d'environnement, des formats de clés reconnus, des Bearer tokens et des clés privées. Les valeurs JSON décodées sont inspectées, y compris les arguments d'outils et les entrées d'embeddings. Les en-têtes d'authentification du SDK restent utilisables.
-- Précontrôle des messages avant la recherche RAG et avant le cache de `llm.js`. Un refus du gateway n'entraîne pas un fallback vers un autre modèle.
+- Précontrôle des messages avant la recherche RAG et avant le cache de `llm.js`. Un refus du gatewa y n'entraîne pas un fallback vers un autre modèle.
 - Corps JSON limité à 200 000 octets ; sorties limitées à 4 096 tokens par appel. Les demandes explicites dépassant ce plafond sont refusées ; sans limite fournie, le plafond est ajouté. Une seule complétion par appel.
 - Délai de transport maximal de 120 secondes, compatible avec l'annulation de l'appelant et le streaming.
 - Maximum de 60 requêtes par minute dans ce workspace, toutes catégories confondues. Chaque tentative HTTP et chaque retry consomme une réservation.
@@ -27,7 +27,7 @@ Embeddings : embedding-client.js
 
 ## Audit et refus
 
-`logs/gateway/audit.jsonl` contient ALLOW/BLOCK, motif, fournisseur/modèle autorisé, identifiant de tâche et limites. Il ne contient ni prompts, réponses, secrets ni en-têtes. ALLOW signifie admission avant le réseau, pas réussite du fournisseur : consulter les métriques pour la réussite HTTP.
+`logs/gateway/audit.jsonl`contient ALLOW/BLOCK, motif, fournisseur/modèle autorisé, identifiant de tâche et limites. Il ne contient ni prompts, réponses, secrets ni en-têtes. ALLOW signifie admission avant le réseau, pas réussite du fournisseur : consulter les métriques pour la réussite HTTP.
 
 `logs/gateway/quota.json` partage les réservations entre processus, avec verrou exclusif pour la lecture/écriture et synchronisation sur disque avant envoi. Une écriture interrompue peut laisser un journal invalide : il sera refusé, jamais réinitialisé silencieusement. Un journal corrompu, un audit impossible ou un verrou occupé bloque l'appel. Après un crash, un verrou résiduel nécessite une intervention locale après vérification qu'aucun processus ne l'utilise. Ne pas effacer le quota pour contourner un budget.
 
@@ -71,3 +71,12 @@ node --test scripts/agents/tests/ai-gateway.test.js scripts/agents/tests/ai-gate
 ```
 
 Les tests utilisent des transports simulés : aucun appel fournisseur n'est nécessaire. Ils vérifient les blocages avant envoi, le quota persistant, les vrais chemins SDK du chat/streaming/juge/embeddings et l'absence de fallback après refus.
+
+## Embeddings locaux (22 octobre 2026)
+
+Les embeddings E5 passent désormais par un worker CPU local ONNX, sans requête
+HTTP et sans consommation du quota réseau du gateway. Le worker ne peut pas
+télécharger de modèle à l’exécution. Seule la commande explicite `rag:setup`
+télécharge les artefacts épinglés. Le gateway continue de contrôler les appels
+Groq du chat, du juge et du reranking. `AI_LOCAL_ONLY=true` bloque ces appels cloud,
+sans bloquer le calcul local des embeddings. Les textes retrouvés restent non fiables.

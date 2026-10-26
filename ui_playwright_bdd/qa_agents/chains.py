@@ -4,6 +4,7 @@ from collections import Counter
 from langchain_core.messages import convert_to_messages
 from langchain_core.output_parsers import JsonOutputParser
 from .model import GatewayChatModel
+from .observability import callbacks
 
 
 def typed_structured(messages, schema, *, model=None, retries=2):
@@ -15,7 +16,7 @@ def typed_structured(messages, schema, *, model=None, retries=2):
               "Return ONLY a complete JSON object matching this JSON Schema: "
               + json.dumps(schema.model_json_schema(), ensure_ascii=False)}]
     for attempt in range(attempts):
-        answer = model.invoke(convert_to_messages(prompt), temperature=0, rag=False)
+        answer = model.invoke(convert_to_messages(prompt), config={"callbacks": callbacks()}, temperature=0, rag=False)
         text = answer.content
         if not isinstance(text, str):
             raise ValueError("Expected a text JSON response")
@@ -32,7 +33,7 @@ def typed_structured(messages, schema, *, model=None, retries=2):
 
 
 def chat(messages, options=None, *, model=None):
-    response = (model or GatewayChatModel()).invoke(convert_to_messages(messages), **(options or {}))
+    response = (model or GatewayChatModel()).invoke(convert_to_messages(messages), config={"callbacks": callbacks()}, **(options or {}))
     result = {"role": "assistant", "content": response.content}
     if response.tool_calls:
         result["tool_calls"] = [{"id": call["id"], "type": "function", "function": {
@@ -46,7 +47,7 @@ def structured(messages, schema, retries=2, temperature=None, *, model=None):
     prompt = [*messages, {"role": "user", "content": "Return ONLY a complete JSON object matching: " + json.dumps(schema, ensure_ascii=False)}]
     # Provider errors propagate immediately. Only a malformed JSON answer is retried.
     for attempt in range(max(1, min(int(retries), 3))):
-        answer = model.invoke(convert_to_messages(prompt), temperature=temperature)
+        answer = model.invoke(convert_to_messages(prompt), config={"callbacks": callbacks()}, temperature=temperature)
         text = answer.content.strip()
         if text.startswith("```"):
             text = text.split("\n", 1)[-1].removesuffix("```").strip()

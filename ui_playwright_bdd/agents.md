@@ -1,190 +1,45 @@
-# agents.md — UI Playwright BDD Framework
+# Instructions pour les agents — UI Playwright BDD
 
-Ce fichier décrit comment les agents IA interagissent avec ce framework.
-Convention inspirée de `CLAUDE.md` (Anthropic) — lisible par tout agent LLM.
+Lire [README.md](README.md) pour l'installation et les parcours de référence.
+CucumberJS est le moteur BDD unique (`cucumber.js`). Playwright fournit
+l'automatisation et les assertions. Les features restent la source des scénarios.
 
----
+## Commandes de référence
 
-## Ce que fait ce framework
+- `npm run test:headless` : régression Cucumber sans LLM.
+- `npm run agents:pipeline -- quick --local-only` : smoke sans LLM.
+- `npm run agents:pipeline -- full` : pipeline Python LangGraph recommandé.
+- `npm run typecheck` et `npm run lint` : contrôles statiques.
+- `node --test scripts/tests/step-definitions.test.js` : contrats des assertions,
+  métriques et résolution Gherkin sans navigateur ni appels externes.
 
-Tests UI BDD (Playwright + Cucumber + TypeScript) pour l'application **QACart Todo**
-(qacart-todo.herokuapp.com) — 29 scénarios Gherkin couvrant Signup, Login, Todo, Delete Todo, API Setup.
+Les adaptateurs `scripts/agents/` historiques restent disponibles ; leurs
+commandes ne sont pas équivalentes au graphe Python `qa_agents/`.
+Les synchronisations externes et publications ont des commandes séparées.
 
----
+## Responsabilités
 
-## Commandes disponibles
+- `src/core/world.ts` : contexte isolé et navigateur par scénario.
+- `src/hooks/hooks.ts` : cycle de vie, preuves et tentatives.
+- `src/pages/` : Page Objects et sélecteurs stables.
+- `src/steps/` : liaison métier avec Cucumber.
+- `src/api/` et `src/data/` : préconditions API et données de test.
+- `qa_agents/` : orchestration et analyses Python.
 
-### Exécuter des tests
+## Règles de travail
 
-```bash
-node scripts/agents/runner-agent.js smoke         # Tests @smoke (rapide)
-node scripts/agents/runner-agent.js critical      # Tests @critical
-node scripts/agents/runner-agent.js regression    # Suite complète
-node scripts/agents/runner-agent.js gono-go       # Smoke + Critical + analyse LLM
-node scripts/agents/runner-agent.js baseline      # Enregistre le baseline actuel
-```
+Ne jamais committer `.env`, les credentials, `logs/`, `memory/` ni les résultats.
+Conserver les modifications existantes de l'utilisateur.
+Configurer le certificat du proxy plutôt que désactiver la vérification TLS de Git.
+Ne pas publier ni envoyer de notifications sans instruction explicite.
+Les tests seuls ne nécessitent pas de clé LLM.
 
-Ou via npm :
-```bash
-npm run test:smoke
-npm run test:regression
-npm run test:critical
-```
-### Gouvernance IA et validation humaine
+Le verdict de tests est déterministe et distinct de l'autorisation de livraison.
+Les analyses IA sont des hypothèses à vérifier ; les propositions de correctif
+passent par la revue décrite dans `docs/ci-human-review.md`.
+Ne pas assouplir les assertions pour masquer les défauts de l'application.
+La règle cible des tâches est dans `docs/todo-validation.md`.
 
-```bash
-node scripts/agents/governance-agent.js status               # État de la gouvernance IA
-node scripts/agents/governance-agent.js security             # Analyse de sécurité des prompts
-node scripts/agents/governance-agent.js audit                # Historique des décisions IA
-node scripts/agents/governance-agent.js approve <id> <reviewer>  # Validation humaine
-node scripts/agents/governance-agent.js critical --dry-run   # Simulation d'une décision critique
-```
-### Analyser la qualité
-
-```bash
-node scripts/agents/quality-agent.js gate         # Quality gate → exit 0/1
-node scripts/agents/quality-agent.js kpi          # KPI dashboard HTML
-node scripts/agents/quality-agent.js flaky --runs=3
-node scripts/agents/quality-agent.js verify
-```
-
-### Bugs et RCA
-
-```bash
-node scripts/agents/bug-agent.js triage           # Classifie les échecs UI
-node scripts/agents/bug-agent.js rca              # Root cause analysis
-node scripts/agents/bug-agent.js loop             # Boucle agentique
-```
-
-### Génération de code
-
-```bash
-node scripts/agents/codegen-agent.js spec         # Génère la spec UI
-node scripts/agents/codegen-agent.js tc US-001    # Génère les TCs Gherkin pour une US
-node scripts/agents/codegen-agent.js coverage     # Couverture des features
-```
-
-### Rapports
-
-```bash
-node scripts/agents/reporting-agent.js generate   # Rapport Allure HTML
-node scripts/agents/reporting-agent.js publish    # Rapport + notification
-node scripts/agents/reporting-agent.js notify     # Notification Slack/Teams seule
-```
-
-### Pipeline
-
-```bash
-node scripts/agents/pipeline-agent.js quick       # Smoke → gate → notify
-node scripts/agents/pipeline-agent.js full        # Pipeline complet
-node scripts/agents/pipeline-agent.js nightly     # Regression complète nocturne
-node scripts/agents/pipeline-agent.js gate        # Gate CI/CD (exit 0 ou 1)
-node scripts/agents/pipeline-agent.js status      # État du pipeline
-```
-
-### CI/CD et Plane
-
-```bash
-node scripts/agents/ci-agent.js commit            # Commit (ne stage jamais .env)
-node scripts/agents/ci-agent.js push              # Push avec SSL bypass
-node scripts/agents/ci-agent.js pr create         # Crée une PR GitHub
-node scripts/agents/planning-agent.js check       # Vérifie la connexion Plane
-node scripts/agents/planning-agent.js stories     # Liste les US Plane
-node scripts/agents/planning-agent.js testcases   # Liste les cas enfants Plane
-node scripts/agents/planning-agent.js cycles list # Consulte les cycles Plane
-```
-
----
-
-## Structure des fichiers clés
-
-```
-scripts/agents/              ← 10 agents JS (point d'entrée)
-  llm.js                     ← 5 patterns LLM — require() directement
-  shared/
-    circuit-breaker.js       ← résilience LLM
-    memory-store.js          ← mémoire épisodique JSONL
-    prompt-store.js          ← versioning des prompts
-    tracer.js                ← traçabilité des appels LLM
-  plane-fetcher.js           ← client Plane (unique fournisseur du backlog)
-src/
-  features/                  ← fichiers .feature Gherkin (source de vérité)
-  steps/                     ← step definitions Cucumber
-  pages/                     ← Page Object Model (TypeScript)
-  fixtures/                  ← fixtures Playwright (NE PAS COMMITTER user.json)
-prompts/                     ← templates de prompts versionnés (JSON)
-logs/                        ← traces LLM (NE PAS COMMITTER)
-memory/                      ← épisodes agentiques (NE PAS COMMITTER)
-allure-results/              ← résultats de test (NE PAS COMMITTER)
-qa-knowledge/                ← notes QA manuelles (pas un pipeline RAG, non lu par les agents)
-docs/                        ← rapports HTML, specs, traceability matrix
-```
-
----
-
-## Règles de sécurité — OBLIGATOIRES
-
-- **Ne jamais committer `.env`** — contient `GROQ_API_KEY`
-- **Ne jamais committer `src/fixtures/user.json`** — credentials de test
-- **Ne jamais committer `logs/`** ou `memory/`
-- **Push toujours avec SSL bypass** : `git -c http.sslVerify=false push origin main`
-- Le `ci-agent.js` gère ça automatiquement
-
----
-
-## Variables d'environnement requises
-
-```env
-GROQ_API_KEY=...          # LLM Groq LLaMA 3.3 70B (obligatoire)
-PLANE_WORKSPACE=...       # Workspace Plane
-PLANE_PROJECT_ID=...      # Projet Plane
-PLANE_API_KEY=...         # Token Plane, uniquement dans .env
-SLACK_WEBHOOK_URL=...     # Webhook Slack (optionnel)
-TEAMS_WEBHOOK_URL=...     # Webhook Teams (optionnel)
-AGENT_MAX_ITER=5          # Max itérations boucle agentique (hard cap: 20)
-```
-
----
-
-## Quality Gates
-
-| Seuil | Valeur |
-|-------|--------|
-| Pass rate minimum | 90% |
-| Fail rate maximum | 5% |
-| Confidence LLM minimum | 0.70 |
-| Flaky threshold | 0.34 (1/3 runs en échec) |
-
----
-
-## Modules LLM disponibles
-
-```javascript
-const llm = require('./llm');
-
-await llm.chat(messages)                         // Texte libre
-await llm.chatCoT(messages)                      // Chain of Thought
-await llm.chatStructured(messages, schema)       // JSON structuré
-await llm.chatConfident(messages, schema)        // Avec score de confiance
-await llm.chatSelfConsistent(messages, schema,   // Vote majoritaire N fois
-                              verdictKey, n=3)
-```
-
----
-
-## Application testée
-
-- **App** : QACart Todo — qacart-todo.herokuapp.com
-- **Utilisateurs de test** : créés dynamiquement via API Setup (POST register), pas de compte statique
-- **Features** : Signup, Login, Todo, Delete Todo, API Setup (Id01, Id02, Id03, Id04, Id05, Id09)
-- **Projet Plane** : Application_Test (APPLICATIO) ; références SCRUM historiques conservées
-
----
-
-## Ne pas modifier
-
-- `scripts/agents/llm.js` — interface LLM stable
-- `scripts/agents/shared/circuit-breaker.js` — logique CB testée
-- `src/features/*.feature` — source de vérité Gherkin
-- `prompts/*.json` — modifier via `promptStore.save()`, jamais manuellement
-- `src/fixtures/user.json` — ne pas committer, contient des credentials
+Cucumber décide des retries ; `SmartRetry` fournit uniquement un diagnostic.
+Les compteurs sont isolés par pickle et locaux au worker ; les résultats du run
+Cucumber/Allure servent à l'agrégation.

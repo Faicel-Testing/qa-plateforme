@@ -98,6 +98,7 @@ async function chat(messages, opts = {}) {
     ? { protocol: 'tool-calls-v2', model: GROQ_MODEL, tools, temperature }
     : temperature;
   let groqFailure;
+  let providerStatus;
   try {
     const { value, fallback } = await cb.execute(
       async () => gateway.preflight(await _rawGroqChat(messages, tools, temperature)), messages, fnName, cacheVariant
@@ -107,10 +108,12 @@ async function chat(messages, opts = {}) {
   } catch (err) {
     if (gateway.isGatewayError(err)) throw err;
     groqFailure = providerError('Groq', err);
+    providerStatus = err?.status || err?.status_code;
   }
 
   const error = new Error(`Appel Groq impossible (${groqFailure}). Aucune reponse IA disponible.`);
   error.code = tools?.length ? 'LLM_TOOL_CALL_FAILED' : 'LLM_UNAVAILABLE';
+  if (Number.isInteger(providerStatus)) error.status = providerStatus;
   throw error;
 }
 
@@ -129,12 +132,12 @@ async function chatStream(messages) {
 
 // ── chatCot — Chain of Thought (deux étapes) ──────────────────────────────────
 // Étape 1 : raisonnement libre, étape 2 : extraction structurée
-async function chatCot(messages, structuredPrompt = null) {
+async function chatCot(messages, structuredPrompt = null, options = {}) {
   const cotMessages = [
     ...messages,
     { role: 'user', content: 'Raisonne étape par étape avant de conclure. Préfixe ta réponse par ÉTAPE 1, ÉTAPE 2, ... CONCLUSION.' }
   ];
-  const step1 = await chat(cotMessages, { _fnName: 'chatCot' });
+  const step1 = await chat(cotMessages, { ...options, _fnName: 'chatCot' });
   const reasoning = step1.message.content || '';
 
   if (!structuredPrompt) return reasoning;
@@ -144,7 +147,7 @@ async function chatCot(messages, structuredPrompt = null) {
     { role: 'assistant', content: reasoning },
     { role: 'user', content: structuredPrompt }
   ];
-  const step2 = await chat(step2Messages, { _fnName: 'chatCot' });
+  const step2 = await chat(step2Messages, { ...options, _fnName: 'chatCot' });
   return { reasoning, structured: step2.message.content || '' };
 }
 
