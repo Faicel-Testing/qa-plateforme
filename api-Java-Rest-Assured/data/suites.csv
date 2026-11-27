@@ -1,103 +1,103 @@
 "DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
-"  En tant que client API authentifie, je veux mettre a jour partiellement une reservation
-  afin de modifier uniquement les champs necessaires.","568","TC-040 -- PATCH lastname et totalprice (PATCH /booking/{id})","","2026-11-26","passed","2026-11-26","","US-006 -- Mise a jour partielle (PATCH /booking/{id})","TC-040 -- PATCH lastname et totalprice (PATCH /booking/{id})",""
-"  En tant que client API, je veux creer une nouvelle reservation
-  afin d'enregistrer un sejour hotelier dans le systeme.","189","TC-023 -- Champ firstname manquant (POST /booking)","","2026-11-26","passed","2026-11-26","","US-004 -- Creer une reservation (POST /booking)","TC-023 -- Champ firstname manquant (POST /booking)",""
-"  En tant que client API, je veux creer une nouvelle reservation
-  afin d'enregistrer un sejour hotelier dans le systeme.","188","TC-025 -- Champ totalprice manquant (POST /booking)","","2026-11-26","passed","2026-11-26","","US-004 -- Creer une reservation (POST /booking)","TC-025 -- Champ totalprice manquant (POST /booking)",""
-"  En tant que client API, je veux creer une nouvelle reservation
-  afin d'enregistrer un sejour hotelier dans le systeme.","187","TC-022 -- Dates checkin egale checkout (POST /booking)","","2026-11-26","passed","2026-11-26","","US-004 -- Creer une reservation (POST /booking)","TC-022 -- Dates checkin egale checkout (POST /booking)",""
-"  En tant que client API, je veux recuperer la liste de toutes les reservations
-  afin de consulter les IDs disponibles et filtrer par criteres.","180","TC-011 -- Filtre firstname inexistant (GET /booking?firstname=XYZ)","","2026-11-26","passed","2026-11-26","","US-002 -- Lister les reservations (GET /booking)","TC-011 -- Filtre firstname inexistant (GET /booking?firstname=XYZ)",""
-"  En tant que client API, je veux recuperer le detail d'une reservation par son ID
-  afin de consulter ses informations completes.","591","TC-013 -- Reservation existante valide (GET /booking/{id})","","2026-11-26","passed","2026-11-26","","US-003 -- Recuperer une reservation (GET /booking/{id})","TC-013 -- Reservation existante valide (GET /booking/{id})",""
-"  En tant que client API authentifie, je veux mettre a jour partiellement une reservation
-  afin de modifier uniquement les champs necessaires.","553","TC-039 -- PATCH totalprice uniquement (PATCH /booking/{id})","","2026-11-26","passed","2026-11-26","","US-006 -- Mise a jour partielle (PATCH /booking/{id})","TC-039 -- PATCH totalprice uniquement (PATCH /booking/{id})",""
-"  En tant que client API, je veux recuperer le detail d'une reservation par son ID
-  afin de consulter ses informations completes.","370","TC-018 -- ID negatif (GET /booking/-1)","","2026-11-26","passed","2026-11-26","","US-003 -- Recuperer une reservation (GET /booking/{id})","TC-018 -- ID negatif (GET /booking/-1)",""
-"  En tant que client API, je veux creer une nouvelle reservation
-  afin d'enregistrer un sejour hotelier dans le systeme.","192","TC-026 -- Champ depositpaid manquant (POST /booking)","","2026-11-26","passed","2026-11-26","","US-004 -- Creer une reservation (POST /booking)","TC-026 -- Champ depositpaid manquant (POST /booking)",""
-"  En tant que client API authentifie, je veux mettre a jour entierement une reservation
-  afin de modifier toutes ses informations en une seule requete.","543","TC-034 -- PUT sans authentification (PUT /booking/{id})","","2026-11-26","passed","2026-11-26","","US-005 -- Mise a jour complete (PUT /booking/{id})","TC-034 -- PUT sans authentification (PUT /booking/{id})",""
-"  En tant que client API authentifie, je veux mettre a jour entierement une reservation
-  afin de modifier toutes ses informations en une seule requete.","555","TC-036 -- PUT sur ID inexistant (PUT /booking/9999999)","","2026-11-26","passed","2026-11-26","","US-005 -- Mise a jour complete (PUT /booking/{id})","TC-036 -- PUT sur ID inexistant (PUT /booking/9999999)",""
 "  En tant que client API, je veux generer un token d'authentification
-  afin d'effectuer des operations securisees sur les reservations.","213","TC-002 -- Credentials incorrects (POST /auth)","","2026-11-26","passed","2026-11-26","","US-001 -- Authentification (POST /auth)","TC-002 -- Credentials incorrects (POST /auth)",""
-"  En tant que client API, je veux creer une nouvelle reservation
-  afin d'enregistrer un sejour hotelier dans le systeme.","202","TC-028 -- totalprice negatif (POST /booking)","","2026-11-26","failed","2026-11-26","","US-004 -- Creer une reservation (POST /booking)","TC-028 -- totalprice negatif (POST /booking)",""
-"  En tant que client API authentifie, je veux mettre a jour partiellement une reservation
-  afin de modifier uniquement les champs necessaires.","552","TC-042 -- PATCH avec token invalide (PATCH /booking/{id})","","2026-11-26","passed","2026-11-26","","US-006 -- Mise a jour partielle (PATCH /booking/{id})","TC-042 -- PATCH avec token invalide (PATCH /booking/{id})",""
-"  En tant que client API, je veux recuperer la liste de toutes les reservations
-  afin de consulter les IDs disponibles et filtrer par criteres.","187","TC-012 -- SQL injection dans filtre firstname (GET /booking)","","2026-11-26","passed","2026-11-26","","US-002 -- Lister les reservations (GET /booking)","TC-012 -- SQL injection dans filtre firstname (GET /booking)",""
-"  En tant que client API authentifie, je veux mettre a jour entierement une reservation
-  afin de modifier toutes ses informations en une seule requete.","571","TC-033 -- Persistence apres PUT (GET /booking/{id})","","2026-11-26","passed","2026-11-26","","US-005 -- Mise a jour complete (PUT /booking/{id})","TC-033 -- Persistence apres PUT (GET /booking/{id})",""
-"  En tant que client API, je veux recuperer le detail d'une reservation par son ID
-  afin de consulter ses informations completes.","370","TC-016 -- ID inexistant (GET /booking/9999999)","","2026-11-26","passed","2026-11-26","","US-003 -- Recuperer une reservation (GET /booking/{id})","TC-016 -- ID inexistant (GET /booking/9999999)",""
-"  En tant que client API, je veux creer une nouvelle reservation
-  afin d'enregistrer un sejour hotelier dans le systeme.","183","TC-029 -- checkin posterieur a checkout (POST /booking)","","2026-11-26","failed","2026-11-26","","US-004 -- Creer une reservation (POST /booking)","TC-029 -- checkin posterieur a checkout (POST /booking)",""
-"  En tant que client API, je veux recuperer le detail d'une reservation par son ID
-  afin de consulter ses informations completes.","373","TC-014 -- Validation schema JSON (GET /booking/{id})","","2026-11-26","passed","2026-11-26","","US-003 -- Recuperer une reservation (GET /booking/{id})","TC-014 -- Validation schema JSON (GET /booking/{id})",""
-"  En tant que client API authentifie, je veux mettre a jour entierement une reservation
-  afin de modifier toutes ses informations en une seule requete.","546","TC-037 -- PUT sans champ requis firstname (PUT /booking/{id})","","2026-11-26","passed","2026-11-26","","US-005 -- Mise a jour complete (PUT /booking/{id})","TC-037 -- PUT sans champ requis firstname (PUT /booking/{id})",""
-"  En tant que client API, je veux recuperer la liste de toutes les reservations
-  afin de consulter les IDs disponibles et filtrer par criteres.","198","TC-006 -- Liste complete sans filtre (GET /booking)","","2026-11-26","passed","2026-11-26","","US-002 -- Lister les reservations (GET /booking)","TC-006 -- Liste complete sans filtre (GET /booking)",""
+  afin d'effectuer des operations securisees sur les reservations.","38","TC-003 -- Champs username et password manquants (POST /auth)","","2026-11-27","passed","2026-11-27","","US-001 -- Authentification (POST /auth)","TC-003 -- Champs username et password manquants (POST /auth)",""
 "  En tant que client API authentifie, je veux supprimer une reservation
-  afin de l'effacer definitivement du systeme.","745","TC-050 -- Double DELETE sur le meme ID","","2026-11-26","passed","2026-11-26","","US-007 -- Supprimer une reservation (DELETE /booking/{id})","TC-050 -- Double DELETE sur le meme ID",""
+  afin de l'effacer definitivement du systeme.","91","TC-047 -- DELETE sans token (DELETE /booking/{id})","","2026-11-27","passed","2026-11-27","","US-007 -- Supprimer une reservation (DELETE /booking/{id})","TC-047 -- DELETE sans token (DELETE /booking/{id})",""
+"  En tant que client API, je veux recuperer le detail d'une reservation par son ID
+  afin de consulter ses informations completes.","119","TC-013 -- Reservation existante valide (GET /booking/{id})","","2026-11-27","passed","2026-11-27","","US-003 -- Recuperer une reservation (GET /booking/{id})","TC-013 -- Reservation existante valide (GET /booking/{id})",""
+"  En tant que client API authentifie, je veux mettre a jour partiellement une reservation
+  afin de modifier uniquement les champs necessaires.","79","TC-038 -- PATCH firstname uniquement (PATCH /booking/{id})","","2026-11-27","passed","2026-11-27","","US-006 -- Mise a jour partielle (PATCH /booking/{id})","TC-038 -- PATCH firstname uniquement (PATCH /booking/{id})",""
+"  En tant que client API, je veux recuperer la liste de toutes les reservations
+  afin de consulter les IDs disponibles et filtrer par criteres.","25","TC-009 -- Filtre par checkin (GET /booking?checkin=2018-01-01)","","2026-11-27","passed","2026-11-27","","US-002 -- Lister les reservations (GET /booking)","TC-009 -- Filtre par checkin (GET /booking?checkin=2018-01-01)",""
+"  En tant que client API, je veux recuperer la liste de toutes les reservations
+  afin de consulter les IDs disponibles et filtrer par criteres.","21","TC-008 -- Filtre par lastname (GET /booking?lastname=Brown)","","2026-11-27","passed","2026-11-27","","US-002 -- Lister les reservations (GET /booking)","TC-008 -- Filtre par lastname (GET /booking?lastname=Brown)",""
+"  En tant que client API, je veux recuperer le detail d'une reservation par son ID
+  afin de consulter ses informations completes.","48","TC-017 -- ID non numerique (GET /booking/abc)","","2026-11-27","passed","2026-11-27","","US-003 -- Recuperer une reservation (GET /booking/{id})","TC-017 -- ID non numerique (GET /booking/abc)",""
+"  En tant que client API authentifie, je veux supprimer une reservation
+  afin de l'effacer definitivement du systeme.","139","TC-050 -- Double DELETE sur le meme ID","","2026-11-27","passed","2026-11-27","","US-007 -- Supprimer une reservation (DELETE /booking/{id})","TC-050 -- Double DELETE sur le meme ID",""
+"  En tant que client API, je veux recuperer le detail d'une reservation par son ID
+  afin de consulter ses informations completes.","56","TC-016 -- ID inexistant (GET /booking/9999999)","","2026-11-27","passed","2026-11-27","","US-003 -- Recuperer une reservation (GET /booking/{id})","TC-016 -- ID inexistant (GET /booking/9999999)",""
+"  En tant que client API, je veux recuperer la liste de toutes les reservations
+  afin de consulter les IDs disponibles et filtrer par criteres.","83","TC-006 -- Liste complete sans filtre (GET /booking)","","2026-11-27","passed","2026-11-27","","US-002 -- Lister les reservations (GET /booking)","TC-006 -- Liste complete sans filtre (GET /booking)",""
+"  En tant que client API authentifie, je veux mettre a jour partiellement une reservation
+  afin de modifier uniquement les champs necessaires.","74","TC-041 -- PATCH sans token (PATCH /booking/{id})","","2026-11-27","passed","2026-11-27","","US-006 -- Mise a jour partielle (PATCH /booking/{id})","TC-041 -- PATCH sans token (PATCH /booking/{id})",""
+"  En tant que client API, je veux creer une nouvelle reservation
+  afin d'enregistrer un sejour hotelier dans le systeme.","29","TC-022 -- Dates checkin egale checkout (POST /booking)","","2026-11-27","passed","2026-11-27","","US-004 -- Creer une reservation (POST /booking)","TC-022 -- Dates checkin egale checkout (POST /booking)",""
+"  En tant que client API, je veux creer une nouvelle reservation
+  afin d'enregistrer un sejour hotelier dans le systeme.","97","TC-020 -- Creation avec tous les champs valides (POST /booking)","","2026-11-27","passed","2026-11-27","","US-004 -- Creer une reservation (POST /booking)","TC-020 -- Creation avec tous les champs valides (POST /booking)",""
+"  En tant que client API, je veux recuperer la liste de toutes les reservations
+  afin de consulter les IDs disponibles et filtrer par criteres.","23","TC-011 -- Filtre firstname inexistant (GET /booking?firstname=XYZ)","","2026-11-27","passed","2026-11-27","","US-002 -- Lister les reservations (GET /booking)","TC-011 -- Filtre firstname inexistant (GET /booking?firstname=XYZ)",""
 "  En tant que client API, je veux verifier la disponibilite de l'API
-  afin de m'assurer qu'elle est operationnelle avant de lancer les tests.","178","TC-051 -- Health check standard (GET /ping)","","2026-11-26","passed","2026-11-26","","US-008 -- Health Check (GET /ping)","TC-051 -- Health check standard (GET /ping)",""
-"  En tant que client API, je veux recuperer le detail d'une reservation par son ID
-  afin de consulter ses informations completes.","364","TC-019 -- ID zero (GET /booking/0)","","2026-11-26","passed","2026-11-26","","US-003 -- Recuperer une reservation (GET /booking/{id})","TC-019 -- ID zero (GET /booking/0)",""
-"  En tant que client API, je veux recuperer la liste de toutes les reservations
-  afin de consulter les IDs disponibles et filtrer par criteres.","192","TC-007 -- Filtre par firstname (GET /booking?firstname=Jim)","","2026-11-26","passed","2026-11-26","","US-002 -- Lister les reservations (GET /booking)","TC-007 -- Filtre par firstname (GET /booking?firstname=Jim)",""
+  afin de m'assurer qu'elle est operationnelle avant de lancer les tests.","21","TC-051 -- Health check standard (GET /ping)","","2026-11-27","passed","2026-11-27","","US-008 -- Health Check (GET /ping)","TC-051 -- Health check standard (GET /ping)",""
+"  En tant que client API, je veux creer une nouvelle reservation
+  afin d'enregistrer un sejour hotelier dans le systeme.","48","TC-028 -- totalprice negatif (POST /booking)","","2026-11-27","failed","2026-11-27","","US-004 -- Creer une reservation (POST /booking)","TC-028 -- totalprice negatif (POST /booking)",""
+"  En tant que client API, je veux generer un token d'authentification
+  afin d'effectuer des operations securisees sur les reservations.","41","TC-002 -- Credentials incorrects (POST /auth)","","2026-11-27","passed","2026-11-27","","US-001 -- Authentification (POST /auth)","TC-002 -- Credentials incorrects (POST /auth)",""
 "  En tant que client API authentifie, je veux supprimer une reservation
-  afin de l'effacer definitivement du systeme.","555","TC-047 -- DELETE sans token (DELETE /booking/{id})","","2026-11-26","passed","2026-11-26","","US-007 -- Supprimer une reservation (DELETE /booking/{id})","TC-047 -- DELETE sans token (DELETE /booking/{id})",""
-"  En tant que client API, je veux generer un token d'authentification
-  afin d'effectuer des operations securisees sur les reservations.","189","TC-005 -- XSS payload dans password (POST /auth)","","2026-11-26","passed","2026-11-26","","US-001 -- Authentification (POST /auth)","TC-005 -- XSS payload dans password (POST /auth)",""
-"  En tant que client API, je veux creer une nouvelle reservation
-  afin d'enregistrer un sejour hotelier dans le systeme.","200","TC-021 -- Creation sans champ optionnel additionalneeds (POST /booking)","","2026-11-26","passed","2026-11-26","","US-004 -- Creer une reservation (POST /booking)","TC-021 -- Creation sans champ optionnel additionalneeds (POST /booking)",""
-"  En tant que client API, je veux creer une nouvelle reservation
-  afin d'enregistrer un sejour hotelier dans le systeme.","252","TC-020 -- Creation avec tous les champs valides (POST /booking)","","2026-11-26","passed","2026-11-26","","US-004 -- Creer une reservation (POST /booking)","TC-020 -- Creation avec tous les champs valides (POST /booking)",""
-"  En tant que client API, je veux recuperer la liste de toutes les reservations
-  afin de consulter les IDs disponibles et filtrer par criteres.","181","TC-009 -- Filtre par checkin (GET /booking?checkin=2018-01-01)","","2026-11-26","passed","2026-11-26","","US-002 -- Lister les reservations (GET /booking)","TC-009 -- Filtre par checkin (GET /booking?checkin=2018-01-01)",""
-"  En tant que client API, je veux generer un token d'authentification
-  afin d'effectuer des operations securisees sur les reservations.","1615","TC-001 -- Token valide (POST /auth)","","2026-11-26","passed","2026-11-26","","US-001 -- Authentification (POST /auth)","TC-001 -- Token valide (POST /auth)",""
+  afin de l'effacer definitivement du systeme.","115","TC-046 -- Verification suppression par GET apres DELETE","","2026-11-27","passed","2026-11-27","","US-007 -- Supprimer une reservation (DELETE /booking/{id})","TC-046 -- Verification suppression par GET apres DELETE",""
 "  En tant que client API authentifie, je veux mettre a jour entierement une reservation
-  afin de modifier toutes ses informations en une seule requete.","546","TC-035 -- PUT avec token invalide (PUT /booking/{id})","","2026-11-26","passed","2026-11-26","","US-005 -- Mise a jour complete (PUT /booking/{id})","TC-035 -- PUT avec token invalide (PUT /booking/{id})",""
-"  En tant que client API, je veux generer un token d'authentification
-  afin d'effectuer des operations securisees sur les reservations.","198","TC-004 -- SQL injection dans username (POST /auth)","","2026-11-26","passed","2026-11-26","","US-001 -- Authentification (POST /auth)","TC-004 -- SQL injection dans username (POST /auth)",""
+  afin de modifier toutes ses informations en une seule requete.","67","TC-036 -- PUT sur ID inexistant (PUT /booking/9999999)","","2026-11-27","passed","2026-11-27","","US-005 -- Mise a jour complete (PUT /booking/{id})","TC-036 -- PUT sur ID inexistant (PUT /booking/9999999)",""
+"  En tant que client API, je veux creer une nouvelle reservation
+  afin d'enregistrer un sejour hotelier dans le systeme.","39","TC-021 -- Creation sans champ optionnel additionalneeds (POST /booking)","","2026-11-27","passed","2026-11-27","","US-004 -- Creer une reservation (POST /booking)","TC-021 -- Creation sans champ optionnel additionalneeds (POST /booking)",""
+"  En tant que client API, je veux creer une nouvelle reservation
+  afin d'enregistrer un sejour hotelier dans le systeme.","28","TC-025 -- Champ totalprice manquant (POST /booking)","","2026-11-27","passed","2026-11-27","","US-004 -- Creer une reservation (POST /booking)","TC-025 -- Champ totalprice manquant (POST /booking)",""
+"  En tant que client API, je veux recuperer le detail d'une reservation par son ID
+  afin de consulter ses informations completes.","52","TC-018 -- ID negatif (GET /booking/-1)","","2026-11-27","passed","2026-11-27","","US-003 -- Recuperer une reservation (GET /booking/{id})","TC-018 -- ID negatif (GET /booking/-1)",""
+"  En tant que client API, je veux creer une nouvelle reservation
+  afin d'enregistrer un sejour hotelier dans le systeme.","29","TC-027 -- Champ bookingdates manquant (POST /booking)","","2026-11-27","passed","2026-11-27","","US-004 -- Creer une reservation (POST /booking)","TC-027 -- Champ bookingdates manquant (POST /booking)",""
+"  En tant que client API, je veux creer une nouvelle reservation
+  afin d'enregistrer un sejour hotelier dans le systeme.","25","TC-031 -- XSS payload dans firstname (POST /booking)","","2026-11-27","failed","2026-11-27","","US-004 -- Creer une reservation (POST /booking)","TC-031 -- XSS payload dans firstname (POST /booking)",""
 "  En tant que client API authentifie, je veux supprimer une reservation
-  afin de l'effacer definitivement du systeme.","369","TC-049 -- DELETE sur ID inexistant (DELETE /booking/9999999)","","2026-11-26","passed","2026-11-26","","US-007 -- Supprimer une reservation (DELETE /booking/{id})","TC-049 -- DELETE sur ID inexistant (DELETE /booking/9999999)",""
-"  En tant que client API, je veux generer un token d'authentification
-  afin d'effectuer des operations securisees sur les reservations.","197","TC-003 -- Champs username et password manquants (POST /auth)","","2026-11-26","passed","2026-11-26","","US-001 -- Authentification (POST /auth)","TC-003 -- Champs username et password manquants (POST /auth)",""
-"  En tant que client API authentifie, je veux supprimer une reservation
-  afin de l'effacer definitivement du systeme.","550","TC-048 -- DELETE avec token invalide (DELETE /booking/{id})","","2026-11-26","passed","2026-11-26","","US-007 -- Supprimer une reservation (DELETE /booking/{id})","TC-048 -- DELETE avec token invalide (DELETE /booking/{id})",""
+  afin de l'effacer definitivement du systeme.","106","TC-045 -- DELETE avec token valide (DELETE /booking/{id})","","2026-11-27","passed","2026-11-27","","US-007 -- Supprimer une reservation (DELETE /booking/{id})","TC-045 -- DELETE avec token valide (DELETE /booking/{id})",""
+"  En tant que client API, je veux creer une nouvelle reservation
+  afin d'enregistrer un sejour hotelier dans le systeme.","27","TC-024 -- Champ lastname manquant (POST /booking)","","2026-11-27","passed","2026-11-27","","US-004 -- Creer une reservation (POST /booking)","TC-024 -- Champ lastname manquant (POST /booking)",""
+"  En tant que client API, je veux creer une nouvelle reservation
+  afin d'enregistrer un sejour hotelier dans le systeme.","26","TC-026 -- Champ depositpaid manquant (POST /booking)","","2026-11-27","passed","2026-11-27","","US-004 -- Creer une reservation (POST /booking)","TC-026 -- Champ depositpaid manquant (POST /booking)",""
 "  En tant que client API authentifie, je veux mettre a jour partiellement une reservation
-  afin de modifier uniquement les champs necessaires.","551","TC-043 -- PATCH sur ID inexistant (PATCH /booking/9999999)","","2026-11-26","passed","2026-11-26","","US-006 -- Mise a jour partielle (PATCH /booking/{id})","TC-043 -- PATCH sur ID inexistant (PATCH /booking/9999999)",""
+  afin de modifier uniquement les champs necessaires.","83","TC-040 -- PATCH lastname et totalprice (PATCH /booking/{id})","","2026-11-27","passed","2026-11-27","","US-006 -- Mise a jour partielle (PATCH /booking/{id})","TC-040 -- PATCH lastname et totalprice (PATCH /booking/{id})",""
 "  En tant que client API, je veux recuperer la liste de toutes les reservations
-  afin de consulter les IDs disponibles et filtrer par criteres.","178","TC-008 -- Filtre par lastname (GET /booking?lastname=Brown)","","2026-11-26","passed","2026-11-26","","US-002 -- Lister les reservations (GET /booking)","TC-008 -- Filtre par lastname (GET /booking?lastname=Brown)",""
+  afin de consulter les IDs disponibles et filtrer par criteres.","46","TC-010 -- Filtre par checkout (GET /booking?checkout=2019-01-01)","","2026-11-27","passed","2026-11-27","","US-002 -- Lister les reservations (GET /booking)","TC-010 -- Filtre par checkout (GET /booking?checkout=2019-01-01)",""
+"  En tant que client API, je veux creer une nouvelle reservation
+  afin d'enregistrer un sejour hotelier dans le systeme.","27","TC-030 -- Body vide (POST /booking)","","2026-11-27","passed","2026-11-27","","US-004 -- Creer une reservation (POST /booking)","TC-030 -- Body vide (POST /booking)",""
+"  En tant que client API authentifie, je veux supprimer une reservation
+  afin de l'effacer definitivement du systeme.","56","TC-049 -- DELETE sur ID inexistant (DELETE /booking/9999999)","","2026-11-27","passed","2026-11-27","","US-007 -- Supprimer une reservation (DELETE /booking/{id})","TC-049 -- DELETE sur ID inexistant (DELETE /booking/9999999)",""
+"  En tant que client API, je veux generer un token d'authentification
+  afin d'effectuer des operations securisees sur les reservations.","1581","TC-001 -- Token valide (POST /auth)","","2026-11-27","passed","2026-11-27","","US-001 -- Authentification (POST /auth)","TC-001 -- Token valide (POST /auth)",""
 "  En tant que client API authentifie, je veux mettre a jour entierement une reservation
-  afin de modifier toutes ses informations en une seule requete.","571","TC-032 -- Mise a jour complete avec token valide (PUT /booking/{id})","","2026-11-26","passed","2026-11-26","","US-005 -- Mise a jour complete (PUT /booking/{id})","TC-032 -- Mise a jour complete avec token valide (PUT /booking/{id})",""
-"  En tant que client API, je veux creer une nouvelle reservation
-  afin d'enregistrer un sejour hotelier dans le systeme.","185","TC-027 -- Champ bookingdates manquant (POST /booking)","","2026-11-26","passed","2026-11-26","","US-004 -- Creer une reservation (POST /booking)","TC-027 -- Champ bookingdates manquant (POST /booking)",""
-"  En tant que client API, je veux creer une nouvelle reservation
-  afin d'enregistrer un sejour hotelier dans le systeme.","180","TC-031 -- XSS payload dans firstname (POST /booking)","","2026-11-26","failed","2026-11-26","","US-004 -- Creer une reservation (POST /booking)","TC-031 -- XSS payload dans firstname (POST /booking)",""
-"  En tant que client API authentifie, je veux mettre a jour partiellement une reservation
-  afin de modifier uniquement les champs necessaires.","558","TC-044 -- PATCH avec body vide (PATCH /booking/{id})","","2026-11-26","passed","2026-11-26","","US-006 -- Mise a jour partielle (PATCH /booking/{id})","TC-044 -- PATCH avec body vide (PATCH /booking/{id})",""
-"  En tant que client API, je veux creer une nouvelle reservation
-  afin d'enregistrer un sejour hotelier dans le systeme.","180","TC-030 -- Body vide (POST /booking)","","2026-11-26","passed","2026-11-26","","US-004 -- Creer une reservation (POST /booking)","TC-030 -- Body vide (POST /booking)",""
+  afin de modifier toutes ses informations en une seule requete.","71","TC-037 -- PUT sans champ requis firstname (PUT /booking/{id})","","2026-11-27","passed","2026-11-27","","US-005 -- Mise a jour complete (PUT /booking/{id})","TC-037 -- PUT sans champ requis firstname (PUT /booking/{id})",""
 "  En tant que client API authentifie, je veux supprimer une reservation
-  afin de l'effacer definitivement du systeme.","584","TC-045 -- DELETE avec token valide (DELETE /booking/{id})","","2026-11-26","passed","2026-11-26","","US-007 -- Supprimer une reservation (DELETE /booking/{id})","TC-045 -- DELETE avec token valide (DELETE /booking/{id})",""
+  afin de l'effacer definitivement du systeme.","78","TC-048 -- DELETE avec token invalide (DELETE /booking/{id})","","2026-11-27","passed","2026-11-27","","US-007 -- Supprimer une reservation (DELETE /booking/{id})","TC-048 -- DELETE avec token invalide (DELETE /booking/{id})",""
+"  En tant que client API authentifie, je veux mettre a jour entierement une reservation
+  afin de modifier toutes ses informations en une seule requete.","89","TC-033 -- Persistence apres PUT (GET /booking/{id})","","2026-11-27","passed","2026-11-27","","US-005 -- Mise a jour complete (PUT /booking/{id})","TC-033 -- Persistence apres PUT (GET /booking/{id})",""
+"  En tant que client API authentifie, je veux mettre a jour partiellement une reservation
+  afin de modifier uniquement les champs necessaires.","75","TC-039 -- PATCH totalprice uniquement (PATCH /booking/{id})","","2026-11-27","passed","2026-11-27","","US-006 -- Mise a jour partielle (PATCH /booking/{id})","TC-039 -- PATCH totalprice uniquement (PATCH /booking/{id})",""
+"  En tant que client API, je veux creer une nouvelle reservation
+  afin d'enregistrer un sejour hotelier dans le systeme.","27","TC-023 -- Champ firstname manquant (POST /booking)","","2026-11-27","passed","2026-11-27","","US-004 -- Creer une reservation (POST /booking)","TC-023 -- Champ firstname manquant (POST /booking)",""
 "  En tant que client API, je veux recuperer le detail d'une reservation par son ID
-  afin de consulter ses informations completes.","368","TC-015 -- Dates au format ISO 8601 (GET /booking/{id})","","2026-11-26","passed","2026-11-26","","US-003 -- Recuperer une reservation (GET /booking/{id})","TC-015 -- Dates au format ISO 8601 (GET /booking/{id})",""
-"  En tant que client API authentifie, je veux supprimer une reservation
-  afin de l'effacer definitivement du systeme.","743","TC-046 -- Verification suppression par GET apres DELETE","","2026-11-26","passed","2026-11-26","","US-007 -- Supprimer une reservation (DELETE /booking/{id})","TC-046 -- Verification suppression par GET apres DELETE",""
-"  En tant que client API, je veux creer une nouvelle reservation
-  afin d'enregistrer un sejour hotelier dans le systeme.","184","TC-024 -- Champ lastname manquant (POST /booking)","","2026-11-26","passed","2026-11-26","","US-004 -- Creer une reservation (POST /booking)","TC-024 -- Champ lastname manquant (POST /booking)",""
+  afin de consulter ses informations completes.","47","TC-019 -- ID zero (GET /booking/0)","","2026-11-27","passed","2026-11-27","","US-003 -- Recuperer une reservation (GET /booking/{id})","TC-019 -- ID zero (GET /booking/0)",""
+"  En tant que client API, je veux recuperer le detail d'une reservation par son ID
+  afin de consulter ses informations completes.","51","TC-014 -- Validation schema JSON (GET /booking/{id})","","2026-11-27","passed","2026-11-27","","US-003 -- Recuperer une reservation (GET /booking/{id})","TC-014 -- Validation schema JSON (GET /booking/{id})",""
 "  En tant que client API authentifie, je veux mettre a jour partiellement une reservation
-  afin de modifier uniquement les champs necessaires.","552","TC-038 -- PATCH firstname uniquement (PATCH /booking/{id})","","2026-11-26","passed","2026-11-26","","US-006 -- Mise a jour partielle (PATCH /booking/{id})","TC-038 -- PATCH firstname uniquement (PATCH /booking/{id})",""
+  afin de modifier uniquement les champs necessaires.","82","TC-044 -- PATCH avec body vide (PATCH /booking/{id})","","2026-11-27","passed","2026-11-27","","US-006 -- Mise a jour partielle (PATCH /booking/{id})","TC-044 -- PATCH avec body vide (PATCH /booking/{id})",""
+"  En tant que client API authentifie, je veux mettre a jour entierement une reservation
+  afin de modifier toutes ses informations en une seule requete.","74","TC-034 -- PUT sans authentification (PUT /booking/{id})","","2026-11-27","passed","2026-11-27","","US-005 -- Mise a jour complete (PUT /booking/{id})","TC-034 -- PUT sans authentification (PUT /booking/{id})",""
+"  En tant que client API authentifie, je veux mettre a jour entierement une reservation
+  afin de modifier toutes ses informations en une seule requete.","116","TC-032 -- Mise a jour complete avec token valide (PUT /booking/{id})","","2026-11-27","passed","2026-11-27","","US-005 -- Mise a jour complete (PUT /booking/{id})","TC-032 -- Mise a jour complete avec token valide (PUT /booking/{id})",""
+"  En tant que client API authentifie, je veux mettre a jour partiellement une reservation
+  afin de modifier uniquement les champs necessaires.","73","TC-042 -- PATCH avec token invalide (PATCH /booking/{id})","","2026-11-27","passed","2026-11-27","","US-006 -- Mise a jour partielle (PATCH /booking/{id})","TC-042 -- PATCH avec token invalide (PATCH /booking/{id})",""
 "  En tant que client API, je veux recuperer la liste de toutes les reservations
-  afin de consulter les IDs disponibles et filtrer par criteres.","184","TC-010 -- Filtre par checkout (GET /booking?checkout=2019-01-01)","","2026-11-26","passed","2026-11-26","","US-002 -- Lister les reservations (GET /booking)","TC-010 -- Filtre par checkout (GET /booking?checkout=2019-01-01)",""
-"  En tant que client API authentifie, je veux mettre a jour partiellement une reservation
-  afin de modifier uniquement les champs necessaires.","555","TC-041 -- PATCH sans token (PATCH /booking/{id})","","2026-11-26","passed","2026-11-26","","US-006 -- Mise a jour partielle (PATCH /booking/{id})","TC-041 -- PATCH sans token (PATCH /booking/{id})",""
+  afin de consulter les IDs disponibles et filtrer par criteres.","27","TC-007 -- Filtre par firstname (GET /booking?firstname=Jim)","","2026-11-27","passed","2026-11-27","","US-002 -- Lister les reservations (GET /booking)","TC-007 -- Filtre par firstname (GET /booking?firstname=Jim)",""
 "  En tant que client API, je veux recuperer le detail d'une reservation par son ID
-  afin de consulter ses informations completes.","371","TC-017 -- ID non numerique (GET /booking/abc)","","2026-11-26","passed","2026-11-26","","US-003 -- Recuperer une reservation (GET /booking/{id})","TC-017 -- ID non numerique (GET /booking/abc)",""
+  afin de consulter ses informations completes.","58","TC-015 -- Dates au format ISO 8601 (GET /booking/{id})","","2026-11-27","passed","2026-11-27","","US-003 -- Recuperer une reservation (GET /booking/{id})","TC-015 -- Dates au format ISO 8601 (GET /booking/{id})",""
+"  En tant que client API, je veux creer une nouvelle reservation
+  afin d'enregistrer un sejour hotelier dans le systeme.","24","TC-029 -- checkin posterieur a checkout (POST /booking)","","2026-11-27","failed","2026-11-27","","US-004 -- Creer une reservation (POST /booking)","TC-029 -- checkin posterieur a checkout (POST /booking)",""
+"  En tant que client API authentifie, je veux mettre a jour entierement une reservation
+  afin de modifier toutes ses informations en une seule requete.","71","TC-035 -- PUT avec token invalide (PUT /booking/{id})","","2026-11-27","passed","2026-11-27","","US-005 -- Mise a jour complete (PUT /booking/{id})","TC-035 -- PUT avec token invalide (PUT /booking/{id})",""
+"  En tant que client API, je veux recuperer la liste de toutes les reservations
+  afin de consulter les IDs disponibles et filtrer par criteres.","22","TC-012 -- SQL injection dans filtre firstname (GET /booking)","","2026-11-27","passed","2026-11-27","","US-002 -- Lister les reservations (GET /booking)","TC-012 -- SQL injection dans filtre firstname (GET /booking)",""
+"  En tant que client API, je veux generer un token d'authentification
+  afin d'effectuer des operations securisees sur les reservations.","37","TC-004 -- SQL injection dans username (POST /auth)","","2026-11-27","passed","2026-11-27","","US-001 -- Authentification (POST /auth)","TC-004 -- SQL injection dans username (POST /auth)",""
+"  En tant que client API, je veux generer un token d'authentification
+  afin d'effectuer des operations securisees sur les reservations.","32","TC-005 -- XSS payload dans password (POST /auth)","","2026-11-27","passed","2026-11-27","","US-001 -- Authentification (POST /auth)","TC-005 -- XSS payload dans password (POST /auth)",""
+"  En tant que client API authentifie, je veux mettre a jour partiellement une reservation
+  afin de modifier uniquement les champs necessaires.","77","TC-043 -- PATCH sur ID inexistant (PATCH /booking/9999999)","","2026-11-27","passed","2026-11-27","","US-006 -- Mise a jour partielle (PATCH /booking/{id})","TC-043 -- PATCH sur ID inexistant (PATCH /booking/9999999)",""
